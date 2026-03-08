@@ -25,6 +25,7 @@ interface ChatSidebarProps {
 
 const ChatSidebar = ({ currentId, onSelect, onNew, open, onClose }: ChatSidebarProps) => {
   const { signOut } = useAuth();
+  const navigate = useNavigate();
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [search, setSearch] = useState("");
 
