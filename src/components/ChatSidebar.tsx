@@ -1,0 +1,103 @@
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+import { Button } from "@/components/ui/button";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Plus, MessageSquare, Trash2, LogOut, X } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { toast } from "sonner";
+
+interface Conversation {
+  id: string;
+  title: string;
+  updated_at: string;
+}
+
+interface ChatSidebarProps {
+  currentId: string | null;
+  onSelect: (id: string | null) => void;
+  onNew: () => void;
+  open: boolean;
+  onClose: () => void;
+}
+
+const ChatSidebar = ({ currentId, onSelect, onNew, open, onClose }: ChatSidebarProps) => {
+  const { signOut } = useAuth();
+  const [conversations, setConversations] = useState<Conversation[]>([]);
+
+  const load = async () => {
+    const { data } = await supabase
+      .from("conversations")
+      .select("id, title, updated_at")
+      .order("updated_at", { ascending: false });
+    if (data) setConversations(data);
+  };
+
+  useEffect(() => { load(); }, [currentId]);
+
+  const handleDelete = async (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    await supabase.from("conversations").delete().eq("id", id);
+    if (currentId === id) onNew();
+    load();
+    toast.success("تم حذف المحادثة");
+  };
+
+  return (
+    <>
+      {open && (
+        <div className="fixed inset-0 bg-black/40 z-40 md:hidden" onClick={onClose} />
+      )}
+      <aside
+        className={cn(
+          "fixed md:relative z-50 top-0 right-0 h-full w-72 bg-card border-l flex flex-col transition-transform duration-200",
+          open ? "translate-x-0" : "translate-x-full md:translate-x-0 md:w-0 md:overflow-hidden md:border-0"
+        )}
+      >
+        <div className="flex items-center justify-between p-3 border-b">
+          <Button variant="outline" size="sm" className="gap-1.5 flex-1" onClick={() => { onNew(); onClose(); }}>
+            <Plus className="w-4 h-4" />
+            محادثة جديدة
+          </Button>
+          <Button variant="ghost" size="icon" className="md:hidden mr-1" onClick={onClose}>
+            <X className="w-4 h-4" />
+          </Button>
+        </div>
+        <ScrollArea className="flex-1">
+          <div className="p-2 space-y-1">
+            {conversations.map((c) => (
+              <button
+                key={c.id}
+                onClick={() => { onSelect(c.id); onClose(); }}
+                className={cn(
+                  "w-full flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-right transition-colors group",
+                  currentId === c.id
+                    ? "bg-accent text-accent-foreground"
+                    : "hover:bg-muted text-foreground"
+                )}
+              >
+                <MessageSquare className="w-4 h-4 shrink-0" />
+                <span className="truncate flex-1">{c.title}</span>
+                <Trash2
+                  className="w-3.5 h-3.5 shrink-0 opacity-0 group-hover:opacity-60 hover:!opacity-100 text-destructive"
+                  onClick={(e) => handleDelete(c.id, e)}
+                />
+              </button>
+            ))}
+            {conversations.length === 0 && (
+              <p className="text-xs text-muted-foreground text-center py-8">لا توجد محادثات سابقة</p>
+            )}
+          </div>
+        </ScrollArea>
+        <div className="border-t p-3">
+          <Button variant="ghost" size="sm" className="w-full gap-1.5 text-muted-foreground" onClick={signOut}>
+            <LogOut className="w-4 h-4" />
+            تسجيل الخروج
+          </Button>
+        </div>
+      </aside>
+    </>
+  );
+};
+
+export default ChatSidebar;
