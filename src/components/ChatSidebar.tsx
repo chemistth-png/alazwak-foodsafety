@@ -112,8 +112,17 @@ const ChatSidebar = ({ currentId, onSelect, onNew, open, onClose }: ChatSidebarP
             )}
           </div>
         </ScrollArea>
-        <div className="border-t p-3">
-          <Button variant="ghost" size="sm" className="w-full gap-1.5 text-muted-foreground" onClick={signOut}>
+        <div className="border-t p-3 space-y-1">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="w-full gap-1.5 text-foreground justify-start"
+            onClick={() => { navigate("/documents"); onClose(); }}
+          >
+            <FolderOpen className="w-4 h-4" />
+            إدارة المستندات
+          </Button>
+          <Button variant="ghost" size="sm" className="w-full gap-1.5 text-muted-foreground justify-start" onClick={signOut}>
             <LogOut className="w-4 h-4" />
             تسجيل الخروج
           </Button>
