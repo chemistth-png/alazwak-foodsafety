@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, GitBranch, LayoutGrid, ClipboardList } from "lucide-react";
+import ThemeToggle from "@/components/ThemeToggle";
 import FlowChartBuilder from "@/components/plans/FlowChartBuilder";
 import FactoryLayoutBuilder from "@/components/plans/FactoryLayoutBuilder";
 import HACCPTables from "@/components/plans/HACCPTables";
