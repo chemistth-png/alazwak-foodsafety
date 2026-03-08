@@ -12,6 +12,7 @@ import { useAuth } from "@/hooks/useAuth";
 import ChatSidebar from "@/components/ChatSidebar";
 import ThemeToggle from "@/components/ThemeToggle";
 import FileUpload, { AttachedFileChip } from "@/components/FileUpload";
+import ModelSelector from "@/components/ModelSelector";
 
 const SUGGESTED_QUESTIONS = [
   "ما هي اشتراطات هيئة سلامة الغذاء لمصانع المياه المعبأة؟",
@@ -29,6 +30,7 @@ const Index = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const [attachedFiles, setAttachedFiles] = useState<{ name: string; text: string }[]>([]);
+  const [selectedModel, setSelectedModel] = useState("google/gemini-3-flash-preview");
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const exportPDF = useCallback(async () => {
@@ -172,6 +174,7 @@ const Index = () => {
         messages: [...messages, aiMsg],
         onDelta: upsertAssistant,
         authToken: session?.access_token,
+        model: selectedModel,
         onDone: async () => {
           setIsLoading(false);
           if (convId && assistantSoFar) {
@@ -184,7 +187,7 @@ const Index = () => {
       toast.error(e.message || "حدث خطأ أثناء الاتصال");
       setIsLoading(false);
     }
-  }, [messages, isLoading, conversationId, user, attachedFiles]);
+  }, [messages, isLoading, conversationId, user, attachedFiles, selectedModel]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
@@ -229,7 +232,8 @@ const Index = () => {
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1.5">
+            <ModelSelector value={selectedModel} onChange={setSelectedModel} disabled={isLoading} />
             <ThemeToggle />
             {messages.length > 0 && (
               <>

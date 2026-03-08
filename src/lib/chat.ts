@@ -7,11 +7,13 @@ export async function streamChat({
   onDelta,
   onDone,
   authToken,
+  model,
 }: {
   messages: Msg[];
   onDelta: (deltaText: string) => void;
   onDone: () => void;
   authToken?: string;
+  model?: string;
 }) {
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
@@ -26,7 +28,7 @@ export async function streamChat({
   const resp = await fetch(CHAT_URL, {
     method: "POST",
     headers,
-    body: JSON.stringify({ messages }),
+    body: JSON.stringify({ messages, model }),
   });
 
   if (!resp.ok || !resp.body) {
