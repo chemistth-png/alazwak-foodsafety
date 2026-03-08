@@ -61,6 +61,7 @@ const App = () => {
                 <Route path="/auth" element={<AuthRoute><Auth /></AuthRoute>} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
+              <BottomNav />
             </BrowserRouter>
           </TooltipProvider>
         </AuthProvider>
