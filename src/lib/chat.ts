@@ -7,11 +7,13 @@ export async function streamChat({
   onDelta,
   onDone,
   authToken,
+  model,
 }: {
   messages: Msg[];
   onDelta: (deltaText: string) => void;
   onDone: () => void;
   authToken?: string;
+  model?: string;
 }) {
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
