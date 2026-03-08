@@ -30,6 +30,7 @@ const Index = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const [attachedFiles, setAttachedFiles] = useState<{ name: string; text: string }[]>([]);
+  const [selectedModel, setSelectedModel] = useState("google/gemini-3-flash-preview");
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const exportPDF = useCallback(async () => {
