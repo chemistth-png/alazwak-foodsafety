@@ -127,7 +127,8 @@ const Index = () => {
 
     // Create conversation if new
     if (!convId) {
-      const title = trimmed.length > 50 ? trimmed.slice(0, 50) + "..." : trimmed;
+      const titleText = trimmed || (attachedFile ? attachedFile.name : "محادثة جديدة");
+      const title = titleText.length > 50 ? titleText.slice(0, 50) + "..." : titleText;
       const { data } = await supabase
         .from("conversations")
         .insert({ user_id: user!.id, title })
