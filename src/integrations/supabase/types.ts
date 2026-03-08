@@ -102,7 +102,15 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      search_documents: {
+        Args: { p_limit?: number; p_query: string; p_user_id: string }
+        Returns: {
+          content: string
+          file_name: string
+          id: string
+          similarity_score: number
+        }[]
+      }
     }
     Enums: {
       [_ in never]: never
