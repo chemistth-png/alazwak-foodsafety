@@ -249,7 +249,7 @@ const Index = () => {
         </header>
 
         {/* Messages */}
-        <ScrollArea className="flex-1 px-4" ref={scrollRef}>
+        <ScrollArea className="flex-1 px-4" viewportRef={scrollRef}>
           {messages.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full py-16 gap-6">
               <div className="flex items-center justify-center w-20 h-20 rounded-2xl bg-accent">
