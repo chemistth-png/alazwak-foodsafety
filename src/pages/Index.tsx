@@ -325,7 +325,7 @@ const Index = () => {
         </ScrollArea>
 
         {/* Input */}
-        <div className="border-t bg-card p-3">
+        <div className="border-t bg-card p-3 pb-[calc(0.75rem+3.5rem)] md:pb-3">
           <div className="max-w-3xl mx-auto">
             {attachedFiles.length > 0 && (
               <div className="mb-2 flex flex-wrap gap-1.5">

@@ -14,6 +14,9 @@ const BottomNav = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
+  // Hide on auth page and SOP template
+  if (location.pathname === "/auth" || location.pathname === "/sop") return null;
+
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-40 border-t bg-card/95 backdrop-blur-sm md:hidden safe-area-bottom">
       <div className="flex items-center justify-around h-14">
