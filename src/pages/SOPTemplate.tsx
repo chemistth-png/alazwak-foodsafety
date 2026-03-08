@@ -1,14 +1,16 @@
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowRight, Download, Plus, Trash2, Loader2, FileText, GripVertical } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { ArrowRight, Download, Plus, Trash2, Loader2, FileText, Save } from "lucide-react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 import ThemeToggle from "@/components/ThemeToggle";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 
 interface SOPStep {
   id: string;
@@ -26,7 +28,7 @@ const EMPTY_STEP = (): SOPStep => ({
   notes: "",
 });
 
-const CATEGORIES = [
+export const SOP_CATEGORIES = [
   "إنتاج",
   "جودة",
   "صيانة",
@@ -40,8 +42,13 @@ const CATEGORIES = [
 
 const SOPTemplate = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const editId = searchParams.get("id");
+  const { user } = useAuth();
   const formRef = useRef<HTMLDivElement>(null);
   const [isExporting, setIsExporting] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [loaded, setLoaded] = useState(!editId);
 
   const [form, setForm] = useState({
     title: "",
@@ -62,6 +69,42 @@ const SOPTemplate = () => {
 
   const [steps, setSteps] = useState<SOPStep[]>([EMPTY_STEP(), EMPTY_STEP(), EMPTY_STEP()]);
 
+  // Load existing SOP for editing
+  useEffect(() => {
+    if (!editId) return;
+    (async () => {
+      const { data, error } = await supabase
+        .from("sops")
+        .select("*")
+        .eq("id", editId)
+        .single();
+      if (error || !data) {
+        toast.error("لم يتم العثور على الإجراء");
+        navigate("/sops");
+        return;
+      }
+      setForm({
+        title: data.title || "",
+        docNumber: data.doc_number || "",
+        revision: data.revision || "01",
+        category: data.category || "",
+        department: data.department || "",
+        preparedBy: data.prepared_by || "",
+        approvedBy: data.approved_by || "",
+        effectiveDate: data.effective_date || "",
+        purpose: data.purpose || "",
+        scope: data.scope || "",
+        definitions: data.definitions || "",
+        references: (data as any).references || "",
+        safetyNotes: data.safety_notes || "",
+        records: data.records || "",
+      });
+      const loadedSteps = (data.steps as any[]) || [];
+      setSteps(loadedSteps.length > 0 ? loadedSteps : [EMPTY_STEP()]);
+      setLoaded(true);
+    })();
+  }, [editId, navigate]);
+
   const updateField = (field: string, value: string) =>
     setForm((prev) => ({ ...prev, [field]: value }));
 
@@ -74,6 +117,52 @@ const SOPTemplate = () => {
     if (steps.length <= 1) return;
     setSteps((prev) => prev.filter((s) => s.id !== id));
   };
+
+  const saveSOP = useCallback(async () => {
+    if (!form.title) {
+      toast.error("يرجى إدخال عنوان الإجراء أولاً");
+      return;
+    }
+    if (!user) return;
+    setIsSaving(true);
+    try {
+      const payload = {
+        user_id: user.id,
+        title: form.title,
+        doc_number: form.docNumber,
+        revision: form.revision,
+        category: form.category,
+        department: form.department,
+        prepared_by: form.preparedBy,
+        approved_by: form.approvedBy,
+        effective_date: form.effectiveDate,
+        purpose: form.purpose,
+        scope: form.scope,
+        definitions: form.definitions,
+        references: form.references,
+        safety_notes: form.safetyNotes,
+        records: form.records,
+        steps: steps as any,
+        updated_at: new Date().toISOString(),
+      };
+
+      if (editId) {
+        const { error } = await supabase.from("sops").update(payload).eq("id", editId);
+        if (error) throw error;
+        toast.success("تم تحديث الإجراء بنجاح");
+      } else {
+        const { error } = await supabase.from("sops").insert(payload);
+        if (error) throw error;
+        toast.success("تم حفظ الإجراء بنجاح");
+        navigate("/sops");
+      }
+    } catch (e: any) {
+      console.error(e);
+      toast.error("حدث خطأ أثناء الحفظ");
+    } finally {
+      setIsSaving(false);
+    }
+  }, [form, steps, user, editId, navigate]);
 
   const exportPDF = useCallback(async () => {
     if (!form.title) {
@@ -107,7 +196,6 @@ const SOPTemplate = () => {
 
       const html = `
         <div style="direction:rtl;font-family:'Cairo',sans-serif;padding:20px;max-width:700px;">
-          <!-- Header -->
           <div style="display:flex;justify-content:space-between;align-items:center;border:2px solid #0ea5e9;border-radius:8px;padding:12px 16px;margin-bottom:16px;">
             <div>
               <h1 style="font-size:18px;font-weight:bold;color:#0284c7;margin:0;">${form.title}</h1>
@@ -119,8 +207,6 @@ const SOPTemplate = () => {
               ${form.effectiveDate ? `<div>تاريخ السريان: <strong>${form.effectiveDate}</strong></div>` : ""}
             </div>
           </div>
-
-          <!-- Meta -->
           <table style="width:100%;border-collapse:collapse;margin-bottom:16px;font-size:11px;">
             <tr>
               <td style="padding:6px 10px;border:1px solid #d1d5db;background:#f0f9ff;font-weight:bold;width:25%;">القسم</td>
@@ -135,13 +221,10 @@ const SOPTemplate = () => {
               <td style="padding:6px 10px;border:1px solid #d1d5db;">${form.approvedBy}</td>
             </tr>
           </table>
-
           ${section("1. الغرض", form.purpose)}
           ${section("2. نطاق التطبيق", form.scope)}
           ${section("3. التعريفات", form.definitions)}
           ${section("4. المراجع", form.references)}
-
-          <!-- Steps -->
           ${stepsRows ? `
           <div style="margin-bottom:14px;">
             <h3 style="font-size:14px;font-weight:bold;color:#0284c7;margin-bottom:6px;border-bottom:2px solid #0ea5e9;padding-bottom:2px;">5. خطوات التنفيذ</h3>
@@ -157,10 +240,8 @@ const SOPTemplate = () => {
               <tbody>${stepsRows}</tbody>
             </table>
           </div>` : ""}
-
           ${section("6. ملاحظات السلامة", form.safetyNotes)}
           ${section("7. السجلات والنماذج", form.records)}
-
           <p style="text-align:center;color:#94a3b8;font-size:9px;margin-top:24px;">تم الإنشاء بواسطة Alazwak Food Safety</p>
         </div>
       `;
@@ -187,24 +268,37 @@ const SOPTemplate = () => {
     }
   }, [form, steps]);
 
+  if (!loaded) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
   return (
     <div dir="rtl" className="min-h-screen bg-background">
-      {/* Header */}
       <header className="sticky top-0 z-10 flex items-center justify-between gap-3 border-b px-4 py-3 bg-card shadow-sm">
         <div className="flex items-center gap-3">
-          <Button variant="ghost" size="icon" onClick={() => navigate("/")}>
+          <Button variant="ghost" size="icon" onClick={() => navigate("/sops")}>
             <ArrowRight className="w-5 h-5" />
           </Button>
           <div className="flex items-center gap-2">
             <FileText className="w-5 h-5 text-primary" />
-            <h1 className="text-base font-bold text-foreground">قالب إجراء تشغيل قياسي (SOP)</h1>
+            <h1 className="text-base font-bold text-foreground">
+              {editId ? "تعديل إجراء" : "إنشاء إجراء جديد"}
+            </h1>
           </div>
         </div>
         <div className="flex items-center gap-1.5">
           <ThemeToggle />
+          <Button variant="outline" onClick={saveSOP} disabled={isSaving} className="gap-1.5">
+            {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+            حفظ
+          </Button>
           <Button onClick={exportPDF} disabled={isExporting} className="gap-1.5">
             {isExporting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
-            تصدير PDF
+            PDF
           </Button>
         </div>
       </header>
@@ -233,7 +327,7 @@ const SOPTemplate = () => {
               <Select value={form.category} onValueChange={(v) => updateField("category", v)}>
                 <SelectTrigger><SelectValue placeholder="اختر التصنيف" /></SelectTrigger>
                 <SelectContent>
-                  {CATEGORIES.map((c) => (
+                  {SOP_CATEGORIES.map((c) => (
                     <SelectItem key={c} value={c}>{c}</SelectItem>
                   ))}
                 </SelectContent>
@@ -299,26 +393,11 @@ const SOPTemplate = () => {
                 </span>
                 <div className="flex-1 grid grid-cols-1 sm:grid-cols-3 gap-2">
                   <div className="sm:col-span-3">
-                    <Input
-                      value={step.description}
-                      onChange={(e) => updateStep(step.id, "description", e.target.value)}
-                      placeholder="وصف الخطوة..."
-                      className="text-sm"
-                    />
+                    <Input value={step.description} onChange={(e) => updateStep(step.id, "description", e.target.value)} placeholder="وصف الخطوة..." className="text-sm" />
                   </div>
-                  <Input
-                    value={step.responsible}
-                    onChange={(e) => updateStep(step.id, "responsible", e.target.value)}
-                    placeholder="المسؤول"
-                    className="text-sm"
-                  />
+                  <Input value={step.responsible} onChange={(e) => updateStep(step.id, "responsible", e.target.value)} placeholder="المسؤول" className="text-sm" />
                   <div className="sm:col-span-2">
-                    <Input
-                      value={step.notes}
-                      onChange={(e) => updateStep(step.id, "notes", e.target.value)}
-                      placeholder="ملاحظات / معايير قبول"
-                      className="text-sm"
-                    />
+                    <Input value={step.notes} onChange={(e) => updateStep(step.id, "notes", e.target.value)} placeholder="ملاحظات / معايير قبول" className="text-sm" />
                   </div>
                 </div>
                 <Button variant="ghost" size="icon" className="shrink-0 mt-1 text-destructive" onClick={() => removeStep(step.id)} disabled={steps.length <= 1}>
@@ -346,11 +425,14 @@ const SOPTemplate = () => {
           </CardContent>
         </Card>
 
-        {/* Bottom Export */}
-        <div className="flex justify-center pb-8">
+        <div className="flex justify-center gap-3 pb-8">
+          <Button variant="outline" onClick={saveSOP} disabled={isSaving} size="lg" className="gap-2">
+            {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-5 h-5" />}
+            حفظ الإجراء
+          </Button>
           <Button onClick={exportPDF} disabled={isExporting} size="lg" className="gap-2">
             {isExporting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-5 h-5" />}
-            تصدير كملف PDF
+            تصدير PDF
           </Button>
         </div>
       </div>
