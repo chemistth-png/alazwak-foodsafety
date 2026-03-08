@@ -29,6 +29,7 @@ const Plans = () => {
             </p>
           </div>
         </div>
+        <ThemeToggle />
       </header>
 
       {/* Tabs */}
