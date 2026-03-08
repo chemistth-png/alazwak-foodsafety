@@ -163,7 +163,7 @@ const Index = () => {
 
     try {
       await streamChat({
-        messages: [...messages, userMsg],
+        messages: [...messages, aiMsg],
         onDelta: upsertAssistant,
         onDone: async () => {
           setIsLoading(false);
