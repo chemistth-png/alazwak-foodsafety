@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import ChatSidebar from "@/components/ChatSidebar";
+import ThemeToggle from "@/components/ThemeToggle";
 
 const SUGGESTED_QUESTIONS = [
   "ما هي الحدود القصوى للمعادن الثقيلة في المياه المعبأة؟",
