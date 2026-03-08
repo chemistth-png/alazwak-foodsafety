@@ -6,26 +6,21 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-// Simple PDF text extractor without Node.js Buffer dependency
+// Simple PDF text extractor for basic PDFs
 function extractTextFromPDF(data: Uint8Array): string {
   const text = new TextDecoder("latin1").decode(data);
   const textParts: string[] = [];
 
-  // Extract text between BT and ET markers (PDF text objects)
   const btEtRegex = /BT\s([\s\S]*?)ET/g;
   let match;
 
   while ((match = btEtRegex.exec(text)) !== null) {
     const block = match[1];
-
-    // Extract text from Tj operator (show text)
     const tjRegex = /\(([^)]*)\)\s*Tj/g;
     let tjMatch;
     while ((tjMatch = tjRegex.exec(block)) !== null) {
       textParts.push(tjMatch[1]);
     }
-
-    // Extract text from TJ operator (show text array)
     const tjArrayRegex = /\[(.*?)\]\s*TJ/g;
     let tjArrMatch;
     while ((tjArrMatch = tjArrayRegex.exec(block)) !== null) {
@@ -38,19 +33,7 @@ function extractTextFromPDF(data: Uint8Array): string {
     }
   }
 
-  // Also try to extract from stream objects for simpler PDFs
-  const streamRegex = /stream\r?\n([\s\S]*?)endstream/g;
-  while ((match = streamRegex.exec(text)) !== null) {
-    const streamContent = match[1];
-    // Look for readable text in streams
-    const readableText = streamContent.replace(/[^\x20-\x7E\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF\n\r\t]/g, ' ');
-    const cleaned = readableText.replace(/\s{3,}/g, ' ').trim();
-    if (cleaned.length > 20) {
-      textParts.push(cleaned);
-    }
-  }
-
-  let result = textParts.join(' ')
+  return textParts.join(' ')
     .replace(/\\n/g, '\n')
     .replace(/\\r/g, '')
     .replace(/\\t/g, '\t')
@@ -58,8 +41,76 @@ function extractTextFromPDF(data: Uint8Array): string {
     .replace(/\\\)/g, ')')
     .replace(/\s{3,}/g, '\n')
     .trim();
+}
 
-  return result;
+// Use Lovable AI (Gemini) to extract text from complex PDFs (images, tables, scanned docs)
+async function extractTextWithAI(pdfBase64: string, fileName: string): Promise<string> {
+  const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+  if (!LOVABLE_API_KEY) {
+    throw new Error("LOVABLE_API_KEY not configured");
+  }
+
+  const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${LOVABLE_API_KEY}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      model: "google/gemini-2.5-flash",
+      messages: [
+        {
+          role: "user",
+          content: [
+            {
+              type: "text",
+              text: `أنت أداة استخراج نصوص متخصصة. استخرج كل النص الموجود في ملف PDF هذا بدقة عالية.
+              
+قواعد الاستخراج:
+- استخرج كل النصوص بما في ذلك النصوص داخل الجداول والصور
+- حافظ على هيكل الجداول باستخدام | كفاصل بين الأعمدة
+- استخرج النص بلغته الأصلية (عربي، إنجليزي، أو مختلط)
+- إذا كان الملف يحتوي على مخططات أو رسوم بيانية، اوصفها بإيجاز
+- لا تضف أي تعليقات أو شروحات خاصة بك
+- ابدأ مباشرة بالنص المستخرج
+
+اسم الملف: ${fileName}`
+            },
+            {
+              type: "image_url",
+              image_url: {
+                url: `data:application/pdf;base64,${pdfBase64}`
+              }
+            }
+          ]
+        }
+      ],
+    }),
+  });
+
+  if (!response.ok) {
+    const errText = await response.text();
+    console.error("AI extraction error:", errText);
+    throw new Error(`AI extraction failed: ${response.status}`);
+  }
+
+  const data = await response.json();
+  const content = data.choices?.[0]?.message?.content;
+  
+  if (!content) {
+    throw new Error("No content returned from AI");
+  }
+
+  return content;
+}
+
+// Encode Uint8Array to base64 string (Deno-compatible)
+function uint8ArrayToBase64(bytes: Uint8Array): string {
+  let binary = '';
+  for (let i = 0; i < bytes.length; i++) {
+    binary += String.fromCharCode(bytes[i]);
+  }
+  return btoa(binary);
 }
 
 serve(async (req) => {
@@ -99,10 +150,26 @@ serve(async (req) => {
 
     if (fileExt === "pdf") {
       const data = new Uint8Array(await fileData.arrayBuffer());
-      extractedText = extractTextFromPDF(data);
       
-      if (!extractedText || extractedText.length < 10) {
-        extractedText = "[لم يتم استخراج نص كافٍ من ملف PDF - قد يكون الملف يحتوي على صور أو نص مشفر]";
+      // Step 1: Try simple extraction first
+      extractedText = extractTextFromPDF(data);
+      console.log(`Simple extraction result: ${extractedText.length} chars`);
+      
+      // Step 2: If simple extraction yielded little text, use AI
+      if (!extractedText || extractedText.length < 50) {
+        console.log("Simple extraction insufficient, using AI extraction...");
+        try {
+          const base64 = uint8ArrayToBase64(data);
+          extractedText = await extractTextWithAI(base64, fileName);
+          console.log(`AI extraction result: ${extractedText.length} chars`);
+        } catch (aiError) {
+          console.error("AI extraction failed:", aiError);
+          if (extractedText && extractedText.length > 0) {
+            // Keep the simple extraction result
+          } else {
+            extractedText = "[لم يتم استخراج نص من ملف PDF - قد يكون الملف محمياً أو تالفاً]";
+          }
+        }
       }
     } else if (fileExt === "docx" || fileExt === "doc") {
       const mammoth = await import("npm:mammoth@1.6.0");
