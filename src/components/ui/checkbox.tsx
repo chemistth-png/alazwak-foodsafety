@@ -16,10 +16,9 @@ const Checkbox = React.forwardRef<
     )}
     {...props}
   >
-    <CheckboxPrimitive.Indicator asChild forceMount>
-      <span className={cn("flex items-center justify-center text-current", "data-[state=unchecked]:hidden")}>
-        <Check className="h-4 w-4" />
-      </span>
+    {/* @ts-ignore - Radix types mismatch */}
+    <CheckboxPrimitive.Indicator className="flex items-center justify-center text-current">
+      <Check className="h-4 w-4" />
     </CheckboxPrimitive.Indicator>
   </CheckboxPrimitive.Root>
 ));
