@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from "react";
-import { Send, Droplets, Bot, User, Loader2, Trash2, Menu } from "lucide-react";
+import { Send, Droplets, Bot, User, Loader2, Trash2, Menu, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -26,7 +26,50 @@ const Index = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [conversationId, setConversationId] = useState<string | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  const exportPDF = useCallback(async () => {
+    if (messages.length === 0) return;
+    setIsExporting(true);
+    try {
+      const html2pdf = (await import("html2pdf.js")).default;
+      const container = document.createElement("div");
+      container.style.direction = "rtl";
+      container.style.fontFamily = "Cairo, sans-serif";
+      container.style.padding = "24px";
+      container.style.maxWidth = "700px";
+
+      container.innerHTML = `
+        <h2 style="text-align:center;color:#0ea5e9;margin-bottom:8px;">مساعد جودة المياه المعبأة</h2>
+        <p style="text-align:center;color:#888;font-size:12px;margin-bottom:24px;">المواصفة القياسية المصرية 1589</p>
+        <hr style="border:1px solid #e5e7eb;margin-bottom:16px;" />
+        ${messages.map((m) => `
+          <div style="margin-bottom:16px;padding:12px;border-radius:12px;background:${m.role === "user" ? "#f0f9ff" : "#f8fafc"};border:1px solid #e5e7eb;">
+            <p style="font-size:11px;font-weight:bold;color:${m.role === "user" ? "#0ea5e9" : "#64748b"};margin-bottom:6px;">
+              ${m.role === "user" ? "👤 أنت" : "🤖 المساعد"}
+            </p>
+            <div style="font-size:13px;line-height:1.8;white-space:pre-wrap;">${m.content}</div>
+          </div>
+        `).join("")}
+        <p style="text-align:center;color:#aaa;font-size:10px;margin-top:24px;">تم التصدير بواسطة مساعد جودة المياه المعبأة</p>
+      `;
+
+      await html2pdf().set({
+        margin: 10,
+        filename: "محادثة-مساعد-المياه.pdf",
+        html2canvas: { scale: 2, useCORS: true },
+        jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
+      }).from(container).save();
+
+      toast.success("تم تصدير المحادثة بنجاح");
+    } catch (e) {
+      console.error(e);
+      toast.error("حدث خطأ أثناء تصدير المحادثة");
+    } finally {
+      setIsExporting(false);
+    }
+  }, [messages]);
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -165,9 +208,14 @@ const Index = () => {
           <div className="flex items-center gap-1">
             <ThemeToggle />
             {messages.length > 0 && (
-              <Button variant="ghost" size="icon" onClick={clearChat} title="مسح المحادثة">
-                <Trash2 className="w-4 h-4" />
-              </Button>
+              <>
+                <Button variant="ghost" size="icon" onClick={exportPDF} title="تصدير كـ PDF" disabled={isExporting}>
+                  {isExporting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+                </Button>
+                <Button variant="ghost" size="icon" onClick={clearChat} title="مسح المحادثة">
+                  <Trash2 className="w-4 h-4" />
+                </Button>
+              </>
             )}
           </div>
         </header>
