@@ -9,6 +9,8 @@ import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 import { Loader2 } from "lucide-react";
+import { useState, useCallback } from "react";
+import SplashScreen from "@/components/SplashScreen";
 
 const queryClient = new QueryClient();
 
