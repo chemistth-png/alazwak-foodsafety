@@ -44,7 +44,7 @@ serve(async (req) => {
     if (fileExt === "pdf") {
       // Use pdf-parse for PDF files
       const pdfParse = (await import("npm:pdf-parse@1.1.1")).default;
-      const buffer = Buffer.from(await fileData.arrayBuffer());
+      const buffer = new Uint8Array(await fileData.arrayBuffer());
       const pdfData = await pdfParse(buffer);
       extractedText = pdfData.text;
     } else if (fileExt === "docx" || fileExt === "doc") {
