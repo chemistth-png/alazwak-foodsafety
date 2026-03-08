@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import ChatSidebar from "@/components/ChatSidebar";
+import ThemeToggle from "@/components/ThemeToggle";
 
 const SUGGESTED_QUESTIONS = [
   "ما هي الحدود القصوى للمعادن الثقيلة في المياه المعبأة؟",
@@ -161,11 +162,14 @@ const Index = () => {
               </p>
             </div>
           </div>
-          {messages.length > 0 && (
-            <Button variant="ghost" size="icon" onClick={clearChat} title="مسح المحادثة">
-              <Trash2 className="w-4 h-4" />
-            </Button>
-          )}
+          <div className="flex items-center gap-1">
+            <ThemeToggle />
+            {messages.length > 0 && (
+              <Button variant="ghost" size="icon" onClick={clearChat} title="مسح المحادثة">
+                <Trash2 className="w-4 h-4" />
+              </Button>
+            )}
+          </div>
         </header>
 
         {/* Messages */}
