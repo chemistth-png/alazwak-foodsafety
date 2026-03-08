@@ -102,17 +102,20 @@ const Index = () => {
 
   const send = useCallback(async (text: string) => {
     const trimmed = text.trim();
-    if (!trimmed && !attachedFile) return;
+    if (!trimmed && attachedFiles.length === 0) return;
     if (isLoading) return;
 
-    // Build message content with file if attached
+    // Build message content with files if attached
     let messageContent = trimmed;
-    if (attachedFile) {
-      messageContent = `[ملف مرفق: ${attachedFile.name}]\n\nمحتوى الملف:\n${attachedFile.text}${trimmed ? `\n\nسؤال المستخدم: ${trimmed}` : "\n\nقم بتحليل محتوى هذا الملف وتلخيصه."}`;
+    if (attachedFiles.length > 0) {
+      const filesContent = attachedFiles
+        .map((f, i) => `[ملف مرفق ${i + 1}: ${f.name}]\n\nمحتوى الملف:\n${f.text}`)
+        .join("\n\n---\n\n");
+      messageContent = `${filesContent}${trimmed ? `\n\nسؤال المستخدم: ${trimmed}` : "\n\nقم بتحليل محتوى هذه الملفات وتلخيصها."}`;
     }
 
-    const displayContent = attachedFile 
-      ? `📎 ${attachedFile.name}${trimmed ? `\n${trimmed}` : ""}`
+    const displayContent = attachedFiles.length > 0
+      ? `📎 ${attachedFiles.map(f => f.name).join("، ")}${trimmed ? `\n${trimmed}` : ""}`
       : trimmed;
 
     const userMsg: Msg = { role: "user", content: displayContent };
@@ -120,7 +123,7 @@ const Index = () => {
     
     setMessages((prev) => [...prev, userMsg]);
     setInput("");
-    setAttachedFile(null);
+    setAttachedFiles([]);
     setIsLoading(true);
 
     let convId = conversationId;
