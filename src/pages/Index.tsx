@@ -28,7 +28,7 @@ const Index = () => {
   const [conversationId, setConversationId] = useState<string | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
-  const [attachedFile, setAttachedFile] = useState<{ name: string; text: string } | null>(null);
+  const [attachedFiles, setAttachedFiles] = useState<{ name: string; text: string }[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const exportPDF = useCallback(async () => {
