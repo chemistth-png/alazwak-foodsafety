@@ -162,6 +162,8 @@ const Index = () => {
               </p>
             </div>
           </div>
+          <div className="flex items-center gap-1">
+            <ThemeToggle />
           {messages.length > 0 && (
             <Button variant="ghost" size="icon" onClick={clearChat} title="مسح المحادثة">
               <Trash2 className="w-4 h-4" />
