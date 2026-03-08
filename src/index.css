@@ -106,3 +106,14 @@
     font-family: 'Cairo', sans-serif;
   }
 }
+
+@layer utilities {
+  .safe-area-bottom {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+}
+
+/* Hide bottom nav on auth page */
+.auth-page ~ nav {
+  display: none;
+}

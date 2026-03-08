@@ -32,6 +32,7 @@ const Index = () => {
   const [attachedFiles, setAttachedFiles] = useState<{ name: string; text: string }[]>([]);
   const [selectedModel, setSelectedModel] = useState("google/gemini-3-flash-preview");
   const scrollRef = useRef<HTMLDivElement>(null);
+  const bottomRef = useRef<HTMLDivElement>(null);
 
   const exportPDF = useCallback(async () => {
     if (messages.length === 0) return;
@@ -76,9 +77,7 @@ const Index = () => {
   }, [messages]);
 
   useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-    }
+    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
   const loadConversation = useCallback(async (id: string) => {
@@ -249,7 +248,7 @@ const Index = () => {
         </header>
 
         {/* Messages */}
-        <ScrollArea className="flex-1 px-4" ref={scrollRef}>
+        <ScrollArea className="flex-1 px-4">
           {messages.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full py-16 gap-6">
               <div className="flex items-center justify-center w-20 h-20 rounded-2xl bg-accent">
@@ -320,12 +319,13 @@ const Index = () => {
                   </div>
                 </div>
               )}
+              <div ref={bottomRef} />
             </div>
           )}
         </ScrollArea>
 
         {/* Input */}
-        <div className="border-t bg-card p-3">
+        <div className="border-t bg-card p-3 pb-[calc(0.75rem+3.5rem)] md:pb-3">
           <div className="max-w-3xl mx-auto">
             {attachedFiles.length > 0 && (
               <div className="mb-2 flex flex-wrap gap-1.5">
