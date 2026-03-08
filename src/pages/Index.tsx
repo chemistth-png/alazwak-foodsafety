@@ -174,6 +174,7 @@ const Index = () => {
         messages: [...messages, aiMsg],
         onDelta: upsertAssistant,
         authToken: session?.access_token,
+        model: selectedModel,
         onDone: async () => {
           setIsLoading(false);
           if (convId && assistantSoFar) {
