@@ -315,24 +315,38 @@ const Index = () => {
 
         {/* Input */}
         <div className="border-t bg-card p-3">
-          <div className="flex items-end gap-2 max-w-3xl mx-auto">
-            <Textarea
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder="اكتب سؤالك هنا..."
-              className="min-h-[44px] max-h-32 resize-none rounded-xl text-sm"
-              rows={1}
-              disabled={isLoading}
-            />
-            <Button
-              size="icon"
-              className="rounded-xl shrink-0 h-11 w-11"
-              onClick={() => send(input)}
-              disabled={!input.trim() || isLoading}
-            >
-              <Send className="w-4 h-4 rotate-180" />
-            </Button>
+          <div className="max-w-3xl mx-auto">
+            {attachedFile && (
+              <div className="mb-2">
+                <AttachedFileChip
+                  fileName={attachedFile.name}
+                  onRemove={() => setAttachedFile(null)}
+                />
+              </div>
+            )}
+            <div className="flex items-end gap-2">
+              <FileUpload
+                onFileProcessed={(name, text) => setAttachedFile({ name, text })}
+                disabled={isLoading}
+              />
+              <Textarea
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder={attachedFile ? "اكتب سؤالك عن الملف أو اضغط إرسال..." : "اكتب سؤالك هنا..."}
+                className="min-h-[44px] max-h-32 resize-none rounded-xl text-sm"
+                rows={1}
+                disabled={isLoading}
+              />
+              <Button
+                size="icon"
+                className="rounded-xl shrink-0 h-11 w-11"
+                onClick={() => send(input)}
+                disabled={(!input.trim() && !attachedFile) || isLoading}
+              >
+                <Send className="w-4 h-4 rotate-180" />
+              </Button>
+            </div>
           </div>
         </div>
       </div>
