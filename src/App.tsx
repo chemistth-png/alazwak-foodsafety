@@ -8,6 +8,7 @@ import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Documents from "./pages/Documents";
+import Plans from "./pages/Plans";
 import NotFound from "./pages/NotFound";
 import { Loader2 } from "lucide-react";
 import { useState, useCallback } from "react";
@@ -49,6 +50,7 @@ const App = () => {
               <Routes>
                 <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
                 <Route path="/documents" element={<ProtectedRoute><Documents /></ProtectedRoute>} />
+                <Route path="/plans" element={<ProtectedRoute><Plans /></ProtectedRoute>} />
                 <Route path="/auth" element={<AuthRoute><Auth /></AuthRoute>} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
