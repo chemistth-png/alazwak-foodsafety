@@ -319,6 +319,7 @@ const Index = () => {
                   </div>
                 </div>
               )}
+              <div ref={bottomRef} />
             </div>
           )}
         </ScrollArea>
