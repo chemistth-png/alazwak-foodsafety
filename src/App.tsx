@@ -11,6 +11,7 @@ import Documents from "./pages/Documents";
 import Plans from "./pages/Plans";
 import SOPTemplate from "./pages/SOPTemplate";
 import SOPsPage from "./pages/SOPsPage";
+import AgentDashboard from "./pages/AgentDashboard";
 import NotFound from "./pages/NotFound";
 import { Loader2 } from "lucide-react";
 import { useState, useCallback } from "react";
