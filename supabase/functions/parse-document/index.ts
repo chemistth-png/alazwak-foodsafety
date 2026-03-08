@@ -171,11 +171,22 @@ serve(async (req) => {
           }
         }
       }
-    } else if (fileExt === "docx" || fileExt === "doc") {
+    } else if (fileExt === "docx") {
       const mammoth = await import("npm:mammoth@1.6.0");
       const buffer = await fileData.arrayBuffer();
       const result = await mammoth.extractRawText({ buffer });
       extractedText = result.value;
+    } else if (fileExt === "doc") {
+      // Old .doc format not supported by mammoth - use AI extraction
+      console.log("Using AI extraction for .doc file...");
+      try {
+        const data = new Uint8Array(await fileData.arrayBuffer());
+        const base64 = uint8ArrayToBase64(data);
+        extractedText = await extractTextWithAI(base64, fileName);
+      } catch (aiError) {
+        console.error("AI extraction failed for .doc:", aiError);
+        extractedText = "[لم يتم استخراج نص - صيغة .doc القديمة غير مدعومة بشكل مباشر. يرجى تحويل الملف إلى .docx]";
+      }
     } else if (fileExt === "xlsx" || fileExt === "xls") {
       const XLSX = await import("npm:xlsx@0.18.5");
       const buffer = await fileData.arrayBuffer();
