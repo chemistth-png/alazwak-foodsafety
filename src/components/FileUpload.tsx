@@ -66,8 +66,20 @@ const FileUpload = ({ onFileProcessed, disabled }: FileUploadProps) => {
       }
 
       const { text } = await resp.json();
+      
+      // Save parsed content to documents table
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        await supabase.from("documents").insert({
+          user_id: user.id,
+          file_name: file.name,
+          content: text,
+          file_size: file.size,
+        });
+      }
+      
       onFileProcessed(file.name, text);
-      toast.success(`تم تحميل وتحليل الملف: ${file.name}`);
+      toast.success(`تم تحميل وتحليل وحفظ الملف: ${file.name}`);
     } catch (e: any) {
       console.error("File upload error:", e);
       toast.error(e.message || "حدث خطأ أثناء تحميل الملف");
