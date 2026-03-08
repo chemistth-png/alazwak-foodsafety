@@ -9,6 +9,7 @@ import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Documents from "./pages/Documents";
 import Plans from "./pages/Plans";
+import SOPTemplate from "./pages/SOPTemplate";
 import NotFound from "./pages/NotFound";
 import { Loader2 } from "lucide-react";
 import { useState, useCallback } from "react";
