@@ -97,6 +97,72 @@ export type Database = {
           },
         ]
       }
+      sops: {
+        Row: {
+          approved_by: string | null
+          category: string | null
+          created_at: string
+          definitions: string | null
+          department: string | null
+          doc_number: string | null
+          effective_date: string | null
+          id: string
+          prepared_by: string | null
+          purpose: string | null
+          records: string | null
+          references: string | null
+          revision: string | null
+          safety_notes: string | null
+          scope: string | null
+          steps: Json | null
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          approved_by?: string | null
+          category?: string | null
+          created_at?: string
+          definitions?: string | null
+          department?: string | null
+          doc_number?: string | null
+          effective_date?: string | null
+          id?: string
+          prepared_by?: string | null
+          purpose?: string | null
+          records?: string | null
+          references?: string | null
+          revision?: string | null
+          safety_notes?: string | null
+          scope?: string | null
+          steps?: Json | null
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          approved_by?: string | null
+          category?: string | null
+          created_at?: string
+          definitions?: string | null
+          department?: string | null
+          doc_number?: string | null
+          effective_date?: string | null
+          id?: string
+          prepared_by?: string | null
+          purpose?: string | null
+          records?: string | null
+          references?: string | null
+          revision?: string | null
+          safety_notes?: string | null
+          scope?: string | null
+          steps?: Json | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
