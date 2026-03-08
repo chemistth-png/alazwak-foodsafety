@@ -28,7 +28,7 @@ const Index = () => {
   const [conversationId, setConversationId] = useState<string | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
-  const [attachedFile, setAttachedFile] = useState<{ name: string; text: string } | null>(null);
+  const [attachedFiles, setAttachedFiles] = useState<{ name: string; text: string }[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const exportPDF = useCallback(async () => {
@@ -102,17 +102,20 @@ const Index = () => {
 
   const send = useCallback(async (text: string) => {
     const trimmed = text.trim();
-    if (!trimmed && !attachedFile) return;
+    if (!trimmed && attachedFiles.length === 0) return;
     if (isLoading) return;
 
-    // Build message content with file if attached
+    // Build message content with files if attached
     let messageContent = trimmed;
-    if (attachedFile) {
-      messageContent = `[ملف مرفق: ${attachedFile.name}]\n\nمحتوى الملف:\n${attachedFile.text}${trimmed ? `\n\nسؤال المستخدم: ${trimmed}` : "\n\nقم بتحليل محتوى هذا الملف وتلخيصه."}`;
+    if (attachedFiles.length > 0) {
+      const filesContent = attachedFiles
+        .map((f, i) => `[ملف مرفق ${i + 1}: ${f.name}]\n\nمحتوى الملف:\n${f.text}`)
+        .join("\n\n---\n\n");
+      messageContent = `${filesContent}${trimmed ? `\n\nسؤال المستخدم: ${trimmed}` : "\n\nقم بتحليل محتوى هذه الملفات وتلخيصها."}`;
     }
 
-    const displayContent = attachedFile 
-      ? `📎 ${attachedFile.name}${trimmed ? `\n${trimmed}` : ""}`
+    const displayContent = attachedFiles.length > 0
+      ? `📎 ${attachedFiles.map(f => f.name).join("، ")}${trimmed ? `\n${trimmed}` : ""}`
       : trimmed;
 
     const userMsg: Msg = { role: "user", content: displayContent };
@@ -120,14 +123,14 @@ const Index = () => {
     
     setMessages((prev) => [...prev, userMsg]);
     setInput("");
-    setAttachedFile(null);
+    setAttachedFiles([]);
     setIsLoading(true);
 
     let convId = conversationId;
 
     // Create conversation if new
     if (!convId) {
-      const titleText = trimmed || (attachedFile ? attachedFile.name : "محادثة جديدة");
+      const titleText = trimmed || (attachedFiles.length > 0 ? attachedFiles[0].name : "محادثة جديدة");
       const title = titleText.length > 50 ? titleText.slice(0, 50) + "..." : titleText;
       const { data } = await supabase
         .from("conversations")
@@ -177,7 +180,7 @@ const Index = () => {
       toast.error(e.message || "حدث خطأ أثناء الاتصال");
       setIsLoading(false);
     }
-  }, [messages, isLoading, conversationId, user, attachedFile]);
+  }, [messages, isLoading, conversationId, user, attachedFiles]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
@@ -316,24 +319,27 @@ const Index = () => {
         {/* Input */}
         <div className="border-t bg-card p-3">
           <div className="max-w-3xl mx-auto">
-            {attachedFile && (
-              <div className="mb-2">
-                <AttachedFileChip
-                  fileName={attachedFile.name}
-                  onRemove={() => setAttachedFile(null)}
-                />
+            {attachedFiles.length > 0 && (
+              <div className="mb-2 flex flex-wrap gap-1.5">
+                {attachedFiles.map((f, i) => (
+                  <AttachedFileChip
+                    key={i}
+                    fileName={f.name}
+                    onRemove={() => setAttachedFiles(prev => prev.filter((_, idx) => idx !== i))}
+                  />
+                ))}
               </div>
             )}
             <div className="flex items-end gap-2">
               <FileUpload
-                onFileProcessed={(name, text) => setAttachedFile({ name, text })}
-                disabled={isLoading}
+                onFileProcessed={(name, text) => setAttachedFiles(prev => [...prev, { name, text }])}
+                disabled={isLoading || attachedFiles.length >= 10}
               />
               <Textarea
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={handleKeyDown}
-                placeholder={attachedFile ? "اكتب سؤالك عن الملف أو اضغط إرسال..." : "اكتب سؤالك هنا..."}
+                placeholder={attachedFiles.length > 0 ? "اكتب سؤالك عن الملفات أو اضغط إرسال..." : "اكتب سؤالك هنا..."}
                 className="min-h-[44px] max-h-32 resize-none rounded-xl text-sm"
                 rows={1}
                 disabled={isLoading}
@@ -342,7 +348,7 @@ const Index = () => {
                 size="icon"
                 className="rounded-xl shrink-0 h-11 w-11"
                 onClick={() => send(input)}
-                disabled={(!input.trim() && !attachedFile) || isLoading}
+                disabled={(!input.trim() && attachedFiles.length === 0) || isLoading}
               >
                 <Send className="w-4 h-4 rotate-180" />
               </Button>
