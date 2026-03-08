@@ -1,9 +1,10 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Plus, MessageSquare, Trash2, LogOut, X } from "lucide-react";
+import { Plus, MessageSquare, Trash2, LogOut, X, Search } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
@@ -24,6 +25,7 @@ interface ChatSidebarProps {
 const ChatSidebar = ({ currentId, onSelect, onNew, open, onClose }: ChatSidebarProps) => {
   const { signOut } = useAuth();
   const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [search, setSearch] = useState("");
 
   const load = async () => {
     const { data } = await supabase
@@ -34,6 +36,12 @@ const ChatSidebar = ({ currentId, onSelect, onNew, open, onClose }: ChatSidebarP
   };
 
   useEffect(() => { load(); }, [currentId]);
+
+  const filtered = useMemo(() => {
+    if (!search.trim()) return conversations;
+    const q = search.trim().toLowerCase();
+    return conversations.filter((c) => c.title.toLowerCase().includes(q));
+  }, [conversations, search]);
 
   const handleDelete = async (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -63,9 +71,20 @@ const ChatSidebar = ({ currentId, onSelect, onNew, open, onClose }: ChatSidebarP
             <X className="w-4 h-4" />
           </Button>
         </div>
+        <div className="px-3 pt-3 pb-1">
+          <div className="relative">
+            <Search className="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
+            <Input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="بحث في المحادثات..."
+              className="pr-8 h-8 text-sm"
+            />
+          </div>
+        </div>
         <ScrollArea className="flex-1">
           <div className="p-2 space-y-1">
-            {conversations.map((c) => (
+            {filtered.map((c) => (
               <button
                 key={c.id}
                 onClick={() => { onSelect(c.id); onClose(); }}
@@ -84,8 +103,10 @@ const ChatSidebar = ({ currentId, onSelect, onNew, open, onClose }: ChatSidebarP
                 />
               </button>
             ))}
-            {conversations.length === 0 && (
-              <p className="text-xs text-muted-foreground text-center py-8">لا توجد محادثات سابقة</p>
+            {filtered.length === 0 && (
+              <p className="text-xs text-muted-foreground text-center py-8">
+                {search.trim() ? "لا توجد نتائج" : "لا توجد محادثات سابقة"}
+              </p>
             )}
           </div>
         </ScrollArea>
