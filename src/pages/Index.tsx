@@ -187,7 +187,7 @@ const Index = () => {
       toast.error(e.message || "حدث خطأ أثناء الاتصال");
       setIsLoading(false);
     }
-  }, [messages, isLoading, conversationId, user, attachedFiles]);
+  }, [messages, isLoading, conversationId, user, attachedFiles, selectedModel]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
