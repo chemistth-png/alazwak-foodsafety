@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from "react";
-import { Send, Droplets, Bot, User, Loader2, Trash2, Menu, Download } from "lucide-react";
+import { Send, Droplets, Bot, User, Loader2, Trash2, Menu, Download, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -11,6 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import ChatSidebar from "@/components/ChatSidebar";
 import ThemeToggle from "@/components/ThemeToggle";
+import FileUpload, { AttachedFileChip } from "@/components/FileUpload";
 
 const SUGGESTED_QUESTIONS = [
   "ما هي اشتراطات هيئة سلامة الغذاء لمصانع المياه المعبأة؟",
@@ -27,6 +28,7 @@ const Index = () => {
   const [conversationId, setConversationId] = useState<string | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
+  const [attachedFile, setAttachedFile] = useState<{ name: string; text: string } | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const exportPDF = useCallback(async () => {
@@ -100,18 +102,33 @@ const Index = () => {
 
   const send = useCallback(async (text: string) => {
     const trimmed = text.trim();
-    if (!trimmed || isLoading) return;
+    if (!trimmed && !attachedFile) return;
+    if (isLoading) return;
 
-    const userMsg: Msg = { role: "user", content: trimmed };
+    // Build message content with file if attached
+    let messageContent = trimmed;
+    if (attachedFile) {
+      messageContent = `[ملف مرفق: ${attachedFile.name}]\n\nمحتوى الملف:\n${attachedFile.text}${trimmed ? `\n\nسؤال المستخدم: ${trimmed}` : "\n\nقم بتحليل محتوى هذا الملف وتلخيصه."}`;
+    }
+
+    const displayContent = attachedFile 
+      ? `📎 ${attachedFile.name}${trimmed ? `\n${trimmed}` : ""}`
+      : trimmed;
+
+    const userMsg: Msg = { role: "user", content: displayContent };
+    const aiMsg: Msg = { role: "user", content: messageContent };
+    
     setMessages((prev) => [...prev, userMsg]);
     setInput("");
+    setAttachedFile(null);
     setIsLoading(true);
 
     let convId = conversationId;
 
     // Create conversation if new
     if (!convId) {
-      const title = trimmed.length > 50 ? trimmed.slice(0, 50) + "..." : trimmed;
+      const titleText = trimmed || (attachedFile ? attachedFile.name : "محادثة جديدة");
+      const title = titleText.length > 50 ? titleText.slice(0, 50) + "..." : titleText;
       const { data } = await supabase
         .from("conversations")
         .insert({ user_id: user!.id, title })
@@ -128,7 +145,7 @@ const Index = () => {
         .eq("id", convId);
     }
 
-    if (convId) await saveMessage(convId, "user", trimmed);
+    if (convId) await saveMessage(convId, "user", displayContent);
 
     let assistantSoFar = "";
     const upsertAssistant = (chunk: string) => {
@@ -146,7 +163,7 @@ const Index = () => {
 
     try {
       await streamChat({
-        messages: [...messages, userMsg],
+        messages: [...messages, aiMsg],
         onDelta: upsertAssistant,
         onDone: async () => {
           setIsLoading(false);
@@ -160,7 +177,7 @@ const Index = () => {
       toast.error(e.message || "حدث خطأ أثناء الاتصال");
       setIsLoading(false);
     }
-  }, [messages, isLoading, conversationId, user]);
+  }, [messages, isLoading, conversationId, user, attachedFile]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
@@ -298,24 +315,38 @@ const Index = () => {
 
         {/* Input */}
         <div className="border-t bg-card p-3">
-          <div className="flex items-end gap-2 max-w-3xl mx-auto">
-            <Textarea
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder="اكتب سؤالك هنا..."
-              className="min-h-[44px] max-h-32 resize-none rounded-xl text-sm"
-              rows={1}
-              disabled={isLoading}
-            />
-            <Button
-              size="icon"
-              className="rounded-xl shrink-0 h-11 w-11"
-              onClick={() => send(input)}
-              disabled={!input.trim() || isLoading}
-            >
-              <Send className="w-4 h-4 rotate-180" />
-            </Button>
+          <div className="max-w-3xl mx-auto">
+            {attachedFile && (
+              <div className="mb-2">
+                <AttachedFileChip
+                  fileName={attachedFile.name}
+                  onRemove={() => setAttachedFile(null)}
+                />
+              </div>
+            )}
+            <div className="flex items-end gap-2">
+              <FileUpload
+                onFileProcessed={(name, text) => setAttachedFile({ name, text })}
+                disabled={isLoading}
+              />
+              <Textarea
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder={attachedFile ? "اكتب سؤالك عن الملف أو اضغط إرسال..." : "اكتب سؤالك هنا..."}
+                className="min-h-[44px] max-h-32 resize-none rounded-xl text-sm"
+                rows={1}
+                disabled={isLoading}
+              />
+              <Button
+                size="icon"
+                className="rounded-xl shrink-0 h-11 w-11"
+                onClick={() => send(input)}
+                disabled={(!input.trim() && !attachedFile) || isLoading}
+              >
+                <Send className="w-4 h-4 rotate-180" />
+              </Button>
+            </div>
           </div>
         </div>
       </div>
