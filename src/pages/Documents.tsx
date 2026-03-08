@@ -134,7 +134,7 @@ const Documents = () => {
 
       {/* Documents List */}
       <ScrollArea className="flex-1 px-4">
-        <div className="max-w-3xl mx-auto py-2 space-y-2">
+        <div className="max-w-3xl mx-auto py-2 pb-20 md:pb-2 space-y-2">
           {loading ? (
             <div className="flex items-center justify-center py-16">
               <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />

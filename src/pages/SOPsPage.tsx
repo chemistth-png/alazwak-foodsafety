@@ -153,7 +153,7 @@ const SOPsPage = () => {
         </div>
       </header>
 
-      <div className="max-w-4xl mx-auto p-4 space-y-4">
+      <div className="max-w-4xl mx-auto p-4 pb-20 md:pb-4 space-y-4">
         {/* Search & Filter */}
         <div className="flex flex-col sm:flex-row gap-2">
           <div className="relative flex-1">
