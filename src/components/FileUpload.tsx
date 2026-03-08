@@ -40,7 +40,9 @@ const FileUpload = ({ onFileProcessed, disabled }: FileUploadProps) => {
 
     try {
       // Upload to storage
-      const filePath = `${crypto.randomUUID()}-${file.name}`;
+      // Sanitize filename to ASCII-only for storage compatibility
+      const ext = file.name.split(".").pop()?.toLowerCase() || "";
+      const filePath = `${crypto.randomUUID()}-${Date.now()}.${ext}`;
       const { error: uploadError } = await supabase.storage
         .from("chat-files")
         .upload(filePath, file);
