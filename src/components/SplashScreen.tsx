@@ -14,7 +14,7 @@ const SplashScreen = ({ onFinish }: { onFinish: () => void }) => {
       className={`fixed inset-0 z-50 flex flex-col items-center justify-center bg-gradient-to-br from-primary via-sky-500 to-secondary transition-opacity duration-500 ${fadeOut ? "opacity-0" : "opacity-100"}`}
     >
       <div className="animate-bounce mb-6">
-        <img src="/app-icon.png" alt="App Icon" className="w-28 h-28 rounded-3xl shadow-2xl" />
+        <img src="/app-icon.png" alt="Alazwak Food Safety" className="w-32 h-32 drop-shadow-2xl" />
       </div>
       <h1 className="text-2xl font-bold text-primary-foreground mb-2" style={{ fontFamily: "'Cairo', sans-serif" }}>
         Alazwak Food Safety
