@@ -4,7 +4,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Plus, MessageSquare, Trash2, LogOut, X, Search, FolderOpen } from "lucide-react";
+import { Plus, MessageSquare, Trash2, LogOut, X, Search, FolderOpen, LayoutGrid } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
