@@ -12,6 +12,7 @@ import { useAuth } from "@/hooks/useAuth";
 import ChatSidebar from "@/components/ChatSidebar";
 import ThemeToggle from "@/components/ThemeToggle";
 import FileUpload, { AttachedFileChip } from "@/components/FileUpload";
+import ModelSelector from "@/components/ModelSelector";
 
 const SUGGESTED_QUESTIONS = [
   "ما هي اشتراطات هيئة سلامة الغذاء لمصانع المياه المعبأة؟",
