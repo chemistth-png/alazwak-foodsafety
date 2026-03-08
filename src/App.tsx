@@ -11,6 +11,7 @@ import Documents from "./pages/Documents";
 import Plans from "./pages/Plans";
 import SOPTemplate from "./pages/SOPTemplate";
 import SOPsPage from "./pages/SOPsPage";
+import AgentDashboard from "./pages/AgentDashboard";
 import NotFound from "./pages/NotFound";
 import { Loader2 } from "lucide-react";
 import { useState, useCallback } from "react";
@@ -55,6 +56,7 @@ const App = () => {
                 <Route path="/plans" element={<ProtectedRoute><Plans /></ProtectedRoute>} />
                 <Route path="/sops" element={<ProtectedRoute><SOPsPage /></ProtectedRoute>} />
                 <Route path="/sop" element={<ProtectedRoute><SOPTemplate /></ProtectedRoute>} />
+                <Route path="/agent" element={<ProtectedRoute><AgentDashboard /></ProtectedRoute>} />
                 <Route path="/auth" element={<AuthRoute><Auth /></AuthRoute>} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
