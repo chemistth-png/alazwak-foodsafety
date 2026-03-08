@@ -291,61 +291,57 @@ serve(async (req) => {
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
-    // Try to get user's stored documents for context
+    // Extract the latest user query for similarity search
+    const lastUserMessage = [...messages].reverse().find((m: any) => m.role === "user");
+    const searchQuery = lastUserMessage?.content?.slice(0, 500) || "";
+
+    // Try to get relevant stored documents using similarity search
     let documentsContext = "";
     try {
       const authHeader = req.headers.get("Authorization");
-      if (authHeader) {
+      if (authHeader && searchQuery) {
         const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
         const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
         const supabase = createClient(supabaseUrl, supabaseKey);
         
-        // Extract user from JWT
         const token = authHeader.replace("Bearer ", "");
         const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
         
-        // Create client with user token to get user id
         const userClient = createClient(supabaseUrl, anonKey, {
           global: { headers: { Authorization: `Bearer ${token}` } }
         });
         const { data: { user } } = await userClient.auth.getUser();
         
         if (user) {
-          const { data: docs } = await supabase
-            .from("documents")
-            .select("file_name, content")
-            .eq("user_id", user.id)
-            .order("created_at", { ascending: false })
-            .limit(10);
+          // Use similarity search function
+          const { data: docs, error: searchErr } = await supabase
+            .rpc("search_documents", {
+              p_user_id: user.id,
+              p_query: searchQuery,
+              p_limit: 5,
+            });
           
-          if (docs && docs.length > 0) {
-            // Limit total context to avoid token overflow
-            let totalChars = 0;
-            const MAX_TOTAL = 30000;
-            const selectedDocs: typeof docs = [];
-            
-            for (const doc of docs) {
-              if (totalChars + doc.content.length > MAX_TOTAL) {
-                // Truncate the last doc to fit
-                const remaining = MAX_TOTAL - totalChars;
-                if (remaining > 500) {
-                  selectedDocs.push({ ...doc, content: doc.content.slice(0, remaining) + "...[مقتطع]" });
-                }
-                break;
-              }
-              selectedDocs.push(doc);
-              totalChars += doc.content.length;
+          if (searchErr) {
+            console.error("Similarity search error, falling back:", searchErr);
+            // Fallback: fetch recent docs
+            const { data: fallbackDocs } = await supabase
+              .from("documents")
+              .select("file_name, content")
+              .eq("user_id", user.id)
+              .order("created_at", { ascending: false })
+              .limit(5);
+            if (fallbackDocs && fallbackDocs.length > 0) {
+              documentsContext = buildDocsContext(fallbackDocs);
             }
-            
-            documentsContext = `\n\n---\n\n## مستندات المستخدم المرفوعة (استخدمها كمرجع إضافي):\n\n${
-              selectedDocs.map(d => `### ملف: ${d.file_name}\n${d.content}`).join("\n\n---\n\n")
-            }`;
+          } else if (docs && docs.length > 0) {
+            documentsContext = buildDocsContext(
+              docs.map((d: any) => ({ file_name: d.file_name, content: d.content }))
+            );
           }
         }
       }
     } catch (docErr) {
       console.error("Error fetching user documents:", docErr);
-      // Continue without documents
     }
 
     const fullSystemPrompt = SYSTEM_PROMPT + documentsContext;
