@@ -32,6 +32,7 @@ const Index = () => {
   const [attachedFiles, setAttachedFiles] = useState<{ name: string; text: string }[]>([]);
   const [selectedModel, setSelectedModel] = useState("google/gemini-3-flash-preview");
   const scrollRef = useRef<HTMLDivElement>(null);
+  const bottomRef = useRef<HTMLDivElement>(null);
 
   const exportPDF = useCallback(async () => {
     if (messages.length === 0) return;
