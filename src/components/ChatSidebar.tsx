@@ -140,6 +140,15 @@ const ChatSidebar = ({ currentId, onSelect, onNew, open, onClose }: ChatSidebarP
             <FileText className="w-4 h-4" />
             إدارة SOPs
           </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="w-full gap-1.5 text-foreground justify-start"
+            onClick={() => { navigate("/agent"); onClose(); }}
+          >
+            <Bot className="w-4 h-4" />
+            الوكيل الذكي
+          </Button>
           <Button variant="ghost" size="sm" className="w-full gap-1.5 text-muted-foreground justify-start" onClick={signOut}>
             <LogOut className="w-4 h-4" />
             تسجيل الخروج
