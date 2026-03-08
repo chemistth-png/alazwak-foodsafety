@@ -102,11 +102,25 @@ const Index = () => {
 
   const send = useCallback(async (text: string) => {
     const trimmed = text.trim();
-    if (!trimmed || isLoading) return;
+    if (!trimmed && !attachedFile) return;
+    if (isLoading) return;
 
-    const userMsg: Msg = { role: "user", content: trimmed };
+    // Build message content with file if attached
+    let messageContent = trimmed;
+    if (attachedFile) {
+      messageContent = `[ملف مرفق: ${attachedFile.name}]\n\nمحتوى الملف:\n${attachedFile.text}${trimmed ? `\n\nسؤال المستخدم: ${trimmed}` : "\n\nقم بتحليل محتوى هذا الملف وتلخيصه."}`;
+    }
+
+    const displayContent = attachedFile 
+      ? `📎 ${attachedFile.name}${trimmed ? `\n${trimmed}` : ""}`
+      : trimmed;
+
+    const userMsg: Msg = { role: "user", content: displayContent };
+    const aiMsg: Msg = { role: "user", content: messageContent };
+    
     setMessages((prev) => [...prev, userMsg]);
     setInput("");
+    setAttachedFile(null);
     setIsLoading(true);
 
     let convId = conversationId;
