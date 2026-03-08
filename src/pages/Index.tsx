@@ -165,9 +165,13 @@ const Index = () => {
     };
 
     try {
+      // Get auth token for document context
+      const { data: { session } } = await supabase.auth.getSession();
+      
       await streamChat({
         messages: [...messages, aiMsg],
         onDelta: upsertAssistant,
+        authToken: session?.access_token,
         onDone: async () => {
           setIsLoading(false);
           if (convId && assistantSoFar) {
