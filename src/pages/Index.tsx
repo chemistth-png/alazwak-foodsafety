@@ -145,7 +145,7 @@ const Index = () => {
         .eq("id", convId);
     }
 
-    if (convId) await saveMessage(convId, "user", trimmed);
+    if (convId) await saveMessage(convId, "user", displayContent);
 
     let assistantSoFar = "";
     const upsertAssistant = (chunk: string) => {
