@@ -232,7 +232,8 @@ const Index = () => {
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1.5">
+            <ModelSelector value={selectedModel} onChange={setSelectedModel} disabled={isLoading} />
             <ThemeToggle />
             {messages.length > 0 && (
               <>
