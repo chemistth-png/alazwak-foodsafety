@@ -6,6 +6,62 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+// Simple PDF text extractor without Node.js Buffer dependency
+function extractTextFromPDF(data: Uint8Array): string {
+  const text = new TextDecoder("latin1").decode(data);
+  const textParts: string[] = [];
+
+  // Extract text between BT and ET markers (PDF text objects)
+  const btEtRegex = /BT\s([\s\S]*?)ET/g;
+  let match;
+
+  while ((match = btEtRegex.exec(text)) !== null) {
+    const block = match[1];
+
+    // Extract text from Tj operator (show text)
+    const tjRegex = /\(([^)]*)\)\s*Tj/g;
+    let tjMatch;
+    while ((tjMatch = tjRegex.exec(block)) !== null) {
+      textParts.push(tjMatch[1]);
+    }
+
+    // Extract text from TJ operator (show text array)
+    const tjArrayRegex = /\[(.*?)\]\s*TJ/g;
+    let tjArrMatch;
+    while ((tjArrMatch = tjArrayRegex.exec(block)) !== null) {
+      const items = tjArrMatch[1];
+      const strRegex = /\(([^)]*)\)/g;
+      let strMatch;
+      while ((strMatch = strRegex.exec(items)) !== null) {
+        textParts.push(strMatch[1]);
+      }
+    }
+  }
+
+  // Also try to extract from stream objects for simpler PDFs
+  const streamRegex = /stream\r?\n([\s\S]*?)endstream/g;
+  while ((match = streamRegex.exec(text)) !== null) {
+    const streamContent = match[1];
+    // Look for readable text in streams
+    const readableText = streamContent.replace(/[^\x20-\x7E\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF\n\r\t]/g, ' ');
+    const cleaned = readableText.replace(/\s{3,}/g, ' ').trim();
+    if (cleaned.length > 20) {
+      textParts.push(cleaned);
+    }
+  }
+
+  let result = textParts.join(' ')
+    .replace(/\\n/g, '\n')
+    .replace(/\\r/g, '')
+    .replace(/\\t/g, '\t')
+    .replace(/\\\(/g, '(')
+    .replace(/\\\)/g, ')')
+    .replace(/\s{3,}/g, '\n')
+    .trim();
+
+  return result;
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -42,19 +98,18 @@ serve(async (req) => {
     const fileExt = fileName.split(".").pop()?.toLowerCase();
 
     if (fileExt === "pdf") {
-      // Use pdf-parse for PDF files
-      const pdfParse = (await import("npm:pdf-parse@1.1.1")).default;
-      const buffer = new Uint8Array(await fileData.arrayBuffer());
-      const pdfData = await pdfParse(buffer);
-      extractedText = pdfData.text;
+      const data = new Uint8Array(await fileData.arrayBuffer());
+      extractedText = extractTextFromPDF(data);
+      
+      if (!extractedText || extractedText.length < 10) {
+        extractedText = "[لم يتم استخراج نص كافٍ من ملف PDF - قد يكون الملف يحتوي على صور أو نص مشفر]";
+      }
     } else if (fileExt === "docx" || fileExt === "doc") {
-      // Use mammoth for Word files
       const mammoth = await import("npm:mammoth@1.6.0");
       const buffer = await fileData.arrayBuffer();
       const result = await mammoth.extractRawText({ buffer });
       extractedText = result.value;
     } else if (fileExt === "xlsx" || fileExt === "xls") {
-      // Use xlsx for Excel files
       const XLSX = await import("npm:xlsx@0.18.5");
       const buffer = await fileData.arrayBuffer();
       const workbook = XLSX.read(new Uint8Array(buffer), { type: "array" });
