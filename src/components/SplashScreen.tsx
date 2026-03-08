@@ -17,9 +17,9 @@ const SplashScreen = ({ onFinish }: { onFinish: () => void }) => {
         <img src="/app-icon.png" alt="App Icon" className="w-28 h-28 rounded-3xl shadow-2xl" />
       </div>
       <h1 className="text-2xl font-bold text-primary-foreground mb-2" style={{ fontFamily: "'Cairo', sans-serif" }}>
-        مساعد جودة المياه المعبأة
+        Alazwak Food Safety
       </h1>
-      <p className="text-primary-foreground/70 text-sm">مساعدك الذكي لجودة المياه</p>
+      <p className="text-primary-foreground/70 text-sm">مساعدك الذكي لسلامة الغذاء</p>
     </div>
   );
 };
