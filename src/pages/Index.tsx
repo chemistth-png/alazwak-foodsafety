@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from "react";
-import { Send, Droplets, Bot, User, Loader2, Trash2, Menu } from "lucide-react";
+import { Send, Droplets, Bot, User, Loader2, Trash2, Menu, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
