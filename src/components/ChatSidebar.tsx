@@ -122,6 +122,15 @@ const ChatSidebar = ({ currentId, onSelect, onNew, open, onClose }: ChatSidebarP
             <FolderOpen className="w-4 h-4" />
             إدارة المستندات
           </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="w-full gap-1.5 text-foreground justify-start"
+            onClick={() => { navigate("/plans"); onClose(); }}
+          >
+            <LayoutGrid className="w-4 h-4" />
+            المخططات والخطط
+          </Button>
           <Button variant="ghost" size="sm" className="w-full gap-1.5 text-muted-foreground justify-start" onClick={signOut}>
             <LogOut className="w-4 h-4" />
             تسجيل الخروج
