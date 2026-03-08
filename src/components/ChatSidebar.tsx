@@ -135,10 +135,10 @@ const ChatSidebar = ({ currentId, onSelect, onNew, open, onClose }: ChatSidebarP
             variant="ghost"
             size="sm"
             className="w-full gap-1.5 text-foreground justify-start"
-            onClick={() => { navigate("/sop"); onClose(); }}
+            onClick={() => { navigate("/sops"); onClose(); }}
           >
             <FileText className="w-4 h-4" />
-            قالب SOP
+            إدارة SOPs
           </Button>
           <Button variant="ghost" size="sm" className="w-full gap-1.5 text-muted-foreground justify-start" onClick={signOut}>
             <LogOut className="w-4 h-4" />
