@@ -113,6 +113,56 @@
   }
 }
 
+/* RTL-optimized prose for Arabic markdown content */
+.prose {
+  direction: rtl;
+  text-align: right;
+}
+
+.prose h1, .prose h2, .prose h3, .prose h4, .prose h5, .prose h6 {
+  text-align: right;
+}
+
+.prose ul, .prose ol {
+  padding-right: 1.5em;
+  padding-left: 0;
+}
+
+.prose table {
+  direction: rtl;
+  text-align: right;
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.prose th, .prose td {
+  text-align: right;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid hsl(var(--border));
+}
+
+.prose th {
+  background: hsl(var(--muted));
+  font-weight: 600;
+}
+
+.prose blockquote {
+  border-right: 4px solid hsl(var(--primary));
+  border-left: none;
+  padding-right: 1rem;
+  padding-left: 0;
+}
+
+.prose code {
+  direction: ltr;
+  unicode-bidi: embed;
+}
+
+.prose pre {
+  direction: ltr;
+  text-align: left;
+}
+
 /* Hide bottom nav on auth page */
 .auth-page ~ nav {
   display: none;
