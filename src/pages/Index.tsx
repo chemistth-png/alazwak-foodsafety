@@ -13,6 +13,8 @@ import ChatSidebar from "@/components/ChatSidebar";
 import ThemeToggle from "@/components/ThemeToggle";
 import FileUpload, { AttachedFileChip } from "@/components/FileUpload";
 import ModelSelector from "@/components/ModelSelector";
+import VoiceInput from "@/components/VoiceInput";
+import ImageGenerator from "@/components/ImageGenerator";
 
 const SUGGESTED_QUESTIONS = [
   "ما هي اشتراطات هيئة سلامة الغذاء لمصانع المياه المعبأة؟",
