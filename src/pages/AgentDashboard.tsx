@@ -13,8 +13,10 @@ import ReactMarkdown from "react-markdown";
 import {
   Bot, ArrowRight, Loader2, CheckCircle2, Edit3, Trash2, Plus, 
   Sparkles, ClipboardCheck, GraduationCap, ShieldAlert, Droplets,
-  BarChart3, FileText, ChevronRight, Clock, AlertTriangle, Menu
+  BarChart3, FileText, ChevronRight, Clock, AlertTriangle, Menu,
+  Download, FileSpreadsheet, FileType
 } from "lucide-react";
+import { exportToWord, exportToExcel } from "@/lib/exportAgent";
 import ThemeToggle from "@/components/ThemeToggle";
 
 interface AgentTask {
@@ -350,15 +352,38 @@ const AgentDashboard = () => {
                   </Badge>
                 </div>
               </div>
-              {(selectedTask.status === "review" || selectedTask.status === "approved") && (
-                <div className="flex items-center gap-1.5">
-                  {selectedTask.status === "review" && (
-                    <Button size="sm" className="gap-1" onClick={handleApprove} disabled={isGenerating}>
-                      <CheckCircle2 className="w-3.5 h-3.5" /> موافقة
+              {/* Export & Action Buttons */}
+              <div className="flex items-center gap-1.5">
+                {selectedTask.ai_output && (
+                  <>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="gap-1"
+                      onClick={() => exportToWord(selectedTask.title, selectedTask.ai_output)}
+                      title="تصدير Word"
+                    >
+                      <FileType className="w-3.5 h-3.5" />
+                      <span className="hidden sm:inline">Word</span>
                     </Button>
-                  )}
-                </div>
-              )}
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="gap-1"
+                      onClick={() => exportToExcel(selectedTask.title, selectedTask.ai_output)}
+                      title="تصدير Excel"
+                    >
+                      <FileSpreadsheet className="w-3.5 h-3.5" />
+                      <span className="hidden sm:inline">Excel</span>
+                    </Button>
+                  </>
+                )}
+                {selectedTask.status === "review" && (
+                  <Button size="sm" className="gap-1" onClick={handleApprove} disabled={isGenerating}>
+                    <CheckCircle2 className="w-3.5 h-3.5" /> موافقة
+                  </Button>
+                )}
+              </div>
             </div>
 
             {/* AI Output */}
