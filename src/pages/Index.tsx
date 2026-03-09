@@ -226,10 +226,10 @@ const Index = () => {
             </div>
             <div>
               <h1 className="text-base font-bold text-foreground leading-tight">
-                مساعد جودة المياه المعبأة
+                Alazwak FoodSafety
               </h1>
               <p className="text-xs text-muted-foreground">
-                المواصفة القياسية المصرية 1589
+                مساعدك الذكي لسلامة الغذاء
               </p>
             </div>
           </div>
