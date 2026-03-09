@@ -59,6 +59,7 @@ const App = () => {
                 <Route path="/sops" element={<ProtectedRoute><SOPsPage /></ProtectedRoute>} />
                 <Route path="/sop" element={<ProtectedRoute><SOPTemplate /></ProtectedRoute>} />
                 <Route path="/agent" element={<ProtectedRoute><AgentDashboard /></ProtectedRoute>} />
+                <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
                 <Route path="/auth" element={<AuthRoute><Auth /></AuthRoute>} />
                 <Route path="*" element={<NotFound />} />
               </Routes>

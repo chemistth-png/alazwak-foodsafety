@@ -1,12 +1,12 @@
 import { useNavigate, useLocation } from "react-router-dom";
-import { MessageSquare, FolderOpen, LayoutGrid, FileText, Bot } from "lucide-react";
+import { MessageSquare, FolderOpen, LayoutGrid, FileText, Bot, PieChart } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const NAV_ITEMS = [
   { path: "/", label: "المحادثة", icon: MessageSquare },
   { path: "/agent", label: "الوكيل", icon: Bot },
+  { path: "/dashboard", label: "الإحصائيات", icon: PieChart },
   { path: "/documents", label: "المستندات", icon: FolderOpen },
-  { path: "/plans", label: "المخططات", icon: LayoutGrid },
   { path: "/sops", label: "SOPs", icon: FileText },
 ];
 
