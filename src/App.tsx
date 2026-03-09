@@ -15,6 +15,7 @@ import AgentDashboard from "./pages/AgentDashboard";
 import Dashboard from "./pages/Dashboard";
 import BottomNav from "./components/BottomNav";
 import NotFound from "./pages/NotFound";
+import Install from "./pages/Install";
 import { Loader2 } from "lucide-react";
 import { useState, useCallback } from "react";
 import SplashScreen from "@/components/SplashScreen";
@@ -61,6 +62,7 @@ const App = () => {
                 <Route path="/agent" element={<ProtectedRoute><AgentDashboard /></ProtectedRoute>} />
                 <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
                 <Route path="/auth" element={<AuthRoute><Auth /></AuthRoute>} />
+                <Route path="/install" element={<Install />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
               <BottomNav />
