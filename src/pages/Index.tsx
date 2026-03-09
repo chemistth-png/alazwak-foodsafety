@@ -346,6 +346,10 @@ const Index = () => {
                 onFileProcessed={(name, text) => setAttachedFiles(prev => [...prev, { name, text }])}
                 disabled={isLoading || attachedFiles.length >= 10}
               />
+              <VoiceInput
+                onTranscript={(text) => setInput(prev => prev ? `${prev} ${text}` : text)}
+                disabled={isLoading}
+              />
               <Textarea
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
