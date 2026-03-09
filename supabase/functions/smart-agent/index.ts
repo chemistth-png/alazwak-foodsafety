@@ -6,6 +6,14 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+const FORMAT_INSTRUCTION = `
+أجب بتنسيق Markdown منظم وواضح باللغة العربية. استخدم:
+- عناوين ## و ### للأقسام
+- جداول Markdown (| عمود1 | عمود2 |) للبيانات المنظمة
+- قوائم مرقمة ونقطية
+- **نص عريض** للمصطلحات المهمة
+لا تستخدم JSON. اكتب بأسلوب احترافي مناسب لمستندات الجودة.`;
+
 const AGENT_PROMPTS: Record<string, string> = {
   cleaning_plan: `أنت خبير متخصص في خطط التنظيف والتعقيم والتطهير لمصانع المياه المعبأة وصناعة الغذاء.
 قم بإنشاء خطة تنظيف وتعقيم شاملة تتضمن:
@@ -18,7 +26,7 @@ const AGENT_PROMPTS: Record<string, string> = {
 7. معايير القبول والتحقق (ATP, Swab tests)
 8. المسؤولين عن التنفيذ والمراجعة
 9. النماذج والسجلات المطلوبة
-أجب بتنسيق JSON منظم.`,
+${FORMAT_INSTRUCTION}`,
 
   training_plan: `أنت خبير في تخطيط التدريب وتقييم الأداء في مجال سلامة الغذاء والمياه المعبأة.
 قم بإنشاء خطة تدريب سنوية شاملة تتضمن:
@@ -30,7 +38,7 @@ const AGENT_PROMPTS: Record<string, string> = {
 6. نموذج تقييم أداء العاملين
 7. خطة التدريب التأسيسي للموظفين الجدد
 8. سجلات التدريب المطلوبة
-أجب بتنسيق JSON منظم.`,
+${FORMAT_INSTRUCTION}`,
 
   risk_assessment: `أنت خبير في تقييم المخاطر وتحليل HACCP لمصانع المياه المعبأة.
 قم بإنشاء تقييم مخاطر شامل يتضمن:
@@ -42,7 +50,7 @@ const AGENT_PROMPTS: Record<string, string> = {
 6. إجراءات التحقق
 7. خطة HACCP كاملة
 8. برنامج المتطلبات الأساسية (PRPs)
-أجب بتنسيق JSON منظم.`,
+${FORMAT_INSTRUCTION}`,
 
   water_monitoring: `أنت خبير في مراقبة ومتابعة معالجة المياه المعبأة.
 قم بإنشاء نظام متابعة شامل يتضمن:
@@ -54,7 +62,7 @@ const AGENT_PROMPTS: Record<string, string> = {
 6. نموذج السجل اليومي
 7. مؤشرات الأداء الرئيسية
 8. جدول الصيانة الوقائية للمعدات
-أجب بتنسيق JSON منظم.`,
+${FORMAT_INSTRUCTION}`,
 
   performance_eval: `أنت خبير في تقييم الأداء وإدارة الموارد البشرية في مجال سلامة الغذاء.
 قم بإنشاء نظام تقييم أداء شامل يتضمن:
@@ -65,7 +73,7 @@ const AGENT_PROMPTS: Record<string, string> = {
 5. نظام المكافآت والحوافز
 6. إجراءات التعامل مع ضعف الأداء
 7. متطلبات الكفاءة لكل وظيفة
-أجب بتنسيق JSON منظم.`,
+${FORMAT_INSTRUCTION}`,
 
   haccp: `أنت خبير في تطبيق نظام HACCP لمصانع المياه المعبأة.
 قم بإنشاء خطة HACCP كاملة تتضمن الخطوات الـ12:
@@ -81,11 +89,11 @@ const AGENT_PROMPTS: Record<string, string> = {
 10. الإجراءات التصحيحية
 11. إجراءات التحقق
 12. التوثيق والسجلات
-أجب بتنسيق JSON منظم.`,
+${FORMAT_INSTRUCTION}`,
 
   general: `أنت وكيل ذكي متخصص في إدارة الجودة وسلامة الغذاء لمصانع المياه المعبأة.
 ساعد مدير الجودة في أي مهمة يطلبها. قدم إجابات مفصلة وعملية.
-أجب بتنسيق JSON منظم إذا كان المطلوب خطة أو نموذج.`,
+${FORMAT_INSTRUCTION}`,
 };
 
 console.log("smart-agent function initialized");
