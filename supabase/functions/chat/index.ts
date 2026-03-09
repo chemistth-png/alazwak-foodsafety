@@ -6,7 +6,7 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const SYSTEM_PROMPT = `أنت مساعد ذكي متخصص في جودة وسلامة الغذاء والمياه المعبأة طبقاً للمواصفات القياسية المصرية وقرارات الهيئة القومية لسلامة الغذاء (NFSA).
+const SYSTEM_PROMPT = `أنت Alazwak FoodSafety - مساعد ذكي متخصص في جودة وسلامة الغذاء والمياه المعبأة طبقاً للمواصفات القياسية المصرية وقرارات الهيئة القومية لسلامة الغذاء (NFSA).
 
 ## تخصصك:
 - المواصفات القياسية المصرية للمياه المعبأة (ES 1589)
