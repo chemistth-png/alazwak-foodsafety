@@ -48,8 +48,8 @@ const Index = () => {
       container.style.maxWidth = "700px";
 
       container.innerHTML = `
-        <h2 style="text-align:center;color:#0ea5e9;margin-bottom:8px;">مساعد جودة المياه المعبأة</h2>
-        <p style="text-align:center;color:#888;font-size:12px;margin-bottom:24px;">المواصفة القياسية المصرية 1589</p>
+        <h2 style="text-align:center;color:#0ea5e9;margin-bottom:8px;">Alazwak FoodSafety</h2>
+        <p style="text-align:center;color:#888;font-size:12px;margin-bottom:24px;">مساعدك الذكي لسلامة الغذاء</p>
         <hr style="border:1px solid #e5e7eb;margin-bottom:16px;" />
         ${messages.map((m) => `
           <div style="margin-bottom:16px;padding:12px;border-radius:12px;background:${m.role === "user" ? "#f0f9ff" : "#f8fafc"};border:1px solid #e5e7eb;">
