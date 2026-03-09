@@ -352,15 +352,38 @@ const AgentDashboard = () => {
                   </Badge>
                 </div>
               </div>
-              {(selectedTask.status === "review" || selectedTask.status === "approved") && (
-                <div className="flex items-center gap-1.5">
-                  {selectedTask.status === "review" && (
-                    <Button size="sm" className="gap-1" onClick={handleApprove} disabled={isGenerating}>
-                      <CheckCircle2 className="w-3.5 h-3.5" /> موافقة
+              {/* Export & Action Buttons */}
+              <div className="flex items-center gap-1.5">
+                {selectedTask.ai_output && (
+                  <>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="gap-1"
+                      onClick={() => exportToWord(selectedTask.title, selectedTask.ai_output)}
+                      title="تصدير Word"
+                    >
+                      <FileType className="w-3.5 h-3.5" />
+                      <span className="hidden sm:inline">Word</span>
                     </Button>
-                  )}
-                </div>
-              )}
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="gap-1"
+                      onClick={() => exportToExcel(selectedTask.title, selectedTask.ai_output)}
+                      title="تصدير Excel"
+                    >
+                      <FileSpreadsheet className="w-3.5 h-3.5" />
+                      <span className="hidden sm:inline">Excel</span>
+                    </Button>
+                  </>
+                )}
+                {selectedTask.status === "review" && (
+                  <Button size="sm" className="gap-1" onClick={handleApprove} disabled={isGenerating}>
+                    <CheckCircle2 className="w-3.5 h-3.5" /> موافقة
+                  </Button>
+                )}
+              </div>
             </div>
 
             {/* AI Output */}
