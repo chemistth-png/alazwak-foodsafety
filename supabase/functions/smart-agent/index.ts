@@ -6,94 +6,118 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const FORMAT_INSTRUCTION = `
-أجب بتنسيق Markdown منظم وواضح باللغة العربية. استخدم:
-- عناوين ## و ### للأقسام
-- جداول Markdown (| عمود1 | عمود2 |) للبيانات المنظمة
-- قوائم مرقمة ونقطية
-- **نص عريض** للمصطلحات المهمة
-لا تستخدم JSON. اكتب بأسلوب احترافي مناسب لمستندات الجودة.`;
+const SOP_FORMAT = `
+## تعليمات التنسيق الإلزامية:
+أنت تكتب وثائق رسمية لنظام إدارة الجودة وسلامة الغذاء. التزم بالآتي:
+
+### هيكل الوثيقة (إلزامي):
+كل وثيقة يجب أن تتضمن الأقسام التالية بالترتيب:
+
+1. **الغرض (Purpose)** - الهدف من الوثيقة/الإجراء
+2. **نطاق التطبيق (Scope)** - حدود تطبيق الوثيقة
+3. **التعريفات (Definitions)** - المصطلحات الفنية المستخدمة
+4. **المراجع (References)** - المواصفات والمعايير المرجعية (ISO 22000, ISO 9001:2015, المواصفة المصرية 1589، متطلبات NFSA)
+5. **المسؤوليات (Responsibilities)** - تحديد المسؤول عن كل نشاط
+6. **الإجراءات (Procedures)** - الخطوات التفصيلية مرقمة (6-1، 6-2، 6-2-1...)
+7. **السجلات (Records)** - النماذج والسجلات المطلوبة في جدول (اسم السجل، الكود، المسؤول، مدة الحفظ)
+8. **معايير قياس فاعلية الأداء (Performance Criteria)** - مؤشرات KPI ونسب الأداء المقبولة
+
+### قواعد الكتابة:
+- استخدم اللغة العربية الفصحى الرسمية (لا عامية)
+- استخدم صيغة المبني للمجهول أو صيغة الغائب (يتم، يُعد، يُراجع)
+- رقّم الأقسام الفرعية (1-1، 1-2، 6-1-1، 6-1-2...)
+- استخدم جداول Markdown للبيانات المنظمة
+- استخدم **نص عريض** للمصطلحات الفنية المهمة
+- لا تستخدم JSON أبداً
+- اكتب بأسلوب رسمي مطابق لوثائق ISO
+`;
 
 const AGENT_PROMPTS: Record<string, string> = {
-  cleaning_plan: `أنت خبير متخصص في خطط التنظيف والتعقيم والتطهير لمصانع المياه المعبأة وصناعة الغذاء.
-قم بإنشاء خطة تنظيف وتعقيم شاملة تتضمن:
-1. جدول التنظيف اليومي/الأسبوعي/الشهري/السنوي
-2. المعدات والأسطح المطلوب تنظيفها
-3. المواد الكيميائية المستخدمة والتركيزات
-4. طريقة التنظيف (CIP/COP) لكل منطقة
-5. زمن التلامس ودرجة الحرارة
-6. إجراءات الشطف والتعقيم النهائي
-7. معايير القبول والتحقق (ATP, Swab tests)
-8. المسؤولين عن التنفيذ والمراجعة
-9. النماذج والسجلات المطلوبة
-${FORMAT_INSTRUCTION}`,
+  cleaning_plan: `أنت مستشار متخصص في أنظمة الجودة وسلامة الغذاء ومعتمد كمراجع ISO 22000 و FSSC 22000.
+قم بإعداد إجراء التنظيف والتعقيم والتطهير وفقاً لمتطلبات ISO 22000:2018 البند 8.2 (برامج المتطلبات الأساسية).
 
-  training_plan: `أنت خبير في تخطيط التدريب وتقييم الأداء في مجال سلامة الغذاء والمياه المعبأة.
-قم بإنشاء خطة تدريب سنوية شاملة تتضمن:
-1. مصفوفة التدريب (Training Matrix) حسب الوظائف
-2. الدورات التدريبية المطلوبة (GMP, GHP, HACCP, Food Safety)
-3. جدول زمني للتدريب (شهري/ربع سنوي)
-4. أهداف التدريب ومؤشرات الأداء (KPIs)
-5. طرق تقييم فعالية التدريب
-6. نموذج تقييم أداء العاملين
-7. خطة التدريب التأسيسي للموظفين الجدد
-8. سجلات التدريب المطلوبة
-${FORMAT_INSTRUCTION}`,
+يجب أن يتضمن الإجراء:
+- جداول التنظيف (يومي/أسبوعي/شهري/سنوي) لكل منطقة ومعدة
+- المواد الكيميائية المعتمدة والتركيزات ودرجات الحرارة وأزمنة التلامس
+- إجراءات CIP و COP التفصيلية
+- طرق التحقق (ATP، المسحات الميكروبيولوجية، الفحص البصري)
+- معايير القبول والرفض
+- الإجراءات التصحيحية عند عدم المطابقة
+- النماذج والسجلات المطلوبة
+${SOP_FORMAT}`,
 
-  risk_assessment: `أنت خبير في تقييم المخاطر وتحليل HACCP لمصانع المياه المعبأة.
-قم بإنشاء تقييم مخاطر شامل يتضمن:
-1. تحديد المخاطر (فيزيائية، كيميائية، بيولوجية)
-2. مصفوفة تقييم المخاطر (الاحتمالية × الشدة)
-3. نقاط التحكم الحرجة (CCPs) والحدود الحرجة
-4. إجراءات المراقبة لكل CCP
-5. الإجراءات التصحيحية
-6. إجراءات التحقق
-7. خطة HACCP كاملة
-8. برنامج المتطلبات الأساسية (PRPs)
-${FORMAT_INSTRUCTION}`,
+  training_plan: `أنت مستشار متخصص في أنظمة الجودة وسلامة الغذاء ومعتمد كمراجع ISO 22000 و FSSC 22000.
+قم بإعداد إجراء التدريب وتقييم الكفاءة وفقاً لمتطلبات ISO 22000:2018 البند 7.2 (الكفاءة).
 
-  water_monitoring: `أنت خبير في مراقبة ومتابعة معالجة المياه المعبأة.
-قم بإنشاء نظام متابعة شامل يتضمن:
-1. نقاط المراقبة في خط الإنتاج
-2. المعايير المطلوب قياسها في كل نقطة (pH, TDS, Turbidity, Chlorine, etc.)
-3. الحدود المقبولة لكل معيار طبقاً للمواصفة المصرية 1589
-4. تكرار القياس (مستمر/يومي/أسبوعي)
-5. إجراءات التعامل مع الانحرافات
-6. نموذج السجل اليومي
-7. مؤشرات الأداء الرئيسية
-8. جدول الصيانة الوقائية للمعدات
-${FORMAT_INSTRUCTION}`,
+يجب أن يتضمن الإجراء:
+- مصفوفة التدريب (Training Matrix) حسب الوظائف والكفاءات
+- البرنامج التدريبي السنوي (GMP, GHP, HACCP, سلامة الغذاء)
+- متطلبات الكفاءة لكل وظيفة
+- آليات تقييم فعالية التدريب
+- خطة التدريب التأسيسي للموظفين الجدد
+- النماذج والسجلات المطلوبة
+${SOP_FORMAT}`,
 
-  performance_eval: `أنت خبير في تقييم الأداء وإدارة الموارد البشرية في مجال سلامة الغذاء.
-قم بإنشاء نظام تقييم أداء شامل يتضمن:
-1. معايير التقييم حسب الوظيفة
-2. مؤشرات الأداء الرئيسية (KPIs)
-3. نموذج التقييم الدوري (ربع سنوي/سنوي)
-4. خطة التطوير الفردية
-5. نظام المكافآت والحوافز
-6. إجراءات التعامل مع ضعف الأداء
-7. متطلبات الكفاءة لكل وظيفة
-${FORMAT_INSTRUCTION}`,
+  risk_assessment: `أنت مستشار متخصص في أنظمة الجودة وسلامة الغذاء ومعتمد كمراجع ISO 22000 و FSSC 22000.
+قم بإعداد إجراء تحليل المخاطر وتقييمها وفقاً لمتطلبات ISO 22000:2018 البند 8.5.2 (تحليل المخاطر).
 
-  haccp: `أنت خبير في تطبيق نظام HACCP لمصانع المياه المعبأة.
-قم بإنشاء خطة HACCP كاملة تتضمن الخطوات الـ12:
-1. تشكيل فريق HACCP
-2. وصف المنتج
-3. تحديد الاستخدام المقصود
-4. رسم مخطط التدفق
-5. التحقق الميداني
-6. تحليل المخاطر
-7. تحديد نقاط التحكم الحرجة
-8. وضع الحدود الحرجة
-9. نظام المراقبة
+يجب أن يتضمن الإجراء:
+- منهجية تحديد المخاطر (فيزيائية، كيميائية، بيولوجية، مسببات الحساسية)
+- مصفوفة تقييم المخاطر (الاحتمالية × الشدة × إمكانية الكشف)
+- تحديد نقاط التحكم الحرجة (CCPs) والحدود الحرجة
+- برنامج المتطلبات الأساسية التشغيلية (OPRPs)
+- خطة المراقبة لكل CCP و OPRP
+- الإجراءات التصحيحية
+- إجراءات التحقق والمصادقة
+- النماذج والسجلات المطلوبة
+${SOP_FORMAT}`,
+
+  water_monitoring: `أنت مستشار متخصص في أنظمة الجودة وسلامة الغذاء ومعتمد كمراجع ISO 22000 و FSSC 22000.
+قم بإعداد إجراء مراقبة ومتابعة جودة المياه وفقاً للمواصفة القياسية المصرية 1589 ومتطلبات ISO 22000:2018.
+
+يجب أن يتضمن الإجراء:
+- نقاط المراقبة في خطوط الإنتاج (من المصدر إلى المنتج النهائي)
+- المعايير الفيزيائية والكيميائية والميكروبيولوجية المطلوبة طبقاً للمواصفة 1589
+- الحدود المقبولة لكل معيار (pH, TDS, عكارة، كلور متبقي، إلخ)
+- تكرار القياس والمسؤول عن التنفيذ
+- الإجراءات التصحيحية عند الانحراف عن الحدود
+- جدول الصيانة الوقائية لمعدات المعالجة
+- النماذج والسجلات المطلوبة
+${SOP_FORMAT}`,
+
+  performance_eval: `أنت مستشار متخصص في أنظمة الجودة وسلامة الغذاء ومعتمد كمراجع ISO 22000 و FSSC 22000.
+قم بإعداد إجراء تقييم الأداء ومراجعة الإدارة وفقاً لمتطلبات ISO 22000:2018 البند 9 (تقييم الأداء).
+
+يجب أن يتضمن الإجراء:
+- مؤشرات الأداء الرئيسية (KPIs) لنظام إدارة سلامة الغذاء
+- منهجية القياس والمتابعة
+- تقييم أداء العاملين وفقاً لمعايير الكفاءة
+- آلية مراجعة الإدارة (مدخلات ومخرجات)
+- خطط التحسين المستمر
+- النماذج والسجلات المطلوبة
+${SOP_FORMAT}`,
+
+  haccp: `أنت مستشار متخصص في أنظمة الجودة وسلامة الغذاء ومعتمد كمراجع ISO 22000 و FSSC 22000.
+قم بإعداد خطة HACCP كاملة لمصنع مياه معبأة وفقاً لمتطلبات Codex Alimentarius و ISO 22000:2018 البند 8.5.
+
+يجب أن تتضمن الخطة الخطوات الاثنتي عشرة:
+1. تشكيل فريق سلامة الغذاء (أسماء، مؤهلات، مسؤوليات)
+2. وصف المنتج (الخصائص الفيزيائية والكيميائية والميكروبيولوجية)
+3. تحديد الاستخدام المقصود والفئة المستهدفة
+4. رسم مخطط التدفق (من المصدر إلى التوزيع)
+5. التحقق الميداني من مخطط التدفق
+6. تحليل المخاطر في كل مرحلة
+7. تحديد نقاط التحكم الحرجة (CCPs)
+8. وضع الحدود الحرجة لكل CCP
+9. نظام المراقبة (ماذا، كيف، متى، من)
 10. الإجراءات التصحيحية
 11. إجراءات التحقق
-12. التوثيق والسجلات
-${FORMAT_INSTRUCTION}`,
+12. نظام التوثيق والسجلات
+${SOP_FORMAT}`,
 
-  general: `أنت وكيل ذكي متخصص في إدارة الجودة وسلامة الغذاء لمصانع المياه المعبأة.
-ساعد مدير الجودة في أي مهمة يطلبها. قدم إجابات مفصلة وعملية.
-${FORMAT_INSTRUCTION}`,
+  general: `أنت مستشار متخصص في أنظمة إدارة الجودة وسلامة الغذاء، معتمد كمراجع ISO 22000 و ISO 9001 و FSSC 22000.
+ساعد مدير الجودة في إعداد الوثيقة المطلوبة بأسلوب رسمي واحترافي.
+${SOP_FORMAT}`,
 };
 
 console.log("smart-agent function initialized");
@@ -113,7 +137,6 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Get user from auth header
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) throw new Error("Authorization required");
     const token = authHeader.replace("Bearer ", "");
@@ -124,9 +147,7 @@ serve(async (req) => {
     const { data: { user } } = await userClient.auth.getUser();
     if (!user) throw new Error("User not authenticated");
 
-    // Action: create new task and generate
     if (action === "generate") {
-      // Create or update task
       let currentTaskId = taskId;
       if (!currentTaskId) {
         const { data: newTask, error: insertErr } = await supabase
@@ -146,11 +167,9 @@ serve(async (req) => {
         await supabase.from("agent_tasks").update({ status: "generating" }).eq("id", currentTaskId);
       }
 
-      // Build prompt
       const systemPrompt = AGENT_PROMPTS[type] || AGENT_PROMPTS.general;
-      const userPrompt = `${title}\n\n${description || ""}${feedback ? `\n\nملاحظات المستخدم للتعديل:\n${feedback}` : ""}`;
+      const userPrompt = `عنوان الوثيقة: ${title}\n\n${description ? `تفاصيل إضافية: ${description}` : ""}${feedback ? `\n\nملاحظات للتعديل:\n${feedback}` : ""}`;
 
-      // Call AI (non-streaming for structured output)
       const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
         method: "POST",
         headers: {
@@ -171,12 +190,12 @@ serve(async (req) => {
         const errText = await response.text();
         console.error("AI error:", response.status, errText);
         if (response.status === 429) {
-          return new Response(JSON.stringify({ error: "تم تجاوز الحد الأقصى للطلبات" }), {
+          return new Response(JSON.stringify({ error: "تم تجاوز الحد الأقصى للطلبات، يُرجى المحاولة لاحقاً" }), {
             status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" }
           });
         }
         if (response.status === 402) {
-          return new Response(JSON.stringify({ error: "يرجى إضافة رصيد للمحفظة" }), {
+          return new Response(JSON.stringify({ error: "يُرجى إضافة رصيد للمحفظة" }), {
             status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" }
           });
         }
@@ -186,7 +205,6 @@ serve(async (req) => {
       const aiResult = await response.json();
       const aiOutput = aiResult.choices?.[0]?.message?.content || "";
 
-      // Update task with AI output, set to review
       await supabase.from("agent_tasks").update({
         ai_output: aiOutput,
         status: "review",
@@ -198,7 +216,6 @@ serve(async (req) => {
       });
     }
 
-    // Action: approve task
     if (action === "approve") {
       await supabase.from("agent_tasks").update({
         status: "approved",
@@ -210,7 +227,6 @@ serve(async (req) => {
       });
     }
 
-    // Action: request revision
     if (action === "revise") {
       await supabase.from("agent_tasks").update({
         status: "revision",
@@ -218,12 +234,17 @@ serve(async (req) => {
         updated_at: new Date().toISOString(),
       }).eq("id", taskId);
 
-      // Re-generate with feedback
       const { data: task } = await supabase.from("agent_tasks").select("*").eq("id", taskId).single();
       if (!task) throw new Error("Task not found");
 
       const systemPrompt = AGENT_PROMPTS[task.type] || AGENT_PROMPTS.general;
-      const userPrompt = `${task.title}\n\n${task.description || ""}\n\nالمخرج السابق:\n${task.ai_output}\n\nملاحظات المستخدم للتعديل:\n${feedback}`;
+      const revisionInstruction = `\n\n## تعليمات التعديل:
+قم بتعديل الوثيقة السابقة بناءً على ملاحظات المستخدم أدناه.
+- حافظ على نفس الهيكل والتنسيق الرسمي
+- طبّق التعديلات المطلوبة فقط دون تغيير الأجزاء الصحيحة
+- أعد الوثيقة كاملة بعد التعديل`;
+
+      const userPrompt = `عنوان الوثيقة: ${task.title}\n\n${task.description ? `التفاصيل: ${task.description}` : ""}\n\nالوثيقة السابقة:\n${task.ai_output}\n\nملاحظات التعديل المطلوبة:\n${feedback}`;
 
       const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
         method: "POST",
@@ -234,7 +255,7 @@ serve(async (req) => {
         body: JSON.stringify({
           model: "google/gemini-3-flash-preview",
           messages: [
-            { role: "system", content: systemPrompt + "\n\nقم بتعديل المخرج السابق بناءً على ملاحظات المستخدم. حافظ على التنسيق والهيكل." },
+            { role: "system", content: systemPrompt + revisionInstruction },
             { role: "user", content: userPrompt },
           ],
           stream: false,

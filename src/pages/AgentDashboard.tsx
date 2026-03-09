@@ -350,11 +350,13 @@ const AgentDashboard = () => {
                   </Badge>
                 </div>
               </div>
-              {selectedTask.status === "review" && (
+              {(selectedTask.status === "review" || selectedTask.status === "approved") && (
                 <div className="flex items-center gap-1.5">
-                  <Button size="sm" className="gap-1" onClick={handleApprove} disabled={isGenerating}>
-                    <CheckCircle2 className="w-3.5 h-3.5" /> موافقة
-                  </Button>
+                  {selectedTask.status === "review" && (
+                    <Button size="sm" className="gap-1" onClick={handleApprove} disabled={isGenerating}>
+                      <CheckCircle2 className="w-3.5 h-3.5" /> موافقة
+                    </Button>
+                  )}
                 </div>
               )}
             </div>
@@ -381,27 +383,31 @@ const AgentDashboard = () => {
             </ScrollArea>
 
             {/* Feedback / Revision Input */}
-            {selectedTask.status === "review" && (
+            {(selectedTask.status === "review" || selectedTask.status === "approved") && (
               <div className="border-t bg-card p-3">
-                <div className="max-w-4xl mx-auto flex items-end gap-2">
-                  <Textarea
-                    value={feedback}
-                    onChange={e => setFeedback(e.target.value)}
-                    placeholder="اكتب ملاحظات التعديل هنا... (مثال: أضف المزيد من التفاصيل عن مواد التنظيف)"
-                    className="min-h-[44px] max-h-24 resize-none rounded-xl text-sm"
-                    rows={1}
-                    disabled={isGenerating}
-                  />
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    className="rounded-xl shrink-0 h-11 w-11"
-                    onClick={handleRevise}
-                    disabled={isGenerating || !feedback.trim()}
-                    title="طلب تعديل"
-                  >
-                    {isGenerating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Edit3 className="w-4 h-4" />}
-                  </Button>
+                <div className="max-w-4xl mx-auto">
+                  <p className="text-xs text-muted-foreground mb-2 flex items-center gap-1">
+                    <Edit3 className="w-3 h-3" /> اكتب ملاحظاتك لتعديل المخرج وسيقوم الوكيل بإعادة إنشائه
+                  </p>
+                  <div className="flex items-end gap-2">
+                    <Textarea
+                      value={feedback}
+                      onChange={e => setFeedback(e.target.value)}
+                      placeholder="مثال: أضف جدول بمواد التنظيف والتركيزات، عدّل صيغة الخطوات لتكون أكثر تفصيلاً..."
+                      className="min-h-[44px] max-h-24 resize-none rounded-xl text-sm"
+                      rows={2}
+                      disabled={isGenerating}
+                    />
+                    <Button
+                      variant="outline"
+                      className="rounded-xl shrink-0 h-11 gap-1.5 px-4"
+                      onClick={handleRevise}
+                      disabled={isGenerating || !feedback.trim()}
+                    >
+                      {isGenerating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Edit3 className="w-4 h-4" />}
+                      <span className="hidden sm:inline">طلب تعديل</span>
+                    </Button>
+                  </div>
                 </div>
               </div>
             )}
