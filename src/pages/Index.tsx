@@ -59,7 +59,7 @@ const Index = () => {
             <div style="font-size:13px;line-height:1.8;white-space:pre-wrap;">${m.content}</div>
           </div>
         `).join("")}
-        <p style="text-align:center;color:#aaa;font-size:10px;margin-top:24px;">تم التصدير بواسطة مساعد جودة المياه المعبأة</p>
+        <p style="text-align:center;color:#aaa;font-size:10px;margin-top:24px;">تم التصدير بواسطة Alazwak FoodSafety</p>
       `;
 
       await html2pdf().set({
