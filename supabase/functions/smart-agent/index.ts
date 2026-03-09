@@ -88,7 +88,9 @@ const AGENT_PROMPTS: Record<string, string> = {
 أجب بتنسيق JSON منظم إذا كان المطلوب خطة أو نموذج.`,
 };
 
+console.log("smart-agent function initialized");
 serve(async (req) => {
+  console.log("smart-agent received request:", req.method);
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
