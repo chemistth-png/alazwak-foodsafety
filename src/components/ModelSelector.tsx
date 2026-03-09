@@ -9,13 +9,14 @@ export interface ModelOption {
 
 export const AVAILABLE_MODELS: ModelOption[] = [
   { id: "google/gemini-3-flash-preview", label: "Gemini 3 Flash", description: "سريع ومتوازن" },
+  { id: "google/gemini-3.1-pro-preview", label: "Gemini 3.1 Pro", description: "أحدث نموذج تحليل" },
   { id: "google/gemini-2.5-flash", label: "Gemini 2.5 Flash", description: "متوازن ومتعدد المهام" },
   { id: "google/gemini-2.5-pro", label: "Gemini 2.5 Pro", description: "الأقوى في التحليل" },
   { id: "google/gemini-2.5-flash-lite", label: "Gemini 2.5 Lite", description: "الأسرع والأخف" },
+  { id: "openai/gpt-5.2", label: "GPT-5.2", description: "أحدث نموذج من OpenAI" },
   { id: "openai/gpt-5", label: "GPT-5", description: "دقة عالية وتحليل معمق" },
   { id: "openai/gpt-5-mini", label: "GPT-5 Mini", description: "أداء جيد وسريع" },
   { id: "openai/gpt-5-nano", label: "GPT-5 Nano", description: "خفيف وسريع جداً" },
-  { id: "openai/gpt-5.2", label: "GPT-5.2", description: "أحدث نموذج من OpenAI" },
 ];
 
 interface ModelSelectorProps {

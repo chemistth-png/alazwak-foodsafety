@@ -13,11 +13,13 @@ import ChatSidebar from "@/components/ChatSidebar";
 import ThemeToggle from "@/components/ThemeToggle";
 import FileUpload, { AttachedFileChip } from "@/components/FileUpload";
 import ModelSelector from "@/components/ModelSelector";
+import VoiceInput from "@/components/VoiceInput";
+import ImageGenerator from "@/components/ImageGenerator";
 
 const SUGGESTED_QUESTIONS = [
-  "ما هي اشتراطات هيئة سلامة الغذاء لمصانع المياه المعبأة؟",
+  "ما هي اشتراطات هيئة سلامة الغذاء لمصانع الأغذية والمياه المعبأة؟",
   "ما هي الحدود الميكروبية والكيميائية طبقاً لقرارات الهيئة؟",
-  "ما هي مراحل معالجة المياه ووسائل التعقيم المسموحة؟",
+  "كيف أطبق نظام HACCP في مصنعي؟",
   "ما الفرق بين ISO 9001 و ISO 22000 و FSSC 22000؟",
 ];
 
@@ -46,8 +48,8 @@ const Index = () => {
       container.style.maxWidth = "700px";
 
       container.innerHTML = `
-        <h2 style="text-align:center;color:#0ea5e9;margin-bottom:8px;">مساعد جودة المياه المعبأة</h2>
-        <p style="text-align:center;color:#888;font-size:12px;margin-bottom:24px;">المواصفة القياسية المصرية 1589</p>
+        <h2 style="text-align:center;color:#0ea5e9;margin-bottom:8px;">Alazwak FoodSafety</h2>
+        <p style="text-align:center;color:#888;font-size:12px;margin-bottom:24px;">مساعدك الذكي لسلامة الغذاء</p>
         <hr style="border:1px solid #e5e7eb;margin-bottom:16px;" />
         ${messages.map((m) => `
           <div style="margin-bottom:16px;padding:12px;border-radius:12px;background:${m.role === "user" ? "#f0f9ff" : "#f8fafc"};border:1px solid #e5e7eb;">
@@ -57,12 +59,12 @@ const Index = () => {
             <div style="font-size:13px;line-height:1.8;white-space:pre-wrap;">${m.content}</div>
           </div>
         `).join("")}
-        <p style="text-align:center;color:#aaa;font-size:10px;margin-top:24px;">تم التصدير بواسطة مساعد جودة المياه المعبأة</p>
+        <p style="text-align:center;color:#aaa;font-size:10px;margin-top:24px;">تم التصدير بواسطة Alazwak FoodSafety</p>
       `;
 
       await html2pdf().set({
         margin: 10,
-        filename: "محادثة-مساعد-المياه.pdf",
+        filename: "محادثة-Alazwak-FoodSafety.pdf",
         html2canvas: { scale: 2, useCORS: true },
         jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
       }).from(container).save();
@@ -224,15 +226,16 @@ const Index = () => {
             </div>
             <div>
               <h1 className="text-base font-bold text-foreground leading-tight">
-                مساعد جودة المياه المعبأة
+                Alazwak FoodSafety
               </h1>
               <p className="text-xs text-muted-foreground">
-                المواصفة القياسية المصرية 1589
+                مساعدك الذكي لسلامة الغذاء
               </p>
             </div>
           </div>
           <div className="flex items-center gap-1.5">
             <ModelSelector value={selectedModel} onChange={setSelectedModel} disabled={isLoading} />
+            <ImageGenerator />
             <ThemeToggle />
             {messages.length > 0 && (
               <>
@@ -255,9 +258,9 @@ const Index = () => {
                 <Droplets className="w-10 h-10 text-accent-foreground" />
               </div>
               <div className="text-center space-y-2 max-w-md">
-                <h2 className="text-xl font-bold text-foreground">مرحباً بك! 👋</h2>
+                <h2 className="text-xl font-bold text-foreground">مرحباً بك في Alazwak FoodSafety! 👋</h2>
                 <p className="text-sm text-muted-foreground leading-relaxed">
-                  أنا مساعدك المتخصص في جودة وسلامة المياه المعبأة طبقاً للمواصفة المصرية 1589. اسألني أي سؤال!
+                  مساعدك الذكي المتخصص في جودة وسلامة الغذاء. اسألني أي سؤال!
                 </p>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 w-full max-w-lg">
@@ -342,6 +345,10 @@ const Index = () => {
               <FileUpload
                 onFileProcessed={(name, text) => setAttachedFiles(prev => [...prev, { name, text }])}
                 disabled={isLoading || attachedFiles.length >= 10}
+              />
+              <VoiceInput
+                onTranscript={(text) => setInput(prev => prev ? `${prev} ${text}` : text)}
+                disabled={isLoading}
               />
               <Textarea
                 value={input}

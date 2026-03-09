@@ -46,7 +46,7 @@ const Auth = () => {
           <div className="flex items-center justify-center w-14 h-14 rounded-2xl bg-primary text-primary-foreground">
             <Droplets className="w-7 h-7" />
           </div>
-          <h1 className="text-xl font-bold text-foreground">مساعد جودة المياه المعبأة</h1>
+          <h1 className="text-xl font-bold text-foreground">Alazwak FoodSafety</h1>
           <p className="text-sm text-muted-foreground">
             {isLogin ? "سجّل دخولك للمتابعة" : "أنشئ حساباً جديداً"}
           </p>
