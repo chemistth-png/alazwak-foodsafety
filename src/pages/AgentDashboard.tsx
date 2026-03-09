@@ -13,8 +13,10 @@ import ReactMarkdown from "react-markdown";
 import {
   Bot, ArrowRight, Loader2, CheckCircle2, Edit3, Trash2, Plus, 
   Sparkles, ClipboardCheck, GraduationCap, ShieldAlert, Droplets,
-  BarChart3, FileText, ChevronRight, Clock, AlertTriangle, Menu
+  BarChart3, FileText, ChevronRight, Clock, AlertTriangle, Menu,
+  Download, FileSpreadsheet, FileType
 } from "lucide-react";
+import { exportToWord, exportToExcel } from "@/lib/exportAgent";
 import ThemeToggle from "@/components/ThemeToggle";
 
 interface AgentTask {
