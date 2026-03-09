@@ -30,6 +30,10 @@ const FileUpload = ({ onFileProcessed, disabled }: FileUploadProps) => {
       return;
     }
 
+    if (ext === "doc") {
+      toast.warning("صيغة .doc القديمة قد لا تُستخرج بدقة. يُفضل تحويل الملف إلى .docx للحصول على نتائج أفضل.", { duration: 6000 });
+    }
+
     if (file.size > MAX_FILE_SIZE) {
       toast.error("حجم الملف يتجاوز الحد الأقصى (20 ميجابايت)");
       return;
