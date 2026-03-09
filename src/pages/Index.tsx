@@ -258,9 +258,9 @@ const Index = () => {
                 <Droplets className="w-10 h-10 text-accent-foreground" />
               </div>
               <div className="text-center space-y-2 max-w-md">
-                <h2 className="text-xl font-bold text-foreground">مرحباً بك! 👋</h2>
+                <h2 className="text-xl font-bold text-foreground">مرحباً بك في Alazwak FoodSafety! 👋</h2>
                 <p className="text-sm text-muted-foreground leading-relaxed">
-                  أنا مساعدك المتخصص في جودة وسلامة المياه المعبأة طبقاً للمواصفة المصرية 1589. اسألني أي سؤال!
+                  مساعدك الذكي المتخصص في جودة وسلامة الغذاء. اسألني أي سؤال!
                 </p>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 w-full max-w-lg">
