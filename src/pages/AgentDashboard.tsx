@@ -350,11 +350,13 @@ const AgentDashboard = () => {
                   </Badge>
                 </div>
               </div>
-              {selectedTask.status === "review" && (
+              {(selectedTask.status === "review" || selectedTask.status === "approved") && (
                 <div className="flex items-center gap-1.5">
-                  <Button size="sm" className="gap-1" onClick={handleApprove} disabled={isGenerating}>
-                    <CheckCircle2 className="w-3.5 h-3.5" /> موافقة
-                  </Button>
+                  {selectedTask.status === "review" && (
+                    <Button size="sm" className="gap-1" onClick={handleApprove} disabled={isGenerating}>
+                      <CheckCircle2 className="w-3.5 h-3.5" /> موافقة
+                    </Button>
+                  )}
                 </div>
               )}
             </div>
