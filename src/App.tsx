@@ -12,6 +12,7 @@ import Plans from "./pages/Plans";
 import SOPTemplate from "./pages/SOPTemplate";
 import SOPsPage from "./pages/SOPsPage";
 import AgentDashboard from "./pages/AgentDashboard";
+import Dashboard from "./pages/Dashboard";
 import BottomNav from "./components/BottomNav";
 import NotFound from "./pages/NotFound";
 import { Loader2 } from "lucide-react";
