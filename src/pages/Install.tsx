@@ -42,7 +42,7 @@ const Install = () => {
 
   if (isInstalled) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen p-6 text-center" dir="rtl">
+      <div className="flex flex-col items-center justify-center min-h-full p-6 text-center" dir="rtl">
         <CheckCircle2 className="w-16 h-16 text-secondary mb-4" />
         <h1 className="text-2xl font-bold text-foreground mb-2">التطبيق مثبّت بالفعل! ✅</h1>
         <p className="text-muted-foreground">يمكنك فتحه من الشاشة الرئيسية لجهازك.</p>
@@ -51,7 +51,7 @@ const Install = () => {
   }
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen p-6" dir="rtl">
+    <div className="flex flex-col items-center justify-center min-h-full p-6 overflow-y-auto" dir="rtl">
       <div className="max-w-md w-full space-y-6 text-center">
         <img src="/app-icon.png" alt="Alazwak Food Safety" className="w-20 h-20 mx-auto rounded-2xl shadow-lg" />
         <h1 className="text-2xl font-bold text-foreground">تثبيت التطبيق</h1>

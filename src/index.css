@@ -113,6 +113,25 @@
   }
 }
 
+/* Mobile viewport fix — use dvh where supported */
+html, body, #root {
+  height: 100%;
+  overflow: hidden;
+}
+
+@supports (height: 100dvh) {
+  html, body, #root {
+    height: 100dvh;
+  }
+}
+
+/* Prevent iOS zoom on input focus */
+@media screen and (max-width: 767px) {
+  input, textarea, select {
+    font-size: 16px !important;
+  }
+}
+
 /* RTL-optimized prose for Arabic markdown content */
 .prose {
   direction: rtl;

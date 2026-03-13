@@ -205,7 +205,7 @@ const Index = () => {
   };
 
   return (
-    <div dir="rtl" className="flex h-screen bg-background">
+    <div dir="rtl" className="flex h-full bg-background overflow-hidden">
       <ChatSidebar
         currentId={conversationId}
         onSelect={loadConversation}
