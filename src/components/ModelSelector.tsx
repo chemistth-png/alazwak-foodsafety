@@ -17,6 +17,8 @@ export const AVAILABLE_MODELS: ModelOption[] = [
   { id: "openai/gpt-5", label: "GPT-5", description: "دقة عالية وتحليل معمق" },
   { id: "openai/gpt-5-mini", label: "GPT-5 Mini", description: "أداء جيد وسريع" },
   { id: "openai/gpt-5-nano", label: "GPT-5 Nano", description: "خفيف وسريع جداً" },
+  { id: "deepseek/deepseek-chat", label: "DeepSeek V3", description: "نموذج محادثة قوي" },
+  { id: "deepseek/deepseek-reasoner", label: "DeepSeek R1", description: "تفكير عميق ومنطقي" },
 ];
 
 interface ModelSelectorProps {

@@ -369,21 +369,51 @@ serve(async (req) => {
 
     const fullSystemPrompt = SYSTEM_PROMPT + documentsContext;
 
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: model || "google/gemini-3-flash-preview",
-        messages: [
-          { role: "system", content: fullSystemPrompt },
-          ...messages,
-        ],
-        stream: true,
-      }),
-    });
+    const isDeepSeek = model?.startsWith("deepseek/");
+    const deepSeekModel = isDeepSeek ? model.replace("deepseek/", "") : null;
+
+    let response: Response;
+
+    if (isDeepSeek) {
+      const DEEPSEEK_API_KEY = Deno.env.get("DEEPSEEK_API_KEY");
+      if (!DEEPSEEK_API_KEY) {
+        return new Response(JSON.stringify({ error: "مفتاح DeepSeek API غير مُعدّ" }), {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      response = await fetch("https://api.deepseek.com/chat/completions", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${DEEPSEEK_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: deepSeekModel,
+          messages: [
+            { role: "system", content: fullSystemPrompt },
+            ...messages,
+          ],
+          stream: true,
+        }),
+      });
+    } else {
+      response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${LOVABLE_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: model || "google/gemini-3-flash-preview",
+          messages: [
+            { role: "system", content: fullSystemPrompt },
+            ...messages,
+          ],
+          stream: true,
+        }),
+      });
+    }
 
     if (!response.ok) {
       if (response.status === 429) {
