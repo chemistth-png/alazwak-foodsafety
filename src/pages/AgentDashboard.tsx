@@ -271,7 +271,7 @@ const AgentDashboard = () => {
       <main className={`${mobileView === "detail" ? "flex" : "hidden"} md:flex flex-col flex-1 min-w-0`}>
         {/* New Task Form */}
         {showNewTask ? (
-          <div className="flex-1 flex items-start justify-center p-6 overflow-auto">
+          <div className="flex-1 flex items-start justify-center p-6 pb-[calc(1.5rem+3.5rem)] md:pb-6 overflow-auto">
             <Card className="w-full max-w-2xl">
               <CardHeader>
                 <div className="flex items-center justify-between">
@@ -409,7 +409,7 @@ const AgentDashboard = () => {
 
             {/* Feedback / Revision Input */}
             {(selectedTask.status === "review" || selectedTask.status === "approved") && (
-              <div className="border-t bg-card p-3">
+              <div className="border-t bg-card p-3 pb-[calc(0.75rem+3.5rem)] md:pb-3">
                 <div className="max-w-4xl mx-auto">
                   <p className="text-xs text-muted-foreground mb-2 flex items-center gap-1">
                     <Edit3 className="w-3 h-3" /> اكتب ملاحظاتك لتعديل المخرج وسيقوم الوكيل بإعادة إنشائه
