@@ -416,6 +416,9 @@ serve(async (req) => {
     }
 
     if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`AI error [${isDeepSeek ? "DeepSeek" : "Gateway"}]: status=${response.status}, body=${errorText}`);
+      
       if (response.status === 429) {
         return new Response(JSON.stringify({ error: "تم تجاوز الحد الأقصى للطلبات، يرجى المحاولة لاحقاً." }), {
           status: 429,
@@ -423,14 +426,13 @@ serve(async (req) => {
         });
       }
       if (response.status === 402) {
-        return new Response(JSON.stringify({ error: "يرجى إضافة رصيد للمحفظة." }), {
+        const msg = isDeepSeek ? "رصيد حساب DeepSeek غير كافٍ، يرجى شحن الرصيد." : "يرجى إضافة رصيد للمحفظة.";
+        return new Response(JSON.stringify({ error: msg }), {
           status: 402,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      const t = await response.text();
-      console.error("AI gateway error:", response.status, t);
-      return new Response(JSON.stringify({ error: "خطأ في الاتصال بالذكاء الاصطناعي" }), {
+      return new Response(JSON.stringify({ error: `خطأ في الاتصال بالذكاء الاصطناعي (${response.status})` }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
