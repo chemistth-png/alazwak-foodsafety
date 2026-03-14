@@ -409,7 +409,7 @@ const AgentDashboard = () => {
 
             {/* Feedback / Revision Input */}
             {(selectedTask.status === "review" || selectedTask.status === "approved") && (
-              <div className="border-t bg-card p-3">
+              <div className="border-t bg-card p-3 pb-[calc(0.75rem+3.5rem)] md:pb-3">
                 <div className="max-w-4xl mx-auto">
                   <p className="text-xs text-muted-foreground mb-2 flex items-center gap-1">
                     <Edit3 className="w-3 h-3" /> اكتب ملاحظاتك لتعديل المخرج وسيقوم الوكيل بإعادة إنشائه
