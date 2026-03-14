@@ -102,6 +102,7 @@ const AgentDashboard = () => {
         type: newType,
         title: newTitle,
         description: newDesc,
+        model: agentSpeed === "accurate" ? "google/gemini-2.5-pro" : "google/gemini-2.5-flash-lite",
       });
       toast.success("تم إنشاء المهمة بنجاح! بانتظار مراجعتك.");
       setShowNewTask(false);
