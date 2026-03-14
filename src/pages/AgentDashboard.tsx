@@ -61,6 +61,7 @@ const AgentDashboard = () => {
   const [newType, setNewType] = useState("cleaning_plan");
   const [newTitle, setNewTitle] = useState("");
   const [newDesc, setNewDesc] = useState("");
+  const [agentSpeed, setAgentSpeed] = useState<"fast" | "accurate">("fast");
   const [feedback, setFeedback] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
   const [mobileView, setMobileView] = useState<"list" | "detail">("list");
