@@ -305,6 +305,33 @@ const AgentDashboard = () => {
                   </div>
                 </div>
 
+                {/* Speed Selection */}
+                <div>
+                  <label className="text-sm font-medium text-foreground mb-2 block">وضع الذكاء الاصطناعي</label>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      onClick={() => setAgentSpeed("fast")}
+                      className={`flex flex-col items-center gap-1.5 p-3 rounded-xl border text-sm transition-all ${
+                        agentSpeed === "fast" ? "border-primary bg-accent ring-1 ring-primary" : "border-border hover:bg-muted"
+                      }`}
+                    >
+                      <Sparkles className="w-5 h-5 text-amber-500" />
+                      <span className="text-xs font-medium">⚡ سريع</span>
+                      <span className="text-[10px] text-muted-foreground">استجابة أسرع</span>
+                    </button>
+                    <button
+                      onClick={() => setAgentSpeed("accurate")}
+                      className={`flex flex-col items-center gap-1.5 p-3 rounded-xl border text-sm transition-all ${
+                        agentSpeed === "accurate" ? "border-primary bg-accent ring-1 ring-primary" : "border-border hover:bg-muted"
+                      }`}
+                    >
+                      <ShieldAlert className="w-5 h-5 text-emerald-500" />
+                      <span className="text-xs font-medium">🎯 دقيق</span>
+                      <span className="text-[10px] text-muted-foreground">تحليل أعمق وأشمل</span>
+                    </button>
+                  </div>
+                </div>
+
                 <div>
                   <label className="text-sm font-medium text-foreground mb-1.5 block">عنوان المهمة</label>
                   <Input
