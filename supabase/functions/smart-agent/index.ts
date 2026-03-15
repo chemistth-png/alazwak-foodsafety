@@ -244,7 +244,8 @@ serve(async (req) => {
         await supabase.from("agent_tasks").update({ status: "generating" }).eq("id", currentTaskId);
       }
 
-      const systemPrompt = AGENT_PROMPTS[type] || AGENT_PROMPTS.general;
+      const docsContext = await fetchUserDocs(supabase, user.id, `${title} ${description || ""}`);
+      const systemPrompt = (AGENT_PROMPTS[type] || AGENT_PROMPTS.general) + docsContext;
       const userPrompt = `عنوان الوثيقة: ${title}\n\n${description ? `تفاصيل إضافية: ${description}` : ""}${feedback ? `\n\nملاحظات للتعديل:\n${feedback}` : ""}`;
 
       const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
