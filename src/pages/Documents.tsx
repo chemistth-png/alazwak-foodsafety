@@ -28,6 +28,7 @@ import {
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import ThemeToggle from "@/components/ThemeToggle";
+import { logAudit } from "@/lib/auditLog";
 
 interface Document {
   id: string;
