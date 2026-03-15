@@ -13,6 +13,7 @@ import SOPTemplate from "./pages/SOPTemplate";
 import SOPsPage from "./pages/SOPsPage";
 import AgentDashboard from "./pages/AgentDashboard";
 import Dashboard from "./pages/Dashboard";
+import AuditLogPage from "./pages/AuditLogPage";
 import BottomNav from "./components/BottomNav";
 import NotFound from "./pages/NotFound";
 import Install from "./pages/Install";
