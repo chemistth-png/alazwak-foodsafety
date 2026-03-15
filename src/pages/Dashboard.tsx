@@ -331,6 +331,12 @@ const Dashboard = () => {
             )}
           </CardContent>
         </Card>
+
+        {/* Audit Log Link */}
+        <Button variant="outline" className="w-full gap-2 text-sm" onClick={() => navigate("/audit")}>
+          <Shield className="w-4 h-4" />
+          سجل التدقيق
+        </Button>
       </div>
     </div>
   );
