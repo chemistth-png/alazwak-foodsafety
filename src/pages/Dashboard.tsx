@@ -10,7 +10,7 @@ import {
   Bot, FileText, FolderOpen, ClipboardCheck, CheckCircle2,
   Clock, AlertTriangle, TrendingUp, BarChart3, ArrowLeft,
   Sparkles, GraduationCap, ShieldAlert, Droplets, Activity,
-  ListChecks, PieChart
+  ListChecks, PieChart, Shield
 } from "lucide-react";
 import { PieChart as RePieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
 import ThemeToggle from "@/components/ThemeToggle";
