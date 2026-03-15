@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
+import Landing from "./pages/Landing";
 import Documents from "./pages/Documents";
 import Plans from "./pages/Plans";
 import SOPTemplate from "./pages/SOPTemplate";
@@ -41,6 +42,10 @@ const AuthRoute = ({ children }: { children: React.ReactNode }) => {
   return <>{children}</>;
 };
 
+const PublicRoute = ({ children }: { children: React.ReactNode }) => {
+  return <>{children}</>;
+};
+
 const App = () => {
   const [showSplash, setShowSplash] = useState(true);
   const handleSplashFinish = useCallback(() => setShowSplash(false), []);
@@ -55,6 +60,7 @@ const App = () => {
             {showSplash && <SplashScreen onFinish={handleSplashFinish} />}
             <BrowserRouter>
               <Routes>
+                <Route path="/landing" element={<PublicRoute><Landing /></PublicRoute>} />
                 <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
                 <Route path="/documents" element={<ProtectedRoute><Documents /></ProtectedRoute>} />
                 <Route path="/plans" element={<ProtectedRoute><Plans /></ProtectedRoute>} />

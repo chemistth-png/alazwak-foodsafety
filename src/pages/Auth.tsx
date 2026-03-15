@@ -3,16 +3,16 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Droplets, Loader2 } from "lucide-react";
+import { Droplets, Loader2, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 
 const Auth = () => {
+  const navigate = useNavigate();
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -40,8 +40,22 @@ const Auth = () => {
   };
 
   return (
-    <div dir="rtl" className="flex items-center justify-center min-h-screen bg-background px-4">
-      <div className="w-full max-w-sm space-y-8">
+    <div dir="rtl" className="min-h-screen bg-background">
+      {/* Back to Landing */}
+      <div className="border-b bg-card/50">
+        <div className="container h-14 flex items-center">
+          <button
+            onClick={() => navigate("/landing")}
+            className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <ArrowRight className="w-4 h-4" />
+            العودة إلى الصفحة الرئيسية
+          </button>
+        </div>
+      </div>
+
+      <div className="flex items-center justify-center min-h-[calc(100vh-56px)] px-4">
+        <div className="w-full max-w-sm space-y-8">
         <div className="flex flex-col items-center gap-3">
           <div className="flex items-center justify-center w-14 h-14 rounded-2xl bg-primary text-primary-foreground">
             <Droplets className="w-7 h-7" />
@@ -93,6 +107,7 @@ const Auth = () => {
             {isLogin ? "إنشاء حساب" : "تسجيل الدخول"}
           </button>
         </p>
+      </div>
       </div>
     </div>
   );
