@@ -315,7 +315,8 @@ serve(async (req) => {
       const { data: task } = await supabase.from("agent_tasks").select("*").eq("id", taskId).single();
       if (!task) throw new Error("Task not found");
 
-      const systemPrompt = AGENT_PROMPTS[task.type] || AGENT_PROMPTS.general;
+      const docsContext = await fetchUserDocs(supabase, user.id, `${task.title} ${feedback || ""}`);
+      const systemPrompt = (AGENT_PROMPTS[task.type] || AGENT_PROMPTS.general) + docsContext;
       const revisionInstruction = `\n\n## تعليمات التعديل:
 قم بتعديل الوثيقة السابقة بناءً على ملاحظات المستخدم أدناه.
 - حافظ على نفس الهيكل والتنسيق الرسمي
