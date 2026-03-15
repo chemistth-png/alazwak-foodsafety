@@ -28,6 +28,7 @@ import {
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import ThemeToggle from "@/components/ThemeToggle";
+import { logAudit } from "@/lib/auditLog";
 
 interface Document {
   id: string;
@@ -61,10 +62,12 @@ const Documents = () => {
   }, []);
 
   const handleDelete = async (id: string) => {
+    const doc = documents.find(d => d.id === id);
     const { error } = await supabase.from("documents").delete().eq("id", id);
     if (error) {
       toast.error("فشل في حذف المستند");
     } else {
+      logAudit({ action: "delete_document", entity_type: "document", entity_id: id, entity_title: doc?.file_name });
       toast.success("تم حذف المستند بنجاح");
       setDocuments((prev) => prev.filter((d) => d.id !== id));
       if (expandedId === id) setExpandedId(null);

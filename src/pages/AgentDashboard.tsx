@@ -17,6 +17,7 @@ import {
   Download, FileSpreadsheet, FileType
 } from "lucide-react";
 import { exportToWord, exportToExcel } from "@/lib/exportAgent";
+import { logAudit } from "@/lib/auditLog";
 import ThemeToggle from "@/components/ThemeToggle";
 
 interface AgentTask {
@@ -124,6 +125,7 @@ const AgentDashboard = () => {
     setIsGenerating(true);
     try {
       await callAgent({ action: "approve", taskId: selectedTask.id });
+      logAudit({ action: "approve_task", entity_type: "agent_task", entity_id: selectedTask.id, entity_title: selectedTask.title });
       toast.success("تمت الموافقة على المهمة ✅");
       await loadTasks();
       setSelectedTask({ ...selectedTask, status: "approved" });
@@ -141,6 +143,7 @@ const AgentDashboard = () => {
         feedback,
       });
       toast.success("تم إعادة إنشاء المهمة بناءً على ملاحظاتك");
+      logAudit({ action: "revise_task", entity_type: "agent_task", entity_id: selectedTask.id, entity_title: selectedTask.title, details: { feedback } });
       setFeedback("");
       await loadTasks();
       const { data } = await supabase.from("agent_tasks").select("*").eq("id", selectedTask.id).single();
@@ -150,7 +153,9 @@ const AgentDashboard = () => {
   };
 
   const handleDelete = async (id: string) => {
+    const task = tasks.find(t => t.id === id);
     await supabase.from("agent_tasks").delete().eq("id", id);
+    logAudit({ action: "delete_task", entity_type: "agent_task", entity_id: id, entity_title: task?.title });
     if (selectedTask?.id === id) { setSelectedTask(null); setMobileView("list"); }
     toast.success("تم حذف المهمة");
     loadTasks();

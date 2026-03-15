@@ -15,6 +15,7 @@ import FileUpload, { AttachedFileChip } from "@/components/FileUpload";
 import ModelSelector from "@/components/ModelSelector";
 import VoiceInput from "@/components/VoiceInput";
 import ImageGenerator from "@/components/ImageGenerator";
+import { logAudit } from "@/lib/auditLog";
 
 const SUGGESTED_QUESTIONS = [
   "ما هي اشتراطات هيئة سلامة الغذاء لمصانع الأغذية والمياه المعبأة؟",
@@ -199,6 +200,7 @@ const Index = () => {
 
   const clearChat = async () => {
     if (conversationId) {
+      logAudit({ action: "clear_chat", entity_type: "conversation", entity_id: conversationId });
       await supabase.from("conversations").delete().eq("id", conversationId);
     }
     startNew();

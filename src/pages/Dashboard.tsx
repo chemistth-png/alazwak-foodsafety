@@ -10,7 +10,7 @@ import {
   Bot, FileText, FolderOpen, ClipboardCheck, CheckCircle2,
   Clock, AlertTriangle, TrendingUp, BarChart3, ArrowLeft,
   Sparkles, GraduationCap, ShieldAlert, Droplets, Activity,
-  ListChecks, PieChart
+  ListChecks, PieChart, Shield
 } from "lucide-react";
 import { PieChart as RePieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
 import ThemeToggle from "@/components/ThemeToggle";
@@ -331,6 +331,12 @@ const Dashboard = () => {
             )}
           </CardContent>
         </Card>
+
+        {/* Audit Log Link */}
+        <Button variant="outline" className="w-full gap-2 text-sm" onClick={() => navigate("/audit")}>
+          <Shield className="w-4 h-4" />
+          سجل التدقيق
+        </Button>
       </div>
     </div>
   );

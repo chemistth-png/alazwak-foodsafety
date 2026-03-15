@@ -15,6 +15,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import ThemeToggle from "@/components/ThemeToggle";
 import { SOP_CATEGORIES } from "@/pages/SOPTemplate";
+import { logAudit } from "@/lib/auditLog";
 
 interface SOP {
   id: string;
@@ -54,11 +55,13 @@ const SOPsPage = () => {
   useEffect(() => { load(); }, [load]);
 
   const deleteSOP = async (id: string) => {
+    const sop = sops.find(s => s.id === id);
     const { error } = await supabase.from("sops").delete().eq("id", id);
     if (error) {
       toast.error("حدث خطأ أثناء الحذف");
       return;
     }
+    logAudit({ action: "delete_sop", entity_type: "sop", entity_id: id, entity_title: sop?.title });
     toast.success("تم حذف الإجراء");
     setSops((prev) => prev.filter((s) => s.id !== id));
   };
