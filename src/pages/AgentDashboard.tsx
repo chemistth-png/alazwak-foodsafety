@@ -17,6 +17,7 @@ import {
   Download, FileSpreadsheet, FileType
 } from "lucide-react";
 import { exportToWord, exportToExcel } from "@/lib/exportAgent";
+import { logAudit } from "@/lib/auditLog";
 import ThemeToggle from "@/components/ThemeToggle";
 
 interface AgentTask {
