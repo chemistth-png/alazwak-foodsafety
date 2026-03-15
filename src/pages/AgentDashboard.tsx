@@ -153,7 +153,9 @@ const AgentDashboard = () => {
   };
 
   const handleDelete = async (id: string) => {
+    const task = tasks.find(t => t.id === id);
     await supabase.from("agent_tasks").delete().eq("id", id);
+    logAudit({ action: "delete_task", entity_type: "agent_task", entity_id: id, entity_title: task?.title });
     if (selectedTask?.id === id) { setSelectedTask(null); setMobileView("list"); }
     toast.success("تم حذف المهمة");
     loadTasks();

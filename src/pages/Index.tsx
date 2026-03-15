@@ -199,6 +199,7 @@ const Index = () => {
 
   const clearChat = async () => {
     if (conversationId) {
+      logAudit({ action: "clear_chat", entity_type: "conversation", entity_id: conversationId });
       await supabase.from("conversations").delete().eq("id", conversationId);
     }
     startNew();
