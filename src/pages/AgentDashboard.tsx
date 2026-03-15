@@ -143,6 +143,7 @@ const AgentDashboard = () => {
         feedback,
       });
       toast.success("تم إعادة إنشاء المهمة بناءً على ملاحظاتك");
+      logAudit({ action: "revise_task", entity_type: "agent_task", entity_id: selectedTask.id, entity_title: selectedTask.title, details: { feedback } });
       setFeedback("");
       await loadTasks();
       const { data } = await supabase.from("agent_tasks").select("*").eq("id", selectedTask.id).single();
