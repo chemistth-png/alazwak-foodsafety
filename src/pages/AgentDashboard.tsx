@@ -125,6 +125,7 @@ const AgentDashboard = () => {
     setIsGenerating(true);
     try {
       await callAgent({ action: "approve", taskId: selectedTask.id });
+      logAudit({ action: "approve_task", entity_type: "agent_task", entity_id: selectedTask.id, entity_title: selectedTask.title });
       toast.success("تمت الموافقة على المهمة ✅");
       await loadTasks();
       setSelectedTask({ ...selectedTask, status: "approved" });
