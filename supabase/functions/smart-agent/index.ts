@@ -152,6 +152,51 @@ ${SOP_FORMAT}`,
 ${SOP_FORMAT}`,
 };
 
+function buildDocsContext(docs: { file_name: string; content: string }[]): string {
+  let totalChars = 0;
+  const MAX_TOTAL = 20000;
+  const selected: typeof docs = [];
+  for (const doc of docs) {
+    if (totalChars + doc.content.length > MAX_TOTAL) {
+      const remaining = MAX_TOTAL - totalChars;
+      if (remaining > 500) {
+        selected.push({ ...doc, content: doc.content.slice(0, remaining) + "...[مقتطع]" });
+      }
+      break;
+    }
+    selected.push(doc);
+    totalChars += doc.content.length;
+  }
+  if (selected.length === 0) return "";
+  return `\n\n---\n## مستندات مرجعية من ملفات المستخدم:\n\n${
+    selected.map(d => `### ملف: ${d.file_name}\n${d.content}`).join("\n\n---\n\n")
+  }`;
+}
+
+async function fetchUserDocs(supabase: any, userId: string, query: string): Promise<string> {
+  try {
+    const { data: docs, error } = await supabase.rpc("search_documents", {
+      p_user_id: userId,
+      p_query: query,
+      p_limit: 5,
+    });
+    if (error) {
+      console.error("Doc search error in agent:", error);
+      const { data: fallback } = await supabase
+        .from("documents")
+        .select("file_name, content")
+        .eq("user_id", userId)
+        .order("created_at", { ascending: false })
+        .limit(3);
+      return fallback?.length ? buildDocsContext(fallback) : "";
+    }
+    return docs?.length ? buildDocsContext(docs.map((d: any) => ({ file_name: d.file_name, content: d.content }))) : "";
+  } catch (e) {
+    console.error("fetchUserDocs error:", e);
+    return "";
+  }
+}
+
 console.log("smart-agent function initialized");
 serve(async (req) => {
   console.log("smart-agent received request:", req.method);
