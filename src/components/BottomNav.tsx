@@ -1,5 +1,5 @@
 import { useNavigate, useLocation } from "react-router-dom";
-import { MessageSquare, FolderOpen, LayoutGrid, FileText, Bot, PieChart } from "lucide-react";
+import { MessageSquare, FolderOpen, LayoutGrid, FileText, Bot, PieChart, Send } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const NAV_ITEMS = [
@@ -8,6 +8,7 @@ const NAV_ITEMS = [
   { path: "/dashboard", label: "الإحصائيات", icon: PieChart },
   { path: "/documents", label: "المستندات", icon: FolderOpen },
   { path: "/sops", label: "SOPs", icon: FileText },
+  { path: "/telegram", label: "تليجرام", icon: Send },
 ];
 
 const BottomNav = () => {

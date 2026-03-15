@@ -15,6 +15,7 @@ import SOPsPage from "./pages/SOPsPage";
 import AgentDashboard from "./pages/AgentDashboard";
 import Dashboard from "./pages/Dashboard";
 import AuditLogPage from "./pages/AuditLogPage";
+import TelegramManagement from "./pages/TelegramManagement";
 import BottomNav from "./components/BottomNav";
 import NotFound from "./pages/NotFound";
 import Install from "./pages/Install";
@@ -69,6 +70,7 @@ const App = () => {
                 <Route path="/agent" element={<ProtectedRoute><AgentDashboard /></ProtectedRoute>} />
                 <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
                 <Route path="/audit" element={<ProtectedRoute><AuditLogPage /></ProtectedRoute>} />
+                <Route path="/telegram" element={<ProtectedRoute><TelegramManagement /></ProtectedRoute>} />
                 <Route path="/auth" element={<AuthRoute><Auth /></AuthRoute>} />
                 <Route path="/install" element={<Install />} />
                 <Route path="*" element={<NotFound />} />

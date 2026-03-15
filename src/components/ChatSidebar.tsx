@@ -4,7 +4,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Plus, MessageSquare, Trash2, LogOut, X, Search, FolderOpen, LayoutGrid, FileText, Bot } from "lucide-react";
+import { Plus, MessageSquare, Trash2, LogOut, X, Search, FolderOpen, LayoutGrid, FileText, Bot, Send } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
@@ -148,6 +148,15 @@ const ChatSidebar = ({ currentId, onSelect, onNew, open, onClose }: ChatSidebarP
           >
             <Bot className="w-4 h-4" />
             الوكيل الذكي
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="w-full gap-1.5 text-foreground justify-start"
+            onClick={() => { navigate("/telegram"); onClose(); }}
+          >
+            <Send className="w-4 h-4" />
+            إدارة التليجرام
           </Button>
           <Button variant="ghost" size="sm" className="w-full gap-1.5 text-muted-foreground justify-start" onClick={signOut}>
             <LogOut className="w-4 h-4" />
