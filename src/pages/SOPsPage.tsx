@@ -15,6 +15,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import ThemeToggle from "@/components/ThemeToggle";
 import { SOP_CATEGORIES } from "@/pages/SOPTemplate";
+import { logAudit } from "@/lib/auditLog";
 
 interface SOP {
   id: string;

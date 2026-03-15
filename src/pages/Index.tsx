@@ -15,6 +15,7 @@ import FileUpload, { AttachedFileChip } from "@/components/FileUpload";
 import ModelSelector from "@/components/ModelSelector";
 import VoiceInput from "@/components/VoiceInput";
 import ImageGenerator from "@/components/ImageGenerator";
+import { logAudit } from "@/lib/auditLog";
 
 const SUGGESTED_QUESTIONS = [
   "ما هي اشتراطات هيئة سلامة الغذاء لمصانع الأغذية والمياه المعبأة؟",
