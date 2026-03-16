@@ -17,13 +17,9 @@ export async function streamChat({
 }) {
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
-    Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+    "apikey": import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+    "Authorization": `Bearer ${authToken || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
   };
-  
-  // Pass user auth token for document context
-  if (authToken) {
-    headers["Authorization"] = `Bearer ${authToken}`;
-  }
 
   const resp = await fetch(CHAT_URL, {
     method: "POST",
