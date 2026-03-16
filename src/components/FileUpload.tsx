@@ -53,6 +53,10 @@ const FileUpload = ({ onFileProcessed, disabled }: FileUploadProps) => {
 
       if (uploadError) throw uploadError;
 
+      // Get user auth token
+      const { data: { session } } = await supabase.auth.getSession();
+      const authToken = session?.access_token || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+
       // Parse the document
       const resp = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/parse-document`,
@@ -60,7 +64,7 @@ const FileUpload = ({ onFileProcessed, disabled }: FileUploadProps) => {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+            Authorization: `Bearer ${authToken}`,
           },
           body: JSON.stringify({ filePath, fileName: file.name, mimeType: file.type }),
         }
