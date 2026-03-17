@@ -375,6 +375,8 @@ serve(async (req) => {
 
     const isDeepSeek = model?.startsWith("deepseek/");
     const deepSeekModel = isDeepSeek ? model.replace("deepseek/", "") : null;
+    const isZhipu = model?.startsWith("zhipu/");
+    const zhipuModel = isZhipu ? model.replace("zhipu/", "") : null;
 
     let response: Response;
 
@@ -394,6 +396,29 @@ serve(async (req) => {
         },
         body: JSON.stringify({
           model: deepSeekModel,
+          messages: [
+            { role: "system", content: fullSystemPrompt },
+            ...messages,
+          ],
+          stream: true,
+        }),
+      });
+    } else if (isZhipu) {
+      const ZHIPU_API_KEY = Deno.env.get("ZHIPU_API_KEY");
+      if (!ZHIPU_API_KEY) {
+        return new Response(JSON.stringify({ error: "مفتاح Zhipu API غير مُعدّ" }), {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      response = await fetch("https://open.bigmodel.cn/api/paas/v4/chat/completions", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${ZHIPU_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: zhipuModel,
           messages: [
             { role: "system", content: fullSystemPrompt },
             ...messages,
