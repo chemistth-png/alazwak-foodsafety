@@ -446,7 +446,7 @@ serve(async (req) => {
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error(`AI error [${isDeepSeek ? "DeepSeek" : "Gateway"}]: status=${response.status}, body=${errorText}`);
+      console.error(`AI error [${isDeepSeek ? "DeepSeek" : isZhipu ? "Zhipu" : "Gateway"}]: status=${response.status}, body=${errorText}`);
       
       if (response.status === 429) {
         return new Response(JSON.stringify({ error: "تم تجاوز الحد الأقصى للطلبات، يرجى المحاولة لاحقاً." }), {
