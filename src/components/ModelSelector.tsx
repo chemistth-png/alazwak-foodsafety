@@ -19,7 +19,6 @@ export const AVAILABLE_MODELS: ModelOption[] = [
   { id: "openai/gpt-5-nano", label: "GPT-5 Nano", description: "خفيف وسريع جداً" },
   { id: "deepseek/deepseek-chat", label: "DeepSeek V3", description: "نموذج محادثة قوي" },
   { id: "deepseek/deepseek-reasoner", label: "DeepSeek R1", description: "تفكير عميق ومنطقي" },
-  { id: "zhipu/glm-4-plus", label: "GLM-4 Plus", description: "نموذج متقدم من Zhipu" },
 ];
 
 interface ModelSelectorProps {
