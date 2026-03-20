@@ -183,8 +183,86 @@ serve(async (req) => {
     }
 
     const MAX_CHARS = 50000;
+    const originalText = extractedText;
     if (extractedText.length > MAX_CHARS) {
       extractedText = extractedText.slice(0, MAX_CHARS) + "\n\n... [تم اقتطاع النص]";
+    }
+
+    // --- RAG: Chunking and Embedding ---
+    try {
+      const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+      if (LOVABLE_API_KEY && originalText.length > 0) {
+        console.log(`Processing RAG for ${fileName}...`);
+        
+        // 1. Save to documents table first to get the ID
+        const { data: doc, error: docError } = await supabase
+          .from("documents")
+          .insert({
+            user_id: user.id,
+            file_name: fileName,
+            content: originalText,
+            file_size: fileData.size,
+          })
+          .select("id")
+          .single();
+        
+        if (docError) throw docError;
+
+        // 2. Chunking (simple character-based with overlap)
+        const chunkSize = 1000;
+        const overlap = 200;
+        const chunks: string[] = [];
+        for (let i = 0; i < originalText.length; i += (chunkSize - overlap)) {
+          chunks.push(originalText.slice(i, i + chunkSize));
+          if (i + chunkSize >= originalText.length) break;
+        }
+
+        console.log(`Generated ${chunks.length} chunks for ${fileName}`);
+
+        // 3. Generate embeddings and store in batches
+        // Note: We'll process in batches to avoid hitting API limits or timeouts
+        const batchSize = 10;
+        for (let i = 0; i < chunks.length; i += batchSize) {
+          const batch = chunks.slice(i, i + batchSize);
+          
+          const embedResp = await fetch("https://ai.gateway.lovable.dev/v1/embeddings", {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${LOVABLE_API_KEY}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              model: "openai/text-embedding-3-small",
+              input: batch,
+            }),
+          });
+
+          if (!embedResp.ok) {
+            console.error(`Embedding batch ${i} failed:`, await embedResp.text());
+            continue;
+          }
+
+          const { data: embeddings } = await embedResp.json();
+          
+          const chunksToInsert = batch.map((content, index) => ({
+            document_id: doc.id,
+            user_id: user.id,
+            content,
+            embedding: embeddings[index].embedding,
+            metadata: { fileName, chunkIndex: i + index },
+          }));
+
+          const { error: insertError } = await supabase
+            .from("document_chunks")
+            .insert(chunksToInsert);
+          
+          if (insertError) console.error("Error inserting chunks:", insertError);
+        }
+        console.log(`RAG processing complete for ${fileName}`);
+      }
+    } catch (ragError) {
+      console.error("RAG processing failed:", ragError);
+      // We don't fail the whole request if RAG fails, just log it
     }
 
     return new Response(JSON.stringify({ text: extractedText, fileName }), {
