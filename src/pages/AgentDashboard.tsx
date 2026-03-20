@@ -370,53 +370,60 @@ const AgentDashboard = () => {
           /* Task Detail View */
           <div className="flex-1 flex flex-col min-h-0">
             {/* Task Header */}
-            <div className="flex items-center gap-3 p-4 border-b bg-card">
-              <Button variant="ghost" size="icon" className="md:hidden" onClick={() => setMobileView("list")}>
-                <ChevronRight className="w-5 h-5" />
-              </Button>
-              <div className={`p-2 rounded-lg ${getTypeInfo(selectedTask.type).color}`}>
-                {(() => { const Icon = getTypeInfo(selectedTask.type).icon; return <Icon className="w-5 h-5" />; })()}
-              </div>
-              <div className="flex-1 min-w-0">
-                <h2 className="font-bold text-foreground truncate">{selectedTask.title}</h2>
-                <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <span>{getTypeInfo(selectedTask.type).label}</span>
-                  <span>•</span>
-                  <Badge variant={STATUS_MAP[selectedTask.status]?.variant || "outline"} className="text-[10px]">
-                    {STATUS_MAP[selectedTask.status]?.label || selectedTask.status}
-                  </Badge>
+            <div className="flex flex-col border-b bg-card">
+              <div className="flex items-center gap-3 p-4 pb-2">
+                <Button variant="ghost" size="icon" className="md:hidden shrink-0" onClick={() => setMobileView("list")}>
+                  <ChevronRight className="w-5 h-5" />
+                </Button>
+                <div className={`p-2 rounded-lg shrink-0 ${getTypeInfo(selectedTask.type).color}`}>
+                  {(() => { const Icon = getTypeInfo(selectedTask.type).icon; return <Icon className="w-5 h-5" />; })()}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h2 className="font-bold text-foreground truncate">{selectedTask.title}</h2>
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <span>{getTypeInfo(selectedTask.type).label}</span>
+                    <span>•</span>
+                    <Badge variant={STATUS_MAP[selectedTask.status]?.variant || "outline"} className="text-[10px]">
+                      {STATUS_MAP[selectedTask.status]?.label || selectedTask.status}
+                    </Badge>
+                  </div>
                 </div>
               </div>
-              {/* Export & Action Buttons */}
-              <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1 -mb-1 max-w-[50%] sm:max-w-none justify-end">
-                <div className="flex items-center gap-1.5 shrink-0">
+              
+              {/* Export & Action Buttons - Second Row on Mobile */}
+              <div className="flex items-center gap-2 px-4 pb-3 overflow-x-auto no-scrollbar">
+                <div className="flex items-center gap-2 shrink-0 w-full sm:w-auto sm:justify-end">
                   {selectedTask.ai_output && (
                     <>
                       <Button
                         size="sm"
                         variant="outline"
-                        className="gap-1 shrink-0 h-8"
+                        className="gap-1.5 shrink-0 h-9 px-3 min-w-[80px]"
                         onClick={() => exportToWord(selectedTask.title, selectedTask.ai_output)}
-                        title="تصدير Word"
                       >
-                        <FileType className="w-3.5 h-3.5" />
-                        <span className="hidden sm:inline">Word</span>
+                        <FileType className="w-4 h-4" />
+                        <span className="text-xs">Word</span>
                       </Button>
                       <Button
                         size="sm"
                         variant="outline"
-                        className="gap-1 shrink-0 h-8"
+                        className="gap-1.5 shrink-0 h-9 px-3 min-w-[80px]"
                         onClick={() => exportToExcel(selectedTask.title, selectedTask.ai_output)}
-                        title="تصدير Excel"
                       >
-                        <FileSpreadsheet className="w-3.5 h-3.5" />
-                        <span className="hidden sm:inline">Excel</span>
+                        <FileSpreadsheet className="w-4 h-4" />
+                        <span className="text-xs">Excel</span>
                       </Button>
                     </>
                   )}
                   {selectedTask.status === "review" && (
-                    <Button size="sm" className="gap-1 shrink-0 h-8" onClick={handleApprove} disabled={isGenerating}>
-                      <CheckCircle2 className="w-3.5 h-3.5" /> موافقة
+                    <Button 
+                      size="sm" 
+                      className="gap-1.5 shrink-0 h-9 px-4 min-w-[100px] bg-primary text-primary-foreground" 
+                      onClick={handleApprove} 
+                      disabled={isGenerating}
+                    >
+                      <CheckCircle2 className="w-4 h-4" />
+                      <span className="text-xs font-bold">موافقة</span>
                     </Button>
                   )}
                 </div>
