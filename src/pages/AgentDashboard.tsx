@@ -192,7 +192,7 @@ const AgentDashboard = () => {
 
         {/* Quick Actions */}
         <div className="p-3 border-b">
-          <Button className="w-full gap-2" onClick={() => setShowNewTask(true)}>
+          <Button className="w-full gap-2" onClick={() => { setSelectedTask(null); setShowNewTask(true); setMobileView("detail"); }}>
             <Plus className="w-4 h-4" /> مهمة جديدة
           </Button>
         </div>
@@ -490,7 +490,7 @@ const AgentDashboard = () => {
                 return (
                   <button
                     key={t.id}
-                    onClick={() => { setNewType(t.id); setShowNewTask(true); }}
+                    onClick={() => { setNewType(t.id); setShowNewTask(true); setMobileView("detail"); }}
                     className="flex items-center gap-3 p-4 rounded-xl border border-border bg-card text-right transition-all hover:bg-accent hover:border-primary/30"
                   >
                     <div className={`p-2 rounded-lg ${t.color}`}><Icon className="w-5 h-5" /></div>
