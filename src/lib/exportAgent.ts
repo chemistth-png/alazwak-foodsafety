@@ -1,200 +1,308 @@
 import * as XLSX from "xlsx";
+import { 
+  Document, 
+  Packer, 
+  Paragraph, 
+  TextRun, 
+  HeadingLevel, 
+  Table, 
+  TableRow, 
+  TableCell, 
+  WidthType, 
+  BorderStyle, 
+  AlignmentType,
+  TextDirection
+} from "docx";
+import { saveAs } from "file-saver";
 
 /**
- * Export markdown content as a Word (.doc) file with RTL Arabic support
- * Uses a more robust HTML-to-Word approach with proper headers and encoding
+ * Export markdown content as a real Word (.docx) file with RTL Arabic support
+ * Uses the 'docx' library for valid file generation
  */
-export function exportToWord(title: string, markdownContent: string) {
-  const htmlContent = markdownToHtml(markdownContent);
+export async function exportToWord(title: string, markdownContent: string) {
+  const sections = parseMarkdownToDocxSections(markdownContent);
   
-  // Word-specific XML/HTML wrapper for better compatibility and RTL support
-  const wordDoc = `
-<html xmlns:o='urn:schemas-microsoft-com:office:office' 
-      xmlns:w='urn:schemas-microsoft-com:office:word' 
-      xmlns='http://www.w3.org/TR/REC-html40'
-      dir="rtl" lang="ar">
-<head>
-  <meta charset="utf-8">
-  <title>${escapeHtml(title)}</title>
-  <!--[if gte mso 9]>
-  <xml>
-    <w:WordDocument>
-      <w:View>Print</w:View>
-      <w:Zoom>100</w:Zoom>
-      <w:DoNotOptimizeForBrowser/>
-    </w:WordDocument>
-  </xml>
-  <![endif]-->
-  <style>
-    @page {
-      size: A4;
-      margin: 2.5cm 2cm 2.5cm 2cm;
-    }
-    body {
-      font-family: 'Arial', 'Simplified Arabic', 'Traditional Arabic', 'Tahoma', sans-serif;
-      font-size: 12pt;
-      line-height: 1.6;
-      direction: rtl;
-      text-align: right;
-      color: #000000;
-    }
-    h1 {
-      font-size: 22pt;
-      color: #1a5276;
-      text-align: center;
-      margin-bottom: 30pt;
-      border-bottom: 2px solid #1a5276;
-      padding-bottom: 10pt;
-    }
-    h2 {
-      font-size: 18pt;
-      color: #1a5276;
-      margin-top: 20pt;
-      margin-bottom: 10pt;
-      border-bottom: 1px solid #aed6f1;
-    }
-    h3 {
-      font-size: 14pt;
-      color: #2c3e50;
-      margin-top: 15pt;
-      margin-bottom: 8pt;
-    }
-    p {
-      margin-bottom: 10pt;
-      text-align: justify;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin: 15pt 0;
-      direction: rtl;
-    }
-    th, td {
-      border: 1px solid #2c3e50;
-      padding: 8pt;
-      text-align: right;
-      vertical-align: top;
-    }
-    th {
-      background-color: #f2f7fb;
-      font-weight: bold;
-      color: #1a5276;
-    }
-    ul, ol {
-      margin-bottom: 10pt;
-      padding-right: 30pt;
-    }
-    li {
-      margin-bottom: 5pt;
-    }
-    .header-box {
-      border: 1px solid #1a5276;
-      padding: 10pt;
-      margin-bottom: 20pt;
-      background-color: #f8fbfe;
-      text-align: center;
-    }
-    .footer {
-      margin-top: 40pt;
-      border-top: 1px solid #dddddd;
-      padding-top: 10pt;
-      font-size: 9pt;
-      color: #777777;
-      text-align: center;
-    }
-  </style>
-</head>
-<body>
-  <div class="header-box">
-    <p style="font-weight: bold; color: #1a5276; margin: 0;">نظام الأذواق لسلامة الغذاء - تقرير الوكيل الذكي</p>
-  </div>
-  
-  <h1>${escapeHtml(title)}</h1>
-  
-  <div class="content">
-    ${htmlContent}
-  </div>
-  
-  <div class="footer">
-    <p>تم إنشاء هذا المستند آلياً بواسطة منصة الأذواق لسلامة الغذاء</p>
-    <p>تاريخ الإصدار: ${new Date().toLocaleDateString('ar-EG')}</p>
-  </div>
-</body>
-</html>`;
+  const doc = new Document({
+    sections: [{
+      properties: {
+        page: {
+          margin: {
+            top: 1440, // 1 inch
+            right: 1440,
+            bottom: 1440,
+            left: 1440,
+          },
+        },
+      },
+      children: [
+        // Header Box
+        new Table({
+          width: { size: 100, type: WidthType.PERCENTAGE },
+          rows: [
+            new TableRow({
+              children: [
+                new TableCell({
+                  children: [
+                    new Paragraph({
+                      alignment: AlignmentType.CENTER,
+                      children: [
+                        new TextRun({
+                          text: "نظام الأذواق لسلامة الغذاء - تقرير الوكيل الذكي",
+                          bold: true,
+                          color: "1a5276",
+                          size: 24,
+                        }),
+                      ],
+                    }),
+                  ],
+                  shading: { fill: "f8fbfe" },
+                  borders: {
+                    top: { style: BorderStyle.SINGLE, size: 1, color: "1a5276" },
+                    bottom: { style: BorderStyle.SINGLE, size: 1, color: "1a5276" },
+                    left: { style: BorderStyle.SINGLE, size: 1, color: "1a5276" },
+                    right: { style: BorderStyle.SINGLE, size: 1, color: "1a5276" },
+                  },
+                }),
+              ],
+            }),
+          ],
+        }),
+        
+        new Paragraph({ spacing: { before: 400, after: 400 } }),
+        
+        // Title
+        new Paragraph({
+          heading: HeadingLevel.HEADING_1,
+          alignment: AlignmentType.CENTER,
+          bidirectional: true,
+          children: [
+            new TextRun({
+              text: title,
+              bold: true,
+              color: "1a5276",
+              size: 44, // 22pt
+            }),
+          ],
+        }),
+        
+        new Paragraph({ spacing: { after: 400 } }),
+        
+        // Content
+        ...sections,
+        
+        // Footer
+        new Paragraph({ spacing: { before: 800 } }),
+        new Table({
+          width: { size: 100, type: WidthType.PERCENTAGE },
+          borders: {
+            top: { style: BorderStyle.SINGLE, size: 1, color: "dddddd" },
+            bottom: { style: BorderStyle.NIL },
+            left: { style: BorderStyle.NIL },
+            right: { style: BorderStyle.NIL },
+          },
+          rows: [
+            new TableRow({
+              children: [
+                new TableCell({
+                  children: [
+                    new Paragraph({
+                      alignment: AlignmentType.CENTER,
+                      bidirectional: true,
+                      children: [
+                        new TextRun({
+                          text: "تم إنشاء هذا المستند آلياً بواسطة منصة الأذواق لسلامة الغذاء",
+                          size: 18,
+                          color: "777777",
+                        }),
+                      ],
+                    }),
+                    new Paragraph({
+                      alignment: AlignmentType.CENTER,
+                      bidirectional: true,
+                      children: [
+                        new TextRun({
+                          text: `تاريخ الإصدار: ${new Date().toLocaleDateString('ar-EG')}`,
+                          size: 18,
+                          color: "777777",
+                        }),
+                      ],
+                    }),
+                  ],
+                }),
+              ],
+            }),
+          ],
+        }),
+      ],
+    }],
+  });
 
-  // Use application/vnd.ms-word to ensure it opens in Word
-  const blob = new Blob([wordDoc], { type: "application/vnd.ms-word;charset=utf-8" });
-  downloadBlob(blob, `${sanitizeFilename(title)}.doc`);
+  const blob = await Packer.toBlob(doc);
+  saveAs(blob, `${sanitizeFilename(title)}.docx`);
 }
 
 /**
- * Export markdown content as an Excel (.xlsx) file with tables extracted
+ * Export markdown content as an Excel (.xlsx) file
+ * Includes ALL content: paragraphs, lists, and tables
  */
 export function exportToExcel(title: string, markdownContent: string) {
   const wb = XLSX.utils.book_new();
-  wb.Workbook = { Views: [{ RTL: true }] }; // Set workbook to RTL
+  wb.Workbook = { Views: [{ RTL: true }] };
   
-  const tables = extractMarkdownTables(markdownContent);
+  const lines = markdownContent.split("\n").map(l => l.trim());
+  const aoa: any[][] = [[title], [""]];
   
-  if (tables.length === 0) {
-    // If no tables, export text content line by line
-    const lines = markdownContent.split("\n")
-      .map(l => l.trim())
-      .filter(l => l.length > 0)
-      .map(line => [line.replace(/[#*_`]/g, "").trim()]);
-      
-    const ws = XLSX.utils.aoa_to_sheet([
-      [title],
-      [""],
-      ...lines
-    ]);
+  let currentTable: string[][] | null = null;
+  
+  lines.forEach(line => {
+    if (line.startsWith("|") && line.includes("-|-")) {
+      // Skip separator
+      return;
+    }
     
-    ws["!cols"] = [{ wch: 100 }];
-    XLSX.utils.book_append_sheet(wb, ws, "المحتوى");
-  } else {
-    // Export each table to a separate sheet
-    tables.forEach((table, idx) => {
-      const ws = XLSX.utils.aoa_to_sheet(table.rows);
+    if (line.startsWith("|")) {
+      const cells = line.split("|").filter((_, i, arr) => i > 0 && i < arr.length - 1).map(c => c.trim().replace(/\*\*/g, ""));
+      if (!currentTable) {
+        currentTable = [cells];
+      } else {
+        currentTable.push(cells);
+      }
+    } else {
+      if (currentTable) {
+        aoa.push(...currentTable);
+        aoa.push([""]);
+        currentTable = null;
+      }
       
-      // Auto-size columns
-      const maxCols = Math.max(...table.rows.map(r => r.length));
-      ws["!cols"] = Array.from({ length: maxCols }, (_, colIdx) => {
-        const maxWidth = Math.max(...table.rows.map(r => (r[colIdx] || "").toString().length));
-        return { wch: Math.min(50, Math.max(15, maxWidth + 2)) };
-      });
-      
-      const sheetName = (table.heading || `جدول ${idx + 1}`).substring(0, 31).replace(/[\\/?*[\]]/g, "");
-      XLSX.utils.book_append_sheet(wb, ws, sheetName);
-    });
+      if (line.length > 0) {
+        // Clean markdown formatting for Excel
+        const cleanLine = line.replace(/[#*_`]/g, "").trim();
+        aoa.push([cleanLine]);
+      } else {
+        aoa.push([""]);
+      }
+    }
+  });
+  
+  if (currentTable) {
+    aoa.push(...currentTable);
   }
+  
+  const ws = XLSX.utils.aoa_to_sheet(aoa);
+  
+  // Basic styling
+  ws["!cols"] = [{ wch: 100 }];
+  
+  XLSX.utils.book_append_sheet(wb, ws, "تقرير المهمة");
+  
+  // Also extract tables to separate sheets for better usability
+  const tables = extractMarkdownTables(markdownContent);
+  tables.forEach((table, idx) => {
+    const tableWs = XLSX.utils.aoa_to_sheet(table.rows);
+    const maxCols = Math.max(...table.rows.map(r => r.length));
+    tableWs["!cols"] = Array.from({ length: maxCols }, (_, colIdx) => {
+      const maxWidth = Math.max(...table.rows.map(r => (r[colIdx] || "").toString().length));
+      return { wch: Math.min(50, Math.max(15, maxWidth + 2)) };
+    });
+    
+    const sheetName = (table.heading || `جدول ${idx + 1}`).substring(0, 31).replace(/[\\/?*[\]]/g, "");
+    XLSX.utils.book_append_sheet(wb, tableWs, sheetName);
+  });
 
   XLSX.writeFile(wb, `${sanitizeFilename(title)}.xlsx`);
 }
 
 // ---- Helpers ----
 
-function escapeHtml(text: string): string {
-  return text
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
-}
-
 function sanitizeFilename(name: string): string {
   return name.replace(/[/\\?%*:|"<>]/g, "-").substring(0, 100) || "document";
 }
 
-function downloadBlob(blob: Blob, filename: string) {
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
+function parseMarkdownToDocxSections(markdown: string): any[] {
+  const lines = markdown.split("\n");
+  const children: any[] = [];
+  
+  let i = 0;
+  while (i < lines.length) {
+    const line = lines[i].trim();
+    
+    if (!line) {
+      i++;
+      continue;
+    }
+    
+    // Headers
+    if (line.startsWith("#")) {
+      const level = line.match(/^#+/)?.[0].length || 1;
+      const text = line.replace(/^#+\s*/, "");
+      children.push(new Paragraph({
+        text: text,
+        heading: level === 1 ? HeadingLevel.HEADING_1 : level === 2 ? HeadingLevel.HEADING_2 : HeadingLevel.HEADING_3,
+        bidirectional: true,
+        spacing: { before: 240, after: 120 },
+      }));
+      i++;
+    } 
+    // Tables
+    else if (line.startsWith("|")) {
+      const tableRows: TableRow[] = [];
+      while (i < lines.length && lines[i].trim().startsWith("|")) {
+        const rowText = lines[i].trim();
+        if (rowText.includes("-|-") || rowText.match(/^\|[\s\-:|]+\|$/)) {
+          i++;
+          continue;
+        }
+        
+        const cells = rowText.split("|").filter((_, idx, arr) => idx > 0 && idx < arr.length - 1);
+        tableRows.push(new TableRow({
+          children: cells.map(cell => new TableCell({
+            children: [new Paragraph({ 
+              text: cell.trim().replace(/\*\*/g, ""), 
+              bidirectional: true,
+              alignment: AlignmentType.RIGHT 
+            })],
+            verticalAlign: AlignmentType.CENTER,
+          })),
+        }));
+        i++;
+      }
+      
+      children.push(new Table({
+        width: { size: 100, type: WidthType.PERCENTAGE },
+        rows: tableRows,
+        spacing: { before: 200, after: 200 },
+      }));
+    }
+    // Lists
+    else if (line.startsWith("- ") || line.match(/^\d+\.\s/)) {
+      const isOrdered = line.match(/^\d+\.\s/);
+      children.push(new Paragraph({
+        text: line.replace(/^[-\d.]+\s+/, ""),
+        bullet: isOrdered ? undefined : { level: 0 },
+        numbering: isOrdered ? { reference: "ordered-list", level: 0 } : undefined,
+        bidirectional: true,
+        alignment: AlignmentType.RIGHT,
+        spacing: { after: 100 },
+      }));
+      i++;
+    }
+    // Normal Paragraph
+    else {
+      children.push(new Paragraph({
+        bidirectional: true,
+        alignment: AlignmentType.RIGHT,
+        spacing: { after: 200 },
+        children: [
+          new TextRun({
+            text: line.replace(/\*\*/g, ""),
+          }),
+        ],
+      }));
+      i++;
+    }
+  }
+  
+  return children;
 }
 
 interface MarkdownTable {
@@ -211,9 +319,7 @@ function extractMarkdownTables(markdown: string): MarkdownTable[] {
     const line = lines[i].trim();
     
     if (line.startsWith("|") && line.includes("-|-")) {
-      // Found a table header separator
       let heading = "";
-      // Look back for a heading
       for (let j = i - 2; j >= 0; j--) {
         const prev = lines[j].trim();
         if (prev.startsWith("#")) {
@@ -227,15 +333,10 @@ function extractMarkdownTables(markdown: string): MarkdownTable[] {
       }
 
       const tableRows: string[][] = [];
-      // Get header row
       if (i > 0 && lines[i-1].trim().startsWith("|")) {
         tableRows.push(parseTableRow(lines[i-1]));
       }
-      
-      // Skip separator row
       i++;
-      
-      // Get data rows
       while (i < lines.length && lines[i].trim().startsWith("|")) {
         tableRows.push(parseTableRow(lines[i]));
         i++;
@@ -258,67 +359,4 @@ function parseTableRow(row: string): string[] {
     .split("|")
     .filter((_, idx, arr) => idx > 0 && idx < arr.length - 1)
     .map(c => c.trim().replace(/\*\*/g, ""));
-}
-
-function markdownToHtml(md: string): string {
-  let html = md;
-  
-  // Clean up carriage returns
-  html = html.replace(/\r\n/g, "\n");
-
-  // Headers
-  html = html.replace(/^### (.+)$/gm, "<h3>$1</h3>");
-  html = html.replace(/^## (.+)$/gm, "<h2>$1</h2>");
-  html = html.replace(/^# (.+)$/gm, "<h1>$1</h1>");
-  
-  // Bold & Italic
-  html = html.replace(/\*\*\*(.+?)\*\*\*/g, "<strong><em>$1</em></strong>");
-  html = html.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
-  html = html.replace(/\*(.+?)\*/g, "<em>$1</em>");
-  
-  // Tables
-  html = html.replace(/((?:\|[^\n]+\|\n)+)/g, (match) => {
-    const rows = match.trim().split("\n");
-    if (rows.length < 2) return match;
-    
-    let tableHtml = '<table>';
-    let hasHeader = false;
-    
-    rows.forEach((row, idx) => {
-      if (row.includes("-|-") || row.match(/^\|[\s\-:|]+\|$/)) {
-        hasHeader = true;
-        return;
-      }
-      
-      const cells = row.split("|").filter((_, i, arr) => i > 0 && i < arr.length - 1);
-      const isHeaderRow = idx === 0 && rows[1] && (rows[1].includes("-|-") || rows[1].match(/^\|[\s\-:|]+\|$/));
-      const tag = isHeaderRow ? "th" : "td";
-      
-      tableHtml += "<tr>" + cells.map(c => `<${tag}>${c.trim()}</${tag}>`).join("") + "</tr>";
-    });
-    
-    tableHtml += "</table>";
-    return tableHtml;
-  });
-  
-  // Lists
-  html = html.replace(/^\s*-\s+(.+)$/gm, "<li>$1</li>");
-  html = html.replace(/((?:<li>.+<\/li>\n?)+)/g, "<ul>$1</ul>");
-  
-  html = html.replace(/^\s*\d+\.\s+(.+)$/gm, "<li>$1</li>");
-  html = html.replace(/((?:<li>.+<\/li>\n?)+)(?!<\/ul>)/g, (match) => {
-    if (match.includes("<ul>")) return match;
-    return `<ol>${match}</ol>`;
-  });
-  
-  // Paragraphs (simplified)
-  const lines = html.split("\n");
-  const processedLines = lines.map(line => {
-    const trimmed = line.trim();
-    if (!trimmed) return "";
-    if (trimmed.startsWith("<")) return trimmed;
-    return `<p>${trimmed}</p>`;
-  });
-  
-  return processedLines.filter(l => l).join("\n");
 }
