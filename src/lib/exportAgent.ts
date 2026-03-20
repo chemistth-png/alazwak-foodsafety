@@ -2,147 +2,128 @@ import * as XLSX from "xlsx";
 
 /**
  * Export markdown content as a Word (.doc) file with RTL Arabic support
+ * Uses a more robust HTML-to-Word approach with proper headers and encoding
  */
 export function exportToWord(title: string, markdownContent: string) {
   const htmlContent = markdownToHtml(markdownContent);
   
-  const wordDoc = `<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE html>
-<html xmlns:o="urn:schemas-microsoft-com:office:office"
-      xmlns:w="urn:schemas-microsoft-com:office:word"
-      xmlns="http://www.w3.org/TR/REC-html40"
+  // Word-specific XML/HTML wrapper for better compatibility and RTL support
+  const wordDoc = `
+<html xmlns:o='urn:schemas-microsoft-com:office:office' 
+      xmlns:w='urn:schemas-microsoft-com:office:word' 
+      xmlns='http://www.w3.org/TR/REC-html40'
       dir="rtl" lang="ar">
 <head>
-<meta charset="utf-8">
-<!--[if gte mso 9]>
-<xml>
-<w:WordDocument>
-<w:View>Print</w:View>
-<w:Zoom>100</w:Zoom>
-<w:DoNotOptimizeForBrowser/>
-</w:WordDocument>
-</xml>
-<![endif]-->
-<style>
-  @page { 
-    size: A4; 
-    margin: 2cm;
-    mso-page-orientation: portrait;
-  }
-  body {
-    font-family: 'Simplified Arabic', 'Traditional Arabic', 'Arial', 'Tahoma', sans-serif;
-    font-size: 12pt;
-    line-height: 2;
-    direction: rtl;
-    text-align: right;
-    color: #1a1a1a;
-    mso-bidi-font-family: 'Simplified Arabic';
-    mso-fareast-font-family: 'Simplified Arabic';
-  }
-  h1 { 
-    font-size: 20pt; 
-    font-weight: bold; 
-    text-align: center; 
-    margin-bottom: 24pt; 
-    border-bottom: 3px solid #1a5276; 
-    padding-bottom: 12pt;
-    color: #1a5276;
-    mso-bidi-font-weight: bold;
-  }
-  h2 { 
-    font-size: 15pt; 
-    font-weight: bold; 
-    margin-top: 18pt; 
-    margin-bottom: 10pt; 
-    color: #1a5276;
-    border-bottom: 1.5px solid #aed6f1;
-    padding-bottom: 4pt;
-    mso-bidi-font-weight: bold;
-  }
-  h3 { 
-    font-size: 13pt; 
-    font-weight: bold; 
-    margin-top: 14pt; 
-    margin-bottom: 6pt;
-    color: #2c3e50;
-    mso-bidi-font-weight: bold;
-  }
-  p { 
-    margin: 6pt 0; 
-    text-align: justify;
-    text-justify: kashida;
-  }
-  ul, ol { 
-    margin: 8pt 24pt 8pt 0; 
-    padding-right: 16pt;
-  }
-  li { 
-    margin: 4pt 0; 
-    line-height: 1.8;
-  }
-  table { 
-    width: 100%; 
-    border-collapse: collapse; 
-    margin: 12pt 0;
-    direction: rtl;
-  }
-  th, td { 
-    border: 1.5px solid #2c3e50; 
-    padding: 8pt 10pt; 
-    text-align: right; 
-    font-size: 11pt;
-    line-height: 1.6;
-    mso-bidi-font-family: 'Simplified Arabic';
-  }
-  th { 
-    background-color: #1a5276; 
-    color: #ffffff;
-    font-weight: bold; 
-    font-size: 11pt;
-    mso-bidi-font-weight: bold;
-  }
-  tr:nth-child(even) td {
-    background-color: #f5f8fa;
-  }
-  strong, b { 
-    font-weight: bold;
-    mso-bidi-font-weight: bold;
-  }
-  .header-info { 
-    text-align: center; 
-    margin-bottom: 24pt;
-    border: 2px solid #1a5276;
-    padding: 12pt;
-    background-color: #eaf2f8;
-  }
-  .doc-code { 
-    font-size: 11pt; 
-    color: #1a5276;
-    font-weight: bold;
-  }
-  .footer {
-    text-align: center;
-    margin-top: 30pt;
-    padding-top: 10pt;
-    border-top: 1px solid #ccc;
-    font-size: 9pt;
-    color: #999;
-  }
-</style>
+  <meta charset="utf-8">
+  <title>${escapeHtml(title)}</title>
+  <!--[if gte mso 9]>
+  <xml>
+    <w:WordDocument>
+      <w:View>Print</w:View>
+      <w:Zoom>100</w:Zoom>
+      <w:DoNotOptimizeForBrowser/>
+    </w:WordDocument>
+  </xml>
+  <![endif]-->
+  <style>
+    @page {
+      size: A4;
+      margin: 2.5cm 2cm 2.5cm 2cm;
+    }
+    body {
+      font-family: 'Arial', 'Simplified Arabic', 'Traditional Arabic', 'Tahoma', sans-serif;
+      font-size: 12pt;
+      line-height: 1.6;
+      direction: rtl;
+      text-align: right;
+      color: #000000;
+    }
+    h1 {
+      font-size: 22pt;
+      color: #1a5276;
+      text-align: center;
+      margin-bottom: 30pt;
+      border-bottom: 2px solid #1a5276;
+      padding-bottom: 10pt;
+    }
+    h2 {
+      font-size: 18pt;
+      color: #1a5276;
+      margin-top: 20pt;
+      margin-bottom: 10pt;
+      border-bottom: 1px solid #aed6f1;
+    }
+    h3 {
+      font-size: 14pt;
+      color: #2c3e50;
+      margin-top: 15pt;
+      margin-bottom: 8pt;
+    }
+    p {
+      margin-bottom: 10pt;
+      text-align: justify;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 15pt 0;
+      direction: rtl;
+    }
+    th, td {
+      border: 1px solid #2c3e50;
+      padding: 8pt;
+      text-align: right;
+      vertical-align: top;
+    }
+    th {
+      background-color: #f2f7fb;
+      font-weight: bold;
+      color: #1a5276;
+    }
+    ul, ol {
+      margin-bottom: 10pt;
+      padding-right: 30pt;
+    }
+    li {
+      margin-bottom: 5pt;
+    }
+    .header-box {
+      border: 1px solid #1a5276;
+      padding: 10pt;
+      margin-bottom: 20pt;
+      background-color: #f8fbfe;
+      text-align: center;
+    }
+    .footer {
+      margin-top: 40pt;
+      border-top: 1px solid #dddddd;
+      padding-top: 10pt;
+      font-size: 9pt;
+      color: #777777;
+      text-align: center;
+    }
+  </style>
 </head>
 <body>
-<div class="header-info">
-  <p class="doc-code">نظام إدارة الجودة وسلامة الغذاء</p>
-</div>
-<h1>${escapeHtml(title)}</h1>
-${htmlContent}
-<div class="footer">
-  <p>تم إنشاء هذا المستند بواسطة نظام الأذواق لسلامة الغذاء</p>
-</div>
+  <div class="header-box">
+    <p style="font-weight: bold; color: #1a5276; margin: 0;">نظام الأذواق لسلامة الغذاء - تقرير الوكيل الذكي</p>
+  </div>
+  
+  <h1>${escapeHtml(title)}</h1>
+  
+  <div class="content">
+    ${htmlContent}
+  </div>
+  
+  <div class="footer">
+    <p>تم إنشاء هذا المستند آلياً بواسطة منصة الأذواق لسلامة الغذاء</p>
+    <p>تاريخ الإصدار: ${new Date().toLocaleDateString('ar-EG')}</p>
+  </div>
 </body>
 </html>`;
 
-  const blob = new Blob(["\ufeff" + wordDoc], { type: "application/msword;charset=utf-8" });
+  // Use application/vnd.ms-word to ensure it opens in Word
+  const blob = new Blob([wordDoc], { type: "application/vnd.ms-word;charset=utf-8" });
   downloadBlob(blob, `${sanitizeFilename(title)}.doc`);
 }
 
@@ -151,57 +132,40 @@ ${htmlContent}
  */
 export function exportToExcel(title: string, markdownContent: string) {
   const wb = XLSX.utils.book_new();
+  wb.Workbook = { Views: [{ RTL: true }] }; // Set workbook to RTL
   
   const tables = extractMarkdownTables(markdownContent);
   
   if (tables.length === 0) {
-    const lines = markdownContent.split("\n").filter(l => l.trim());
-    const data = lines.map(line => [line.replace(/[#*_`]/g, "").trim()]);
-    const ws = XLSX.utils.aoa_to_sheet([["المحتوى"], ...data]);
+    // If no tables, export text content line by line
+    const lines = markdownContent.split("\n")
+      .map(l => l.trim())
+      .filter(l => l.length > 0)
+      .map(line => [line.replace(/[#*_`]/g, "").trim()]);
+      
+    const ws = XLSX.utils.aoa_to_sheet([
+      [title],
+      [""],
+      ...lines
+    ]);
     
-    // Style header
-    ws["!cols"] = [{ wch: 80 }];
-    ws["!rows"] = [{ hpt: 24 }];
-    
+    ws["!cols"] = [{ wch: 100 }];
     XLSX.utils.book_append_sheet(wb, ws, "المحتوى");
   } else {
+    // Export each table to a separate sheet
     tables.forEach((table, idx) => {
       const ws = XLSX.utils.aoa_to_sheet(table.rows);
       
-      // Auto-size columns based on content
+      // Auto-size columns
       const maxCols = Math.max(...table.rows.map(r => r.length));
       ws["!cols"] = Array.from({ length: maxCols }, (_, colIdx) => {
-        const maxWidth = Math.max(
-          ...table.rows.map(r => (r[colIdx] || "").length)
-        );
-        return { wch: Math.max(12, Math.min(50, maxWidth + 4)) };
+        const maxWidth = Math.max(...table.rows.map(r => (r[colIdx] || "").toString().length));
+        return { wch: Math.min(50, Math.max(15, maxWidth + 2)) };
       });
       
-      // Set row heights
-      ws["!rows"] = table.rows.map((_, i) => ({ hpt: i === 0 ? 24 : 20 }));
-      
-      const sheetName = (table.heading || `جدول ${idx + 1}`).substring(0, 31);
+      const sheetName = (table.heading || `جدول ${idx + 1}`).substring(0, 31).replace(/[\\/?*[\]]/g, "");
       XLSX.utils.book_append_sheet(wb, ws, sheetName);
     });
-    
-    // Add a summary sheet if multiple tables
-    if (tables.length > 1) {
-      const summaryData = [
-        ["ملخص المستند"],
-        ["العنوان", title],
-        ["عدد الجداول", String(tables.length)],
-        [""],
-        ["اسم الورقة", "عدد الصفوف", "عدد الأعمدة"],
-        ...tables.map((t, i) => [
-          t.heading || `جدول ${i + 1}`,
-          String(t.rows.length - 1),
-          String(Math.max(...t.rows.map(r => r.length)))
-        ])
-      ];
-      const summaryWs = XLSX.utils.aoa_to_sheet(summaryData);
-      summaryWs["!cols"] = [{ wch: 30 }, { wch: 20 }, { wch: 15 }];
-      XLSX.utils.book_append_sheet(wb, summaryWs, "ملخص");
-    }
   }
 
   XLSX.writeFile(wb, `${sanitizeFilename(title)}.xlsx`);
@@ -210,11 +174,16 @@ export function exportToExcel(title: string, markdownContent: string) {
 // ---- Helpers ----
 
 function escapeHtml(text: string): string {
-  return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  return text
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
 }
 
 function sanitizeFilename(name: string): string {
-  return name.replace(/[/\\?%*:|"<>]/g, "-").substring(0, 100);
+  return name.replace(/[/\\?%*:|"<>]/g, "-").substring(0, 100) || "document";
 }
 
 function downloadBlob(blob: Blob, filename: string) {
@@ -241,9 +210,11 @@ function extractMarkdownTables(markdown: string): MarkdownTable[] {
   while (i < lines.length) {
     const line = lines[i].trim();
     
-    if (line.startsWith("|") && line.endsWith("|")) {
+    if (line.startsWith("|") && line.includes("-|-")) {
+      // Found a table header separator
       let heading = "";
-      for (let j = i - 1; j >= 0; j--) {
+      // Look back for a heading
+      for (let j = i - 2; j >= 0; j--) {
         const prev = lines[j].trim();
         if (prev.startsWith("#")) {
           heading = prev.replace(/^#+\s*/, "").trim();
@@ -256,12 +227,17 @@ function extractMarkdownTables(markdown: string): MarkdownTable[] {
       }
 
       const tableRows: string[][] = [];
+      // Get header row
+      if (i > 0 && lines[i-1].trim().startsWith("|")) {
+        tableRows.push(parseTableRow(lines[i-1]));
+      }
+      
+      // Skip separator row
+      i++;
+      
+      // Get data rows
       while (i < lines.length && lines[i].trim().startsWith("|")) {
-        const row = lines[i].trim();
-        if (!/^\|[\s\-:|]+\|$/.test(row)) {
-          const cells = row.split("|").slice(1, -1).map(c => c.trim().replace(/\*\*/g, ""));
-          tableRows.push(cells);
-        }
+        tableRows.push(parseTableRow(lines[i]));
         i++;
       }
 
@@ -276,52 +252,73 @@ function extractMarkdownTables(markdown: string): MarkdownTable[] {
   return tables;
 }
 
+function parseTableRow(row: string): string[] {
+  return row
+    .trim()
+    .split("|")
+    .filter((_, idx, arr) => idx > 0 && idx < arr.length - 1)
+    .map(c => c.trim().replace(/\*\*/g, ""));
+}
+
 function markdownToHtml(md: string): string {
   let html = md;
   
+  // Clean up carriage returns
+  html = html.replace(/\r\n/g, "\n");
+
   // Headers
-  html = html.replace(/^#### (.+)$/gm, "<h4>$1</h4>");
   html = html.replace(/^### (.+)$/gm, "<h3>$1</h3>");
   html = html.replace(/^## (.+)$/gm, "<h2>$1</h2>");
   html = html.replace(/^# (.+)$/gm, "<h1>$1</h1>");
   
-  // Bold
+  // Bold & Italic
+  html = html.replace(/\*\*\*(.+?)\*\*\*/g, "<strong><em>$1</em></strong>");
   html = html.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
-  
-  // Italic
   html = html.replace(/\*(.+?)\*/g, "<em>$1</em>");
   
-  // Tables - improved rendering
+  // Tables
   html = html.replace(/((?:\|[^\n]+\|\n)+)/g, (match) => {
     const rows = match.trim().split("\n");
-    let table = '<table>';
-    let isFirstDataRow = true;
-    rows.forEach((row) => {
-      if (/^\|[\s\-:|]+\|$/.test(row)) return;
-      const cells = row.split("|").slice(1, -1);
-      const tag = isFirstDataRow ? "th" : "td";
-      table += "<tr>" + cells.map(c => `<${tag}>${c.trim()}</${tag}>`).join("") + "</tr>";
-      isFirstDataRow = false;
+    if (rows.length < 2) return match;
+    
+    let tableHtml = '<table>';
+    let hasHeader = false;
+    
+    rows.forEach((row, idx) => {
+      if (row.includes("-|-") || row.match(/^\|[\s\-:|]+\|$/)) {
+        hasHeader = true;
+        return;
+      }
+      
+      const cells = row.split("|").filter((_, i, arr) => i > 0 && i < arr.length - 1);
+      const isHeaderRow = idx === 0 && rows[1] && (rows[1].includes("-|-") || rows[1].match(/^\|[\s\-:|]+\|$/));
+      const tag = isHeaderRow ? "th" : "td";
+      
+      tableHtml += "<tr>" + cells.map(c => `<${tag}>${c.trim()}</${tag}>`).join("") + "</tr>";
     });
-    table += "</table>";
-    return table;
+    
+    tableHtml += "</table>";
+    return tableHtml;
   });
   
-  // Unordered lists
-  html = html.replace(/^- (.+)$/gm, "<li>$1</li>");
-  html = html.replace(/((?:<li>.*<\/li>\n?)+)/g, (match) => `<ul>${match}</ul>`);
+  // Lists
+  html = html.replace(/^\s*-\s+(.+)$/gm, "<li>$1</li>");
+  html = html.replace(/((?:<li>.+<\/li>\n?)+)/g, "<ul>$1</ul>");
   
-  // Ordered lists
-  html = html.replace(/^\d+\.\s+(.+)$/gm, "<li>$1</li>");
+  html = html.replace(/^\s*\d+\.\s+(.+)$/gm, "<li>$1</li>");
+  html = html.replace(/((?:<li>.+<\/li>\n?)+)(?!<\/ul>)/g, (match) => {
+    if (match.includes("<ul>")) return match;
+    return `<ol>${match}</ol>`;
+  });
   
-  // Horizontal rules
-  html = html.replace(/^---+$/gm, "<hr/>");
+  // Paragraphs (simplified)
+  const lines = html.split("\n");
+  const processedLines = lines.map(line => {
+    const trimmed = line.trim();
+    if (!trimmed) return "";
+    if (trimmed.startsWith("<")) return trimmed;
+    return `<p>${trimmed}</p>`;
+  });
   
-  // Paragraphs
-  html = html.replace(/^(?!<[hultdpoe/]|<\/|<strong|<em|<hr)(.+)$/gm, "<p>$1</p>");
-  
-  // Clean
-  html = html.replace(/<p>\s*<\/p>/g, "");
-  
-  return html;
+  return processedLines.filter(l => l).join("\n");
 }
