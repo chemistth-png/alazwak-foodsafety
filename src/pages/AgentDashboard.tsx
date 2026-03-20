@@ -388,36 +388,38 @@ const AgentDashboard = () => {
                 </div>
               </div>
               {/* Export & Action Buttons */}
-              <div className="flex items-center gap-1.5">
-                {selectedTask.ai_output && (
-                  <>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="gap-1"
-                      onClick={() => exportToWord(selectedTask.title, selectedTask.ai_output)}
-                      title="تصدير Word"
-                    >
-                      <FileType className="w-3.5 h-3.5" />
-                      <span className="hidden sm:inline">Word</span>
+              <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1 -mb-1 max-w-[50%] sm:max-w-none justify-end">
+                <div className="flex items-center gap-1.5 shrink-0">
+                  {selectedTask.ai_output && (
+                    <>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="gap-1 shrink-0 h-8"
+                        onClick={() => exportToWord(selectedTask.title, selectedTask.ai_output)}
+                        title="تصدير Word"
+                      >
+                        <FileType className="w-3.5 h-3.5" />
+                        <span className="hidden sm:inline">Word</span>
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="gap-1 shrink-0 h-8"
+                        onClick={() => exportToExcel(selectedTask.title, selectedTask.ai_output)}
+                        title="تصدير Excel"
+                      >
+                        <FileSpreadsheet className="w-3.5 h-3.5" />
+                        <span className="hidden sm:inline">Excel</span>
+                      </Button>
+                    </>
+                  )}
+                  {selectedTask.status === "review" && (
+                    <Button size="sm" className="gap-1 shrink-0 h-8" onClick={handleApprove} disabled={isGenerating}>
+                      <CheckCircle2 className="w-3.5 h-3.5" /> موافقة
                     </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="gap-1"
-                      onClick={() => exportToExcel(selectedTask.title, selectedTask.ai_output)}
-                      title="تصدير Excel"
-                    >
-                      <FileSpreadsheet className="w-3.5 h-3.5" />
-                      <span className="hidden sm:inline">Excel</span>
-                    </Button>
-                  </>
-                )}
-                {selectedTask.status === "review" && (
-                  <Button size="sm" className="gap-1" onClick={handleApprove} disabled={isGenerating}>
-                    <CheckCircle2 className="w-3.5 h-3.5" /> موافقة
-                  </Button>
-                )}
+                  )}
+                </div>
               </div>
             </div>
 
