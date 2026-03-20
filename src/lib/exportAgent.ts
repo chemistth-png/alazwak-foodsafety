@@ -11,7 +11,9 @@ import {
   WidthType, 
   BorderStyle, 
   AlignmentType,
-  TextDirection
+  TextDirection,
+  UnderlineType,
+  Alignment
 } from "docx";
 import { saveAs } from "file-saver";
 
@@ -20,7 +22,7 @@ import { saveAs } from "file-saver";
  * Uses the 'docx' library for valid file generation
  */
 export async function exportToWord(title: string, markdownContent: string) {
-  const sections = parseMarkdownToDocxSections(markdownContent);
+  const sections = parseMarkdownToDocxElements(markdownContent);
   
   const doc = new Document({
     sections: [{
@@ -33,6 +35,7 @@ export async function exportToWord(title: string, markdownContent: string) {
             left: 1440,
           },
         },
+        bidi: true, // Enable bidirectional text for the entire document
       },
       children: [
         // Header Box
@@ -45,12 +48,14 @@ export async function exportToWord(title: string, markdownContent: string) {
                   children: [
                     new Paragraph({
                       alignment: AlignmentType.CENTER,
+                      bidirectional: true,
                       children: [
                         new TextRun({
                           text: "نظام الأذواق لسلامة الغذاء - تقرير الوكيل الذكي",
                           bold: true,
                           color: "1a5276",
                           size: 24,
+                          font: "Arial",
                         }),
                       ],
                     }),
@@ -81,6 +86,7 @@ export async function exportToWord(title: string, markdownContent: string) {
               bold: true,
               color: "1a5276",
               size: 44, // 22pt
+              font: "Arial",
             }),
           ],
         }),
@@ -113,6 +119,7 @@ export async function exportToWord(title: string, markdownContent: string) {
                           text: "تم إنشاء هذا المستند آلياً بواسطة منصة الأذواق لسلامة الغذاء",
                           size: 18,
                           color: "777777",
+                          font: "Arial",
                         }),
                       ],
                     }),
@@ -121,9 +128,10 @@ export async function exportToWord(title: string, markdownContent: string) {
                       bidirectional: true,
                       children: [
                         new TextRun({
-                          text: `تاريخ الإصدار: ${new Date().toLocaleDateString('ar-EG')}`,
+                          text: `تاريخ الإصدار: ${new Date().toLocaleDateString("ar-EG")}`,
                           size: 18,
                           color: "777777",
+                          font: "Arial",
                         }),
                       ],
                     }),
@@ -149,51 +157,99 @@ export function exportToExcel(title: string, markdownContent: string) {
   const wb = XLSX.utils.book_new();
   wb.Workbook = { Views: [{ RTL: true }] };
   
-  const lines = markdownContent.split("\n").map(l => l.trim());
-  const aoa: any[][] = [[title], [""]];
+  const allContentSheetData: any[][] = [[title], [""]];
   
+  const lines = markdownContent.split("\n");
+  let currentParagraph: string[] = [];
+  let currentList: string[] = [];
   let currentTable: string[][] | null = null;
-  
+
+  const flushParagraph = () => {
+    if (currentParagraph.length > 0) {
+      allContentSheetData.push([currentParagraph.join(" ")]);
+      currentParagraph = [];
+    }
+  };
+
+  const flushList = () => {
+    if (currentList.length > 0) {
+      currentList.forEach(item => allContentSheetData.push([item]));
+      currentList = [];
+    }
+  };
+
   lines.forEach(line => {
-    if (line.startsWith("|") && line.includes("-|-")) {
-      // Skip separator
+    const trimmedLine = line.trim();
+
+    if (trimmedLine.startsWith("|") && trimmedLine.includes("-|-")) {
+      // Table separator line
+      flushParagraph();
+      flushList();
+      // Skip this line, next line is header or data
       return;
     }
-    
-    if (line.startsWith("|")) {
-      const cells = line.split("|").filter((_, i, arr) => i > 0 && i < arr.length - 1).map(c => c.trim().replace(/\*\*/g, ""));
+
+    if (trimmedLine.startsWith("|")) {
+      // Table row
+      flushParagraph();
+      flushList();
+      const cells = trimmedLine.split("|").filter((_, i, arr) => i > 0 && i < arr.length - 1).map(c => c.trim().replace(/\*\*/g, ""));
       if (!currentTable) {
         currentTable = [cells];
       } else {
         currentTable.push(cells);
       }
-    } else {
+    } else if (trimmedLine.startsWith("- ") || trimmedLine.match(/^\d+\.\s/)) {
+      // List item
+      flushParagraph();
       if (currentTable) {
-        aoa.push(...currentTable);
-        aoa.push([""]);
+        allContentSheetData.push(...currentTable);
+        allContentSheetData.push([""]);
         currentTable = null;
       }
-      
-      if (line.length > 0) {
-        // Clean markdown formatting for Excel
-        const cleanLine = line.replace(/[#*_`]/g, "").trim();
-        aoa.push([cleanLine]);
-      } else {
-        aoa.push([""]);
+      currentList.push(trimmedLine.replace(/^[-\d.]+\s+/, ""));
+    } else if (trimmedLine.startsWith("#")) {
+      // Header
+      flushParagraph();
+      flushList();
+      if (currentTable) {
+        allContentSheetData.push(...currentTable);
+        allContentSheetData.push([""]);
+        currentTable = null;
       }
+      allContentSheetData.push([trimmedLine.replace(/^#+\s*/, "").trim()]);
+      allContentSheetData.push([""]);
+    } else if (trimmedLine.length > 0) {
+      // Paragraph content
+      flushList();
+      if (currentTable) {
+        allContentSheetData.push(...currentTable);
+        allContentSheetData.push([""]);
+        currentTable = null;
+      }
+      currentParagraph.push(trimmedLine.replace(/[#*_`]/g, ""));
+    } else {
+      // Empty line
+      flushParagraph();
+      flushList();
+      if (currentTable) {
+        allContentSheetData.push(...currentTable);
+        allContentSheetData.push([""]);
+        currentTable = null;
+      }
+      allContentSheetData.push([""]);
     }
   });
   
+  flushParagraph();
+  flushList();
   if (currentTable) {
-    aoa.push(...currentTable);
+    allContentSheetData.push(...currentTable);
   }
   
-  const ws = XLSX.utils.aoa_to_sheet(aoa);
-  
-  // Basic styling
-  ws["!cols"] = [{ wch: 100 }];
-  
-  XLSX.utils.book_append_sheet(wb, ws, "تقرير المهمة");
+  const wsAllContent = XLSX.utils.aoa_to_sheet(allContentSheetData);
+  wsAllContent["!cols"] = [{ wch: 100 }];
+  XLSX.utils.book_append_sheet(wb, wsAllContent, "تقرير كامل");
   
   // Also extract tables to separate sheets for better usability
   const tables = extractMarkdownTables(markdownContent);
@@ -218,7 +274,7 @@ function sanitizeFilename(name: string): string {
   return name.replace(/[/\\?%*:|"<>]/g, "-").substring(0, 100) || "document";
 }
 
-function parseMarkdownToDocxSections(markdown: string): any[] {
+function parseMarkdownToDocxElements(markdown: string): any[] {
   const lines = markdown.split("\n");
   const children: any[] = [];
   
@@ -227,6 +283,7 @@ function parseMarkdownToDocxSections(markdown: string): any[] {
     const line = lines[i].trim();
     
     if (!line) {
+      children.push(new Paragraph({ spacing: { after: 100 } })); // Add a small space for empty lines
       i++;
       continue;
     }
@@ -239,16 +296,20 @@ function parseMarkdownToDocxSections(markdown: string): any[] {
         text: text,
         heading: level === 1 ? HeadingLevel.HEADING_1 : level === 2 ? HeadingLevel.HEADING_2 : HeadingLevel.HEADING_3,
         bidirectional: true,
+        alignment: AlignmentType.RIGHT,
         spacing: { before: 240, after: 120 },
+        style: "ArabicHeading", // Custom style for Arabic headings
       }));
       i++;
     } 
     // Tables
     else if (line.startsWith("|")) {
       const tableRows: TableRow[] = [];
+      let isHeaderRow = true;
       while (i < lines.length && lines[i].trim().startsWith("|")) {
         const rowText = lines[i].trim();
         if (rowText.includes("-|-") || rowText.match(/^\|[\s\-:|]+\|$/)) {
+          isHeaderRow = false; // Next rows are data rows
           i++;
           continue;
         }
@@ -259,9 +320,12 @@ function parseMarkdownToDocxSections(markdown: string): any[] {
             children: [new Paragraph({ 
               text: cell.trim().replace(/\*\*/g, ""), 
               bidirectional: true,
-              alignment: AlignmentType.RIGHT 
+              alignment: AlignmentType.RIGHT,
+              run: { bold: isHeaderRow, font: "Arial" }
             })],
             verticalAlign: AlignmentType.CENTER,
+            borders: { top: { style: BorderStyle.SINGLE, size: 6, color: "2c3e50" }, bottom: { style: BorderStyle.SINGLE, size: 6, color: "2c3e50" }, left: { style: BorderStyle.SINGLE, size: 6, color: "2c3e50" }, right: { style: BorderStyle.SINGLE, size: 6, color: "2c3e50" } },
+            shading: isHeaderRow ? { fill: "f2f7fb" } : undefined,
           })),
         }));
         i++;
@@ -271,6 +335,7 @@ function parseMarkdownToDocxSections(markdown: string): any[] {
         width: { size: 100, type: WidthType.PERCENTAGE },
         rows: tableRows,
         spacing: { before: 200, after: 200 },
+        alignment: AlignmentType.RIGHT,
       }));
     }
     // Lists
@@ -283,6 +348,7 @@ function parseMarkdownToDocxSections(markdown: string): any[] {
         bidirectional: true,
         alignment: AlignmentType.RIGHT,
         spacing: { after: 100 },
+        run: { font: "Arial" }
       }));
       i++;
     }
@@ -294,7 +360,8 @@ function parseMarkdownToDocxSections(markdown: string): any[] {
         spacing: { after: 200 },
         children: [
           new TextRun({
-            text: line.replace(/\*\*/g, ""),
+            text: line.replace(/\*\*/g, "").replace(/\*/g, ""), // Remove bold/italic markdown
+            font: "Arial",
           }),
         ],
       }));
