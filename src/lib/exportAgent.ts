@@ -90,6 +90,18 @@ export function exportToExcel(title: string, markdownContent: string) {
   let currentTable: string[][] | null = null;
   let maxCols = 1;
 
+  // First pass to determine maxCols from all tables
+  const allTables = extractMarkdownTables(markdownContent);
+  allTables.forEach(table => {
+    table.rows.forEach(row => {
+      if (row.length > maxCols) maxCols = row.length;
+    });
+  });
+  if (maxCols === 1) maxCols = 5; // Default to 5 columns if no tables found to give some width to text
+
+  currentTable = null; // Reset for second pass
+
+  // Second pass to build the sheet data with proper merging and table parsing
   lines.forEach(line => {
     const trimmedLine = line.trim();
 
@@ -99,55 +111,47 @@ export function exportToExcel(title: string, markdownContent: string) {
     }
 
     if (trimmedLine.startsWith("|")) {
-      // Table row: split by | and clean up
+      // Table row
       const cells = trimmedLine
         .split("|")
         .filter((_, i, arr) => i > 0 && i < arr.length - 1)
         .map(c => c.trim().replace(/\*\*/g, ""));
       
-      if (cells.length > maxCols) maxCols = cells.length;
-
       if (!currentTable) {
         currentTable = [cells];
       } else {
         currentTable.push(cells);
       }
     } else {
-      // If we were building a table and hit a non-table line, flush it
+      // Non-table line, flush currentTable if any
       if (currentTable) {
         allContentSheetData.push(...currentTable);
-        allContentSheetData.push([""]);
+        allContentSheetData.push(Array(maxCols).fill("")); // Add an empty row after table
         currentTable = null;
       }
       
       if (trimmedLine.length > 0) {
-        // Clean markdown formatting for Excel
         const cleanLine = trimmedLine.replace(/[#*_`]/g, "").trim();
         const rowIndex = allContentSheetData.length;
         allContentSheetData.push([cleanLine]);
-        // We'll handle merging later after we know maxCols
+        // Merge cells for this paragraph row
+        merges.push({ s: { r: rowIndex, c: 0 }, e: { r: rowIndex, c: Math.max(0, maxCols - 1) } });
       } else {
-        allContentSheetData.push([""]);
+        allContentSheetData.push(Array(maxCols).fill("")); // Empty row, merge it too
+        merges.push({ s: { r: allContentSheetData.length - 1, c: 0 }, e: { r: allContentSheetData.length - 1, c: Math.max(0, maxCols - 1) } });
       }
     }
   });
   
-  // Final flush
+  // Final flush for any remaining table content
   if (currentTable) {
     allContentSheetData.push(...currentTable);
   }
 
-  // Apply merges for non-table rows to span across maxCols
-  allContentSheetData.forEach((row, idx) => {
-    if (row.length === 1 && row[0] && idx > 1) {
-      merges.push({ s: { r: idx, c: 0 }, e: { r: idx, c: Math.max(0, maxCols - 1) } });
-    }
-  });
-  
   const wsAllContent = XLSX.utils.aoa_to_sheet(allContentSheetData);
   wsAllContent["!merges"] = merges;
   
-  // Auto-size columns
+  // Auto-size columns for the main sheet
   wsAllContent["!cols"] = Array.from({ length: maxCols }, () => ({ wch: 25 }));
   if (wsAllContent["!cols"][0]) wsAllContent["!cols"][0].wch = 40;
   
