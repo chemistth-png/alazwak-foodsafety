@@ -26,7 +26,7 @@ export async function exportToWord(title: string, markdownContent: string) {
       properties: {
         page: {
           margin: {
-            top: 720, // 0.5 inch for smaller file size/less metadata
+            top: 720, // 0.5 inch
             right: 720,
             bottom: 720,
             left: 720,
@@ -71,7 +71,6 @@ export async function exportToWord(title: string, markdownContent: string) {
     }],
   });
 
-  // Packer.toBlob is efficient, but we ensure no extra resources are added
   const blob = await Packer.toBlob(doc);
   saveAs(blob, `${sanitizeFilename(title)}.docx`);
 }
@@ -85,9 +84,11 @@ export function exportToExcel(title: string, markdownContent: string) {
   wb.Workbook = { Views: [{ RTL: true }] };
   
   const allContentSheetData: any[][] = [[title], [""]];
+  const merges: XLSX.Range[] = [];
   
   const lines = markdownContent.split("\n");
   let currentTable: string[][] | null = null;
+  let maxCols = 1;
 
   lines.forEach(line => {
     const trimmedLine = line.trim();
@@ -104,6 +105,8 @@ export function exportToExcel(title: string, markdownContent: string) {
         .filter((_, i, arr) => i > 0 && i < arr.length - 1)
         .map(c => c.trim().replace(/\*\*/g, ""));
       
+      if (cells.length > maxCols) maxCols = cells.length;
+
       if (!currentTable) {
         currentTable = [cells];
       } else {
@@ -120,7 +123,9 @@ export function exportToExcel(title: string, markdownContent: string) {
       if (trimmedLine.length > 0) {
         // Clean markdown formatting for Excel
         const cleanLine = trimmedLine.replace(/[#*_`]/g, "").trim();
+        const rowIndex = allContentSheetData.length;
         allContentSheetData.push([cleanLine]);
+        // We'll handle merging later after we know maxCols
       } else {
         allContentSheetData.push([""]);
       }
@@ -131,20 +136,29 @@ export function exportToExcel(title: string, markdownContent: string) {
   if (currentTable) {
     allContentSheetData.push(...currentTable);
   }
+
+  // Apply merges for non-table rows to span across maxCols
+  allContentSheetData.forEach((row, idx) => {
+    if (row.length === 1 && row[0] && idx > 1) {
+      merges.push({ s: { r: idx, c: 0 }, e: { r: idx, c: Math.max(0, maxCols - 1) } });
+    }
+  });
   
   const wsAllContent = XLSX.utils.aoa_to_sheet(allContentSheetData);
+  wsAllContent["!merges"] = merges;
   
-  // Auto-size column A for text, but keep it reasonable
-  wsAllContent["!cols"] = [{ wch: 80 }];
+  // Auto-size columns
+  wsAllContent["!cols"] = Array.from({ length: maxCols }, () => ({ wch: 25 }));
+  if (wsAllContent["!cols"][0]) wsAllContent["!cols"][0].wch = 40;
   
-  XLSX.utils.book_append_sheet(wb, wsAllContent, "تقرير المهمة");
+  XLSX.utils.book_append_sheet(wb, wsAllContent, "تقرير كامل");
   
   // Also extract tables to separate sheets for better usability
   const tables = extractMarkdownTables(markdownContent);
   tables.forEach((table, idx) => {
     const tableWs = XLSX.utils.aoa_to_sheet(table.rows);
-    const maxCols = Math.max(...table.rows.map(r => r.length));
-    tableWs["!cols"] = Array.from({ length: maxCols }, (_, colIdx) => {
+    const tableMaxCols = Math.max(...table.rows.map(r => r.length));
+    tableWs["!cols"] = Array.from({ length: tableMaxCols }, (_, colIdx) => {
       const maxWidth = Math.max(...table.rows.map(r => (r[colIdx] || "").toString().length));
       return { wch: Math.min(50, Math.max(12, maxWidth + 2)) };
     });
