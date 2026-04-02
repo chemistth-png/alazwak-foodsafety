@@ -1,78 +1,55 @@
 import * as XLSX from "xlsx";
-import { 
-  Document, 
-  Packer, 
-  Paragraph, 
-  TextRun, 
-  HeadingLevel, 
-  Table, 
-  TableRow, 
-  TableCell, 
-  WidthType, 
-  BorderStyle, 
-  AlignmentType
-} from "docx";
 import { saveAs } from "file-saver";
 
 /**
- * Export markdown content as a real Word (.docx) file with RTL Arabic support
- * Optimized for minimal file size and mobile compatibility
+ * Export markdown content as a simple Word (.doc) file with RTL Arabic support
+ * This approach uses HTML with Word-specific XML namespaces for maximum mobile compatibility.
  */
 export async function exportToWord(title: string, markdownContent: string) {
-  const sections = parseMarkdownToDocxElements(markdownContent);
+  const htmlContent = parseMarkdownToHtml(markdownContent);
   
-  const doc = new Document({
-    sections: [{
-      properties: {
-        page: {
-          margin: {
-            top: 720, // 0.5 inch
-            right: 720,
-            bottom: 720,
-            left: 720,
-          },
-        },
-        bidi: true,
-      },
-      children: [
-        // Simple Title
-        new Paragraph({
-          heading: HeadingLevel.HEADING_1,
-          alignment: AlignmentType.CENTER,
-          bidirectional: true,
-          children: [
-            new TextRun({
-              text: title,
-              bold: true,
-              size: 32, // 16pt
-            }),
-          ],
-        }),
-        
-        new Paragraph({ spacing: { after: 200 } }),
-        
-        // Content
-        ...sections,
-        
-        // Simple Footer
-        new Paragraph({ spacing: { before: 400 } }),
-        new Paragraph({
-          alignment: AlignmentType.CENTER,
-          bidirectional: true,
-          children: [
-            new TextRun({
-              text: `تاريخ الإصدار: ${new Date().toLocaleDateString("ar-EG")}`,
-              size: 16,
-              color: "666666",
-            }),
-          ],
-        }),
-      ],
-    }],
-  });
+  const html = `
+    <html xmlns:o="urn:schemas-microsoft-com:office:office" 
+          xmlns:w="urn:schemas-microsoft-com:office:word" 
+          xmlns="http://www.w3.org/TR/REC-html40">
+    <head>
+      <meta charset="utf-8">
+      <title>${title}</title>
+      <!--[if gte mso 9]>
+      <xml>
+        <w:WordDocument>
+          <w:View>Print</w:View>
+          <w:Zoom>100</w:Zoom>
+          <w:DoNotOptimizeForBrowser/>
+        </w:WordDocument>
+      </xml>
+      <![endif]-->
+      <style>
+        body {
+          font-family: 'Arial', 'Tahoma', sans-serif;
+          line-height: 1.6;
+        }
+        h1 { color: #1a365d; text-align: center; border-bottom: 2px solid #1a365d; padding-bottom: 10px; }
+        h2 { color: #2c5282; border-bottom: 1px solid #e2e8f0; padding-bottom: 5px; margin-top: 20px; }
+        h3 { color: #2b6cb0; }
+        table { border-collapse: collapse; width: 100%; margin: 15px 0; }
+        th, td { border: 1px solid #cbd5e0; padding: 8px; text-align: right; }
+        th { background-color: #f7fafc; font-weight: bold; }
+        .footer { margin-top: 30px; text-align: center; color: #718096; font-size: 12px; border-top: 1px solid #e2e8f0; padding-top: 10px; }
+      </style>
+    </head>
+    <body dir="rtl">
+      <h1>${title}</h1>
+      ${htmlContent}
+      <div class="footer">
+        تاريخ الإصدار: ${new Date().toLocaleDateString("ar-EG")}
+      </div>
+    </body>
+    </html>
+  `;
 
-  const blob = await Packer.toBlob(doc);
-  saveAs(blob, `${sanitizeFilename(title)}.docx`);
+  const blob = new Blob(['\ufeff', html], { type: 'application/msword' });
+  saveAs(blob, `${sanitizeFilename(title)}.doc`);
 }
 
 /**
@@ -98,8 +75,6 @@ export function exportToExcel(title: string, markdownContent: string) {
     });
   });
   if (maxCols === 1) maxCols = 5; // Default to 5 columns if no tables found to give some width to text
-
-  currentTable = null; // Reset for second pass
 
   // Second pass to build the sheet data with proper merging and table parsing
   lines.forEach(line => {
@@ -180,11 +155,11 @@ function sanitizeFilename(name: string): string {
   return name.replace(/[/\\?%*:|"<>]/g, "-").substring(0, 100) || "document";
 }
 
-function parseMarkdownToDocxElements(markdown: string): any[] {
+function parseMarkdownToHtml(markdown: string): string {
   const lines = markdown.split("\n");
-  const children: any[] = [];
-  
+  let html = "";
   let i = 0;
+  
   while (i < lines.length) {
     const line = lines[i].trim();
     
@@ -196,19 +171,14 @@ function parseMarkdownToDocxElements(markdown: string): any[] {
     // Headers
     if (line.startsWith("#")) {
       const level = line.match(/^#+/)?.[0].length || 1;
-      const text = line.replace(/^#+\s*/, "");
-      children.push(new Paragraph({
-        text: text,
-        heading: level === 1 ? HeadingLevel.HEADING_1 : level === 2 ? HeadingLevel.HEADING_2 : HeadingLevel.HEADING_3,
-        bidirectional: true,
-        alignment: AlignmentType.RIGHT,
-        spacing: { before: 120, after: 60 },
-      }));
+      const text = line.replace(/^#+\s*/, "").replace(/\*\*/g, "");
+      html += `<h${level}>${text}</h${level}>`;
       i++;
     } 
-    // Tables - Simplified for smaller file size
+    // Tables
     else if (line.startsWith("|")) {
-      const tableRows: TableRow[] = [];
+      html += "<table>";
+      let isHeader = true;
       while (i < lines.length && lines[i].trim().startsWith("|")) {
         const rowText = lines[i].trim();
         if (rowText.includes("-|-") || rowText.match(/^\|[\s\-:|]+\|$/)) {
@@ -217,63 +187,36 @@ function parseMarkdownToDocxElements(markdown: string): any[] {
         }
         
         const cells = rowText.split("|").filter((_, idx, arr) => idx > 0 && idx < arr.length - 1);
-        tableRows.push(new TableRow({
-          children: cells.map(cell => new TableCell({
-            children: [new Paragraph({ 
-              text: cell.trim().replace(/\*\*/g, ""), 
-              bidirectional: true,
-              alignment: AlignmentType.RIGHT,
-              spacing: { before: 40, after: 40 }
-            })],
-            borders: {
-              top: { style: BorderStyle.SINGLE, size: 1 },
-              bottom: { style: BorderStyle.SINGLE, size: 1 },
-              left: { style: BorderStyle.SINGLE, size: 1 },
-              right: { style: BorderStyle.SINGLE, size: 1 },
-            }
-          })),
-        }));
+        html += "<tr>";
+        cells.forEach(cell => {
+          const tag = isHeader ? "th" : "td";
+          html += `<${tag}>${cell.trim().replace(/\*\*/g, "")}</${tag}>`;
+        });
+        html += "</tr>";
+        isHeader = false;
         i++;
       }
-      
-      if (tableRows.length > 0) {
-        children.push(new Table({
-          width: { size: 100, type: WidthType.PERCENTAGE },
-          rows: tableRows,
-          spacing: { before: 100, after: 100 },
-        }));
-      }
+      html += "</table>";
     }
     // Lists
     else if (line.startsWith("- ") || line.match(/^\d+\.\s/)) {
       const isOrdered = line.match(/^\d+\.\s/);
-      children.push(new Paragraph({
-        text: line.replace(/^[-\d.]+\s+/, ""),
-        bullet: isOrdered ? undefined : { level: 0 },
-        numbering: isOrdered ? { reference: "ordered-list", level: 0 } : undefined,
-        bidirectional: true,
-        alignment: AlignmentType.RIGHT,
-        spacing: { after: 60 },
-      }));
-      i++;
+      const tag = isOrdered ? "ol" : "ul";
+      html += `<${tag}>`;
+      while (i < lines.length && (lines[i].trim().startsWith("- ") || lines[i].trim().match(/^\d+\.\s/))) {
+        html += `<li>${lines[i].trim().replace(/^[-\d.]+\s+/, "").replace(/\*\*/g, "")}</li>`;
+        i++;
+      }
+      html += `</${tag}>`;
     }
     // Normal Paragraph
     else {
-      children.push(new Paragraph({
-        bidirectional: true,
-        alignment: AlignmentType.RIGHT,
-        spacing: { after: 100 },
-        children: [
-          new TextRun({
-            text: line.replace(/\*\*/g, "").replace(/\*/g, ""),
-          }),
-        ],
-      }));
+      html += `<p>${line.replace(/\*\*/g, "").replace(/\*/g, "")}</p>`;
       i++;
     }
   }
   
-  return children;
+  return html;
 }
 
 interface MarkdownTable {
