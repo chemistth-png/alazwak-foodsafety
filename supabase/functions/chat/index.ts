@@ -340,67 +340,33 @@ serve(async (req) => {
         const { data: { user } } = await userClient.auth.getUser();
         
         if (user) {
-          // --- RAG: Vector Search ---
+          // --- RAG: Chunked Search ---
           try {
-            // 1. Generate embedding for the query
-            const embedResp = await fetch("https://ai.gateway.lovable.dev/v1/embeddings", {
-              method: "POST",
-              headers: {
-                Authorization: `Bearer ${LOVABLE_API_KEY}`,
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({
-                model: "openai/text-embedding-3-small",
-                input: searchQuery,
-              }),
+            const { data: chunks, error: searchErr } = await supabase.rpc("search_document_chunks", {
+              p_user_id: user.id,
+              p_query: searchQuery,
+              p_limit: 8,
             });
 
-            if (embedResp.ok) {
-              const { data: [{ embedding }] } = await embedResp.json();
-              
-              // 2. Perform vector search
-              const { data: chunks, error: searchErr } = await supabase
-                .rpc("match_document_chunks", {
-                  query_embedding: embedding,
-                  match_threshold: 0.3,
-                  match_count: 8,
-                  p_user_id: user.id,
-                });
-              
-              if (!searchErr && chunks && chunks.length > 0) {
-                documentsContext = `\n\n---\n\n## مستندات ذات صلة من ملفات المستخدم (نتائج البحث بالمتجهات):\n\n${
-                  chunks.map((c: any) => `### ملف: ${c.file_name}\n${c.content}`).join("\n\n---\n\n")
-                }`;
-              }
+            if (!searchErr && chunks && chunks.length > 0) {
+              documentsContext = buildDocsContext(
+                chunks.map((c: any) => ({ file_name: c.file_name, content: c.content }))
+              );
             }
-          } catch (ragErr) {
-            console.error("Vector search failed, falling back to text search:", ragErr);
+          } catch (chunkErr) {
+            console.error("Chunk search failed:", chunkErr);
           }
 
-          // Fallback to text similarity search if vector search didn't return results
+          // Fallback to recent docs if no search results
           if (!documentsContext) {
-            const { data: docs, error: searchErr } = await supabase
-              .rpc("search_documents", {
-                p_user_id: user.id,
-                p_query: searchQuery,
-                p_limit: 5,
-              });
-            
-            if (!searchErr && docs && docs.length > 0) {
-              documentsContext = buildDocsContext(
-                docs.map((d: any) => ({ file_name: d.file_name, content: d.content }))
-              );
-            } else {
-              // Final fallback: fetch recent docs
-              const { data: fallbackDocs } = await supabase
-                .from("documents")
-                .select("file_name, content")
-                .eq("user_id", user.id)
-                .order("created_at", { ascending: false })
-                .limit(5);
-              if (fallbackDocs && fallbackDocs.length > 0) {
-                documentsContext = buildDocsContext(fallbackDocs);
-              }
+            const { data: fallbackDocs } = await supabase
+              .from("documents")
+              .select("file_name, content")
+              .eq("user_id", user.id)
+              .order("created_at", { ascending: false })
+              .limit(3);
+            if (fallbackDocs && fallbackDocs.length > 0) {
+              documentsContext = buildDocsContext(fallbackDocs);
             }
           }
         }

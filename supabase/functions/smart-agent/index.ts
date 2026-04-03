@@ -175,60 +175,25 @@ function buildDocsContext(docs: { file_name: string; content: string }[]): strin
 
 async function fetchUserDocs(supabase: any, userId: string, query: string): Promise<string> {
   try {
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (LOVABLE_API_KEY && query) {
-      // 1. Generate embedding for the query
-      const embedResp = await fetch("https://ai.gateway.lovable.dev/v1/embeddings", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${LOVABLE_API_KEY}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          model: "openai/text-embedding-3-small",
-          input: query,
-        }),
-      });
-
-      if (embedResp.ok) {
-        const { data: [{ embedding }] } = await embedResp.json();
-        
-        // 2. Perform vector search
-        const { data: chunks, error: searchErr } = await supabase
-          .rpc("match_document_chunks", {
-            query_embedding: embedding,
-            match_threshold: 0.3,
-            match_count: 8,
-            p_user_id: userId,
-          });
-        
-        if (!searchErr && chunks && chunks.length > 0) {
-          return `\n\n---\n\n## مستندات مرجعية من ملفات المستخدم (نتائج البحث بالمتجهات):\n\n${
-            chunks.map((c: any) => `### ملف: ${c.file_name}\n${c.content}`).join("\n\n---\n\n")
-          }`;
-        }
-      }
-    }
-
-    // Fallback to text similarity search
-    const { data: docs, error } = await supabase.rpc("search_documents", {
+    // Use improved chunked search
+    const { data: chunks, error } = await supabase.rpc("search_document_chunks", {
       p_user_id: userId,
       p_query: query,
-      p_limit: 5,
+      p_limit: 8,
     });
-    
-    if (error || !docs || docs.length === 0) {
-      console.error("Doc search error or no results in agent, falling back to recent docs:", error);
-      const { data: fallback } = await supabase
-        .from("documents")
-        .select("file_name, content")
-        .eq("user_id", userId)
-        .order("created_at", { ascending: false })
-        .limit(3);
-      return fallback?.length ? buildDocsContext(fallback) : "";
+
+    if (!error && chunks && chunks.length > 0) {
+      return buildDocsContext(chunks.map((c: any) => ({ file_name: c.file_name, content: c.content })));
     }
-    
-    return buildDocsContext(docs.map((d: any) => ({ file_name: d.file_name, content: d.content })));
+
+    console.log("Chunk search returned no results, falling back to recent docs");
+    const { data: fallback } = await supabase
+      .from("documents")
+      .select("file_name, content")
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false })
+      .limit(3);
+    return fallback?.length ? buildDocsContext(fallback) : "";
   } catch (e) {
     console.error("fetchUserDocs error:", e);
     return "";
