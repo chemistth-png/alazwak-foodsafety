@@ -122,6 +122,44 @@ export type Database = {
         }
         Relationships: []
       }
+      document_chunks: {
+        Row: {
+          chunk_index: number
+          content: string
+          created_at: string
+          document_id: string
+          file_name: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          chunk_index?: number
+          content: string
+          created_at?: string
+          document_id: string
+          file_name: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          chunk_index?: number
+          content?: string
+          created_at?: string
+          document_id?: string
+          file_name?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "document_chunks_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "documents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       documents: {
         Row: {
           content: string
@@ -252,6 +290,17 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      search_document_chunks: {
+        Args: { p_limit?: number; p_query: string; p_user_id: string }
+        Returns: {
+          chunk_index: number
+          content: string
+          document_id: string
+          file_name: string
+          id: string
+          relevance: number
+        }[]
+      }
       search_documents: {
         Args: { p_limit?: number; p_query: string; p_user_id: string }
         Returns: {
