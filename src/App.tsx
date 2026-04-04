@@ -16,6 +16,7 @@ import AgentDashboard from "./pages/AgentDashboard";
 import Dashboard from "./pages/Dashboard";
 import AuditLogPage from "./pages/AuditLogPage";
 import BottomNav from "./components/BottomNav";
+import DesktopSidebar from "./components/DesktopSidebar";
 import NotFound from "./pages/NotFound";
 import Install from "./pages/Install";
 import { Loader2 } from "lucide-react";
