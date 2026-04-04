@@ -61,7 +61,7 @@ const ChatSidebar = ({ currentId, onSelect, onNew, open, onClose }: ChatSidebarP
       <aside
         className={cn(
           "fixed md:relative z-50 top-0 right-0 h-full w-72 bg-card border-l flex flex-col transition-transform duration-200",
-          open ? "translate-x-0" : "translate-x-full md:translate-x-0 md:w-0 md:overflow-hidden md:border-0"
+          open ? "translate-x-0" : "translate-x-full md:translate-x-0"
         )}
       >
         <div className="flex items-center justify-between p-3 border-b">
@@ -112,46 +112,22 @@ const ChatSidebar = ({ currentId, onSelect, onNew, open, onClose }: ChatSidebarP
             )}
           </div>
         </ScrollArea>
-        <div className="border-t p-3 space-y-1">
-          <Button
-            variant="ghost"
-            size="sm"
-            className="w-full gap-1.5 text-foreground justify-start"
-            onClick={() => { navigate("/documents"); onClose(); }}
-          >
-            <FolderOpen className="w-4 h-4" />
-            إدارة المستندات
+        {/* Mobile-only nav links */}
+        <div className="border-t p-3 space-y-1 md:hidden">
+          <Button variant="ghost" size="sm" className="w-full gap-1.5 text-foreground justify-start" onClick={() => { navigate("/documents"); onClose(); }}>
+            <FolderOpen className="w-4 h-4" /> إدارة المستندات
           </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="w-full gap-1.5 text-foreground justify-start"
-            onClick={() => { navigate("/plans"); onClose(); }}
-          >
-            <LayoutGrid className="w-4 h-4" />
-            المخططات والخطط
+          <Button variant="ghost" size="sm" className="w-full gap-1.5 text-foreground justify-start" onClick={() => { navigate("/plans"); onClose(); }}>
+            <LayoutGrid className="w-4 h-4" /> المخططات والخطط
           </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="w-full gap-1.5 text-foreground justify-start"
-            onClick={() => { navigate("/sops"); onClose(); }}
-          >
-            <FileText className="w-4 h-4" />
-            إدارة SOPs
+          <Button variant="ghost" size="sm" className="w-full gap-1.5 text-foreground justify-start" onClick={() => { navigate("/sops"); onClose(); }}>
+            <FileText className="w-4 h-4" /> إدارة SOPs
           </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="w-full gap-1.5 text-foreground justify-start"
-            onClick={() => { navigate("/agent"); onClose(); }}
-          >
-            <Bot className="w-4 h-4" />
-            الوكيل الذكي
+          <Button variant="ghost" size="sm" className="w-full gap-1.5 text-foreground justify-start" onClick={() => { navigate("/agent"); onClose(); }}>
+            <Bot className="w-4 h-4" /> الوكيل الذكي
           </Button>
           <Button variant="ghost" size="sm" className="w-full gap-1.5 text-muted-foreground justify-start" onClick={signOut}>
-            <LogOut className="w-4 h-4" />
-            تسجيل الخروج
+            <LogOut className="w-4 h-4" /> تسجيل الخروج
           </Button>
         </div>
       </aside>
