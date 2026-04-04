@@ -16,6 +16,7 @@ import AgentDashboard from "./pages/AgentDashboard";
 import Dashboard from "./pages/Dashboard";
 import AuditLogPage from "./pages/AuditLogPage";
 import BottomNav from "./components/BottomNav";
+import DesktopSidebar from "./components/DesktopSidebar";
 import NotFound from "./pages/NotFound";
 import Install from "./pages/Install";
 import { Loader2 } from "lucide-react";
@@ -59,20 +60,25 @@ const App = () => {
             <Sonner />
             {showSplash && <SplashScreen onFinish={handleSplashFinish} />}
             <BrowserRouter>
-              <Routes>
-                <Route path="/landing" element={<PublicRoute><Landing /></PublicRoute>} />
-                <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
-                <Route path="/documents" element={<ProtectedRoute><Documents /></ProtectedRoute>} />
-                <Route path="/plans" element={<ProtectedRoute><Plans /></ProtectedRoute>} />
-                <Route path="/sops" element={<ProtectedRoute><SOPsPage /></ProtectedRoute>} />
-                <Route path="/sop" element={<ProtectedRoute><SOPTemplate /></ProtectedRoute>} />
-                <Route path="/agent" element={<ProtectedRoute><AgentDashboard /></ProtectedRoute>} />
-                <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-                <Route path="/audit" element={<ProtectedRoute><AuditLogPage /></ProtectedRoute>} />
-                <Route path="/auth" element={<AuthRoute><Auth /></AuthRoute>} />
-                <Route path="/install" element={<Install />} />
-                <Route path="*" element={<NotFound />} />
-              </Routes>
+              <div className="flex h-full">
+                <DesktopSidebar />
+                <div className="flex-1 min-w-0 flex flex-col h-full">
+                  <Routes>
+                    <Route path="/landing" element={<PublicRoute><Landing /></PublicRoute>} />
+                    <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
+                    <Route path="/documents" element={<ProtectedRoute><Documents /></ProtectedRoute>} />
+                    <Route path="/plans" element={<ProtectedRoute><Plans /></ProtectedRoute>} />
+                    <Route path="/sops" element={<ProtectedRoute><SOPsPage /></ProtectedRoute>} />
+                    <Route path="/sop" element={<ProtectedRoute><SOPTemplate /></ProtectedRoute>} />
+                    <Route path="/agent" element={<ProtectedRoute><AgentDashboard /></ProtectedRoute>} />
+                    <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+                    <Route path="/audit" element={<ProtectedRoute><AuditLogPage /></ProtectedRoute>} />
+                    <Route path="/auth" element={<AuthRoute><Auth /></AuthRoute>} />
+                    <Route path="/install" element={<Install />} />
+                    <Route path="*" element={<NotFound />} />
+                  </Routes>
+                </div>
+              </div>
               <BottomNav />
             </BrowserRouter>
           </TooltipProvider>

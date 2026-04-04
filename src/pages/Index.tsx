@@ -208,13 +208,26 @@ const Index = () => {
 
   return (
     <div dir="rtl" className="flex h-full bg-background overflow-hidden">
-      <ChatSidebar
-        currentId={conversationId}
-        onSelect={loadConversation}
-        onNew={startNew}
-        open={sidebarOpen}
-        onClose={() => setSidebarOpen(false)}
-      />
+      {/* Chat history sidebar - always visible on desktop */}
+      <div className="hidden md:block">
+        <ChatSidebar
+          currentId={conversationId}
+          onSelect={loadConversation}
+          onNew={startNew}
+          open={true}
+          onClose={() => {}}
+        />
+      </div>
+      {/* Mobile sidebar */}
+      <div className="md:hidden">
+        <ChatSidebar
+          currentId={conversationId}
+          onSelect={loadConversation}
+          onNew={startNew}
+          open={sidebarOpen}
+          onClose={() => setSidebarOpen(false)}
+        />
+      </div>
 
       <div className="flex flex-col flex-1 min-w-0">
         {/* Header */}
