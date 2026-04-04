@@ -218,13 +218,16 @@ const Index = () => {
           onClose={() => {}}
         />
       </div>
-      <ChatSidebar
-        currentId={conversationId}
-        onSelect={loadConversation}
-        onNew={startNew}
-        open={sidebarOpen}
-        onClose={() => setSidebarOpen(false)}
-      />
+      {/* Mobile sidebar */}
+      <div className="md:hidden">
+        <ChatSidebar
+          currentId={conversationId}
+          onSelect={loadConversation}
+          onNew={startNew}
+          open={sidebarOpen}
+          onClose={() => setSidebarOpen(false)}
+        />
+      </div>
 
       <div className="flex flex-col flex-1 min-w-0">
         {/* Header */}
