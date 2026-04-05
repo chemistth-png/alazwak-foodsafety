@@ -100,6 +100,7 @@ const Index = () => {
   const startNew = useCallback(() => {
     setMessages([]);
     setConversationId(null);
+    setMessageSources({});
   }, []);
 
   const saveMessage = async (convId: string, role: string, content: string) => {
