@@ -35,6 +35,7 @@ const Index = () => {
   const [isExporting, setIsExporting] = useState(false);
   const [attachedFiles, setAttachedFiles] = useState<{ name: string; text: string }[]>([]);
   const [selectedModel, setSelectedModel] = useState("google/gemini-3-flash-preview");
+  const [messageSources, setMessageSources] = useState<Record<number, Source[]>>({});
   const scrollRef = useRef<HTMLDivElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
 
