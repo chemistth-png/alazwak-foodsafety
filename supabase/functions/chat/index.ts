@@ -458,7 +458,31 @@ serve(async (req) => {
       });
     }
 
-    return new Response(response.body, {
+    // Create a new readable stream that prepends sources metadata
+    const { readable, writable } = new TransformStream();
+    const writer = writable.getWriter();
+    const encoder = new TextEncoder();
+
+    // Write sources event first, then pipe the AI stream
+    (async () => {
+      try {
+        if (ragSources.length > 0) {
+          await writer.write(encoder.encode(`data: ${JSON.stringify({ sources: ragSources })}\n\n`));
+        }
+        const reader = response.body!.getReader();
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          await writer.write(value);
+        }
+      } catch (e) {
+        console.error("Stream error:", e);
+      } finally {
+        await writer.close();
+      }
+    })();
+
+    return new Response(readable, {
       headers: { ...corsHeaders, "Content-Type": "text/event-stream" },
     });
   } catch (e) {
