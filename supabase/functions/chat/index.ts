@@ -349,8 +349,18 @@ serve(async (req) => {
             });
 
             if (!searchErr && chunks && chunks.length > 0) {
+              // Collect unique source file names with relevance
+              const sourceMap = new Map<string, number>();
+              for (const c of chunks as any[]) {
+                const prev = sourceMap.get(c.file_name) || 0;
+                if (c.relevance > prev) sourceMap.set(c.file_name, c.relevance);
+              }
+              ragSources = Array.from(sourceMap.entries())
+                .sort((a, b) => b[1] - a[1])
+                .map(([name, score]) => ({ file_name: name, relevance: Math.round(score * 100) / 100 }));
+
               documentsContext = buildDocsContext(
-                chunks.map((c: any) => ({ file_name: c.file_name, content: c.content }))
+                (chunks as any[]).map((c: any) => ({ file_name: c.file_name, content: c.content }))
               );
             }
           } catch (chunkErr) {
@@ -367,6 +377,7 @@ serve(async (req) => {
               .limit(3);
             if (fallbackDocs && fallbackDocs.length > 0) {
               documentsContext = buildDocsContext(fallbackDocs);
+              ragSources = fallbackDocs.map((d: any) => ({ file_name: d.file_name, relevance: 0 }));
             }
           }
         }
