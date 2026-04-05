@@ -324,6 +324,7 @@ serve(async (req) => {
 
     // Try to get relevant stored documents using similarity search
     let documentsContext = "";
+    let ragSources: { file_name: string; relevance: number }[] = [];
     try {
       const authHeader = req.headers.get("Authorization");
       if (authHeader && searchQuery) {
@@ -349,8 +350,18 @@ serve(async (req) => {
             });
 
             if (!searchErr && chunks && chunks.length > 0) {
+              // Collect unique source file names with relevance
+              const sourceMap = new Map<string, number>();
+              for (const c of chunks as any[]) {
+                const prev = sourceMap.get(c.file_name) || 0;
+                if (c.relevance > prev) sourceMap.set(c.file_name, c.relevance);
+              }
+              ragSources = Array.from(sourceMap.entries())
+                .sort((a, b) => b[1] - a[1])
+                .map(([name, score]) => ({ file_name: name, relevance: Math.round(score * 100) / 100 }));
+
               documentsContext = buildDocsContext(
-                chunks.map((c: any) => ({ file_name: c.file_name, content: c.content }))
+                (chunks as any[]).map((c: any) => ({ file_name: c.file_name, content: c.content }))
               );
             }
           } catch (chunkErr) {
@@ -367,6 +378,7 @@ serve(async (req) => {
               .limit(3);
             if (fallbackDocs && fallbackDocs.length > 0) {
               documentsContext = buildDocsContext(fallbackDocs);
+              ragSources = fallbackDocs.map((d: any) => ({ file_name: d.file_name, relevance: 0 }));
             }
           }
         }
@@ -446,7 +458,31 @@ serve(async (req) => {
       });
     }
 
-    return new Response(response.body, {
+    // Create a new readable stream that prepends sources metadata
+    const { readable, writable } = new TransformStream();
+    const writer = writable.getWriter();
+    const encoder = new TextEncoder();
+
+    // Write sources event first, then pipe the AI stream
+    (async () => {
+      try {
+        if (ragSources.length > 0) {
+          await writer.write(encoder.encode(`data: ${JSON.stringify({ sources: ragSources })}\n\n`));
+        }
+        const reader = response.body!.getReader();
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          await writer.write(value);
+        }
+      } catch (e) {
+        console.error("Stream error:", e);
+      } finally {
+        await writer.close();
+      }
+    })();
+
+    return new Response(readable, {
       headers: { ...corsHeaders, "Content-Type": "text/event-stream" },
     });
   } catch (e) {

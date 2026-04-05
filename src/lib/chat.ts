@@ -1,4 +1,5 @@
 export type Msg = { role: "user" | "assistant"; content: string };
+export type Source = { file_name: string; relevance: number };
 
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat`;
 
@@ -6,12 +7,14 @@ export async function streamChat({
   messages,
   onDelta,
   onDone,
+  onSources,
   authToken,
   model,
 }: {
   messages: Msg[];
   onDelta: (deltaText: string) => void;
   onDone: () => void;
+  onSources?: (sources: Source[]) => void;
   authToken?: string;
   model?: string;
 }) {
@@ -57,6 +60,11 @@ export async function streamChat({
 
       try {
         const parsed = JSON.parse(jsonStr);
+        // Check for sources metadata
+        if (parsed.sources && onSources) {
+          onSources(parsed.sources);
+          continue;
+        }
         const content = parsed.choices?.[0]?.delta?.content as string | undefined;
         if (content) onDelta(content);
       } catch {
@@ -76,6 +84,10 @@ export async function streamChat({
       if (jsonStr === "[DONE]") continue;
       try {
         const parsed = JSON.parse(jsonStr);
+        if (parsed.sources && onSources) {
+          onSources(parsed.sources);
+          continue;
+        }
         const content = parsed.choices?.[0]?.delta?.content as string | undefined;
         if (content) onDelta(content);
       } catch { /* ignore */ }

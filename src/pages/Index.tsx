@@ -5,7 +5,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import ReactMarkdown from "react-markdown";
-import { streamChat, type Msg } from "@/lib/chat";
+import { streamChat, type Msg, type Source } from "@/lib/chat";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -16,6 +16,7 @@ import ModelSelector from "@/components/ModelSelector";
 import VoiceInput from "@/components/VoiceInput";
 import ImageGenerator from "@/components/ImageGenerator";
 import { logAudit } from "@/lib/auditLog";
+import SourcesBadge from "@/components/SourcesBadge";
 
 const SUGGESTED_QUESTIONS = [
   "ما هي اشتراطات هيئة سلامة الغذاء لمصانع الأغذية والمياه المعبأة؟",
@@ -34,6 +35,7 @@ const Index = () => {
   const [isExporting, setIsExporting] = useState(false);
   const [attachedFiles, setAttachedFiles] = useState<{ name: string; text: string }[]>([]);
   const [selectedModel, setSelectedModel] = useState("google/gemini-3-flash-preview");
+  const [messageSources, setMessageSources] = useState<Record<number, Source[]>>({});
   const scrollRef = useRef<HTMLDivElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
 
@@ -98,6 +100,7 @@ const Index = () => {
   const startNew = useCallback(() => {
     setMessages([]);
     setConversationId(null);
+    setMessageSources({});
   }, []);
 
   const saveMessage = async (convId: string, role: string, content: string) => {
@@ -177,6 +180,13 @@ const Index = () => {
         onDelta: upsertAssistant,
         authToken: session?.access_token,
         model: selectedModel,
+        onSources: (sources) => {
+          setMessages((prev) => {
+            const assistantIdx = prev.length - (prev[prev.length - 1]?.role === "assistant" ? 1 : 0);
+            setMessageSources((old) => ({ ...old, [assistantIdx]: sources }));
+            return prev;
+          });
+        },
         onDone: async () => {
           setIsLoading(false);
           if (convId && assistantSoFar) {
@@ -316,9 +326,12 @@ const Index = () => {
                     }`}
                   >
                     {msg.role === "assistant" ? (
-                      <div className="prose prose-sm max-w-none dark:prose-invert prose-p:my-1 prose-ul:my-1 prose-ol:my-1 prose-li:my-0.5 prose-headings:my-2">
-                        <ReactMarkdown>{msg.content}</ReactMarkdown>
-                      </div>
+                      <>
+                        <div className="prose prose-sm max-w-none dark:prose-invert prose-p:my-1 prose-ul:my-1 prose-ol:my-1 prose-li:my-0.5 prose-headings:my-2">
+                          <ReactMarkdown>{msg.content}</ReactMarkdown>
+                        </div>
+                        {messageSources[i] && <SourcesBadge sources={messageSources[i]} />}
+                      </>
                     ) : (
                       <p className="whitespace-pre-wrap">{msg.content}</p>
                     )}
