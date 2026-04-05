@@ -179,6 +179,13 @@ const Index = () => {
         onDelta: upsertAssistant,
         authToken: session?.access_token,
         model: selectedModel,
+        onSources: (sources) => {
+          setMessages((prev) => {
+            const assistantIdx = prev.length - (prev[prev.length - 1]?.role === "assistant" ? 1 : 0);
+            setMessageSources((old) => ({ ...old, [assistantIdx]: sources }));
+            return prev;
+          });
+        },
         onDone: async () => {
           setIsLoading(false);
           if (convId && assistantSoFar) {
