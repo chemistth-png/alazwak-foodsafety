@@ -324,6 +324,7 @@ serve(async (req) => {
 
     // Try to get relevant stored documents using similarity search
     let documentsContext = "";
+    let ragSources: { file_name: string; relevance: number }[] = [];
     try {
       const authHeader = req.headers.get("Authorization");
       if (authHeader && searchQuery) {
