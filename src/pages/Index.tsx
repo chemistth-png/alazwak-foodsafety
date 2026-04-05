@@ -16,6 +16,7 @@ import ModelSelector from "@/components/ModelSelector";
 import VoiceInput from "@/components/VoiceInput";
 import ImageGenerator from "@/components/ImageGenerator";
 import { logAudit } from "@/lib/auditLog";
+import SourcesBadge from "@/components/SourcesBadge";
 
 const SUGGESTED_QUESTIONS = [
   "ما هي اشتراطات هيئة سلامة الغذاء لمصانع الأغذية والمياه المعبأة؟",
