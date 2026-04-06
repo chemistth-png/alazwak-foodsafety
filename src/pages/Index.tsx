@@ -217,7 +217,7 @@ const Index = () => {
   };
 
   return (
-    <div dir="rtl" className="flex h-full bg-background overflow-hidden">
+    <div dir="rtl" className="flex flex-row-reverse h-full bg-background overflow-hidden">
       {/* Chat history sidebar - always visible on desktop */}
       <div className="hidden md:block">
         <ChatSidebar

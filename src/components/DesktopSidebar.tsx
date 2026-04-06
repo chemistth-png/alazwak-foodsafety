@@ -22,7 +22,7 @@ const DesktopSidebar = () => {
   if (location.pathname === "/auth" || location.pathname === "/landing" || location.pathname === "/install") return null;
 
   return (
-    <aside className="hidden md:flex flex-col w-56 border-l bg-card h-full shrink-0">
+    <aside className="hidden md:flex flex-col w-56 border-s bg-card h-full shrink-0">
       {/* Brand */}
       <div className="flex items-center gap-2.5 px-4 py-4 border-b">
         <div className="flex items-center justify-center w-9 h-9 rounded-xl bg-primary text-primary-foreground">

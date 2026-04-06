@@ -60,7 +60,7 @@ const ChatSidebar = ({ currentId, onSelect, onNew, open, onClose }: ChatSidebarP
       )}
       <aside
         className={cn(
-          "fixed md:relative z-50 top-0 right-0 h-full w-72 bg-card border-l flex flex-col transition-transform duration-200",
+          "fixed md:relative z-50 top-0 right-0 h-full w-72 bg-card border-s flex flex-col transition-transform duration-200",
           open ? "translate-x-0" : "translate-x-full md:translate-x-0"
         )}
       >
