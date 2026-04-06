@@ -60,7 +60,7 @@ const App = () => {
             <Sonner />
             {showSplash && <SplashScreen onFinish={handleSplashFinish} />}
             <BrowserRouter>
-              <div className="flex h-full">
+              <div className="flex flex-row-reverse h-full">
                 <DesktopSidebar />
                 <div className="flex-1 min-w-0 flex flex-col h-full">
                   <Routes>
