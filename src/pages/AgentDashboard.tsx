@@ -39,6 +39,7 @@ const TASK_TYPES = [
   { id: "training_plan", label: "خطة تدريب", icon: GraduationCap, color: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400" },
   { id: "risk_assessment", label: "تقييم مخاطر", icon: ShieldAlert, color: "bg-red-500/10 text-red-600 dark:text-red-400" },
   { id: "water_monitoring", label: "متابعة معالجة المياه", icon: Droplets, color: "bg-cyan-500/10 text-cyan-600 dark:text-cyan-400" },
+  { id: "groundwater_treatment", label: "تحليل بئر واقتراح معالجة", icon: Droplets, color: "bg-sky-500/10 text-sky-600 dark:text-sky-400" },
   { id: "performance_eval", label: "تقييم أداء", icon: BarChart3, color: "bg-purple-500/10 text-purple-600 dark:text-purple-400" },
   { id: "haccp", label: "خطة HACCP", icon: ClipboardCheck, color: "bg-orange-500/10 text-orange-600 dark:text-orange-400" },
   { id: "general", label: "مهمة عامة", icon: FileText, color: "bg-muted text-muted-foreground" },
