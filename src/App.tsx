@@ -15,6 +15,7 @@ import SOPsPage from "./pages/SOPsPage";
 import AgentDashboard from "./pages/AgentDashboard";
 import Dashboard from "./pages/Dashboard";
 import AuditLogPage from "./pages/AuditLogPage";
+import ReferenceLibrary from "./pages/ReferenceLibrary";
 import BottomNav from "./components/BottomNav";
 import DesktopSidebar from "./components/DesktopSidebar";
 import NotFound from "./pages/NotFound";
@@ -73,6 +74,7 @@ const App = () => {
                     <Route path="/agent" element={<ProtectedRoute><AgentDashboard /></ProtectedRoute>} />
                     <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
                     <Route path="/audit" element={<ProtectedRoute><AuditLogPage /></ProtectedRoute>} />
+                    <Route path="/library" element={<ProtectedRoute><ReferenceLibrary /></ProtectedRoute>} />
                     <Route path="/auth" element={<AuthRoute><Auth /></AuthRoute>} />
                     <Route path="/install" element={<Install />} />
                     <Route path="*" element={<NotFound />} />
