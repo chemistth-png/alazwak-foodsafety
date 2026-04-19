@@ -198,15 +198,37 @@ const HACCPTables = () => {
           <Plus className="w-4 h-4" />
           إضافة صف
         </Button>
+        <Button variant="outline" size="sm" onClick={() => savePlan()} disabled={saving} className="gap-1.5">
+          <Save className="w-4 h-4" />
+          {saving ? "حفظ..." : "حفظ"}
+        </Button>
         <Button variant="outline" size="sm" onClick={exportTable} className="gap-1.5">
           <Download className="w-4 h-4" />
           تصدير PDF
         </Button>
+        {signature ? (
+          <Badge variant="default" className="gap-1.5 bg-green-600 hover:bg-green-700">
+            <BadgeCheck className="w-3.5 h-3.5" />
+            معتمد — {signature.signer_name}
+          </Badge>
+        ) : (
+          <Button variant="default" size="sm" onClick={() => setSigOpen(true)} className="gap-1.5">
+            <ShieldCheck className="w-4 h-4" />
+            توقيع واعتماد
+          </Button>
+        )}
+        {docNumber && <span className="text-xs text-muted-foreground ms-auto">رقم الوثيقة: {docNumber}</span>}
       </div>
+
+      <SignatureDialog open={sigOpen} onOpenChange={setSigOpen} onSigned={onSigned} />
 
       {/* Table */}
       <ScrollArea className="flex-1">
         <div id="haccp-table-export" dir="rtl" style={{ fontFamily: "Cairo" }}>
+          <div className="p-3 border-b bg-muted/30 flex justify-between items-center text-xs">
+            <span className="font-bold">Alazwak FoodSafety — {view === "hazards" ? "تحليل المخاطر" : "خطة HACCP"}</span>
+            <span>رقم: {docNumber || "—"} | {signature ? `معتمد ${new Date(signature.signed_at).toLocaleDateString("ar-EG")}` : "مسودّة"}</span>
+          </div>
           {view === "hazards" ? (
             <Table>
               <TableHeader>
