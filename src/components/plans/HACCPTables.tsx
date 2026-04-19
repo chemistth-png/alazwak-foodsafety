@@ -67,9 +67,63 @@ const DEFAULT_CCPS: CCPRow[] = [
 let rowId = 50;
 
 const HACCPTables = () => {
+  const { user } = useAuth();
   const [view, setView] = useState<"hazards" | "ccps">("hazards");
   const [hazards, setHazards] = useState<HazardRow[]>(DEFAULT_HAZARDS);
   const [ccps, setCCPs] = useState<CCPRow[]>(DEFAULT_CCPS);
+  const [planId, setPlanId] = useState<string | null>(null);
+  const [signature, setSignature] = useState<SignaturePayload | null>(null);
+  const [docNumber, setDocNumber] = useState("");
+  const [sigOpen, setSigOpen] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (!user) return;
+    (async () => {
+      const { data } = await supabase
+        .from("haccp_plans")
+        .select("*")
+        .eq("user_id", user.id)
+        .order("updated_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (data) {
+        setPlanId(data.id);
+        if (Array.isArray(data.hazards) && (data.hazards as any[]).length) setHazards(data.hazards as any);
+        if (Array.isArray(data.ccps) && (data.ccps as any[]).length) setCCPs(data.ccps as any);
+        setDocNumber(data.doc_number || "");
+        const sig = data.signature_data as any;
+        if (sig && sig.signed_at) setSignature(sig as SignaturePayload);
+      }
+    })();
+  }, [user]);
+
+  const savePlan = async (extra: Partial<{ signature_data: any; status: string }> = {}) => {
+    if (!user) { toast.error("يجب تسجيل الدخول"); return; }
+    setSaving(true);
+    const payload: any = {
+      user_id: user.id,
+      title: "خطة HACCP",
+      doc_number: docNumber || `HACCP-${Date.now().toString().slice(-6)}`,
+      hazards: hazards as any,
+      ccps: ccps as any,
+      ...extra,
+    };
+    const res = planId
+      ? await supabase.from("haccp_plans").update(payload).eq("id", planId).select().single()
+      : await supabase.from("haccp_plans").insert(payload).select().single();
+    setSaving(false);
+    if (res.error) { toast.error("فشل الحفظ: " + res.error.message); return; }
+    setPlanId(res.data.id);
+    setDocNumber(res.data.doc_number);
+    toast.success("تم الحفظ");
+  };
+
+  const onSigned = async (sig: SignaturePayload) => {
+    setSignature(sig);
+    await savePlan({ signature_data: sig, status: "approved" });
+  };
+
 
   const addHazard = () => {
     const id = String(++rowId);
