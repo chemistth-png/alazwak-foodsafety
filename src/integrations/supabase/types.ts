@@ -187,6 +187,75 @@ export type Database = {
         }
         Relationships: []
       }
+      flowcharts: {
+        Row: {
+          created_at: string
+          data: Json
+          id: string
+          title: string
+          type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          data?: Json
+          id?: string
+          title?: string
+          type?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          data?: Json
+          id?: string
+          title?: string
+          type?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      haccp_plans: {
+        Row: {
+          ccps: Json
+          created_at: string
+          doc_number: string | null
+          hazards: Json
+          id: string
+          signature_data: Json | null
+          status: string
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          ccps?: Json
+          created_at?: string
+          doc_number?: string | null
+          hazards?: Json
+          id?: string
+          signature_data?: Json | null
+          status?: string
+          title?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          ccps?: Json
+          created_at?: string
+          doc_number?: string | null
+          hazards?: Json
+          id?: string
+          signature_data?: Json | null
+          status?: string
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       messages: {
         Row: {
           content: string
@@ -218,6 +287,27 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      reference_favorites: {
+        Row: {
+          created_at: string
+          id: string
+          reference_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          reference_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          reference_id?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       sops: {
         Row: {
@@ -280,6 +370,39 @@ export type Database = {
           scope?: string | null
           steps?: Json | null
           title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      telegram_settings: {
+        Row: {
+          bot_token: string | null
+          chat_id: string | null
+          created_at: string
+          enabled: boolean
+          id: string
+          preferences: Json
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          bot_token?: string | null
+          chat_id?: string | null
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          preferences?: Json
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          bot_token?: string | null
+          chat_id?: string | null
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          preferences?: Json
           updated_at?: string
           user_id?: string
         }

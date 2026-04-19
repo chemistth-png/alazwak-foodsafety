@@ -1,12 +1,16 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Trash2, Download, FileText } from "lucide-react";
+import { Plus, Trash2, Download, Save, ShieldCheck, BadgeCheck } from "lucide-react";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+import SignatureDialog, { type SignaturePayload } from "./SignatureDialog";
+import { Badge } from "@/components/ui/badge";
 
 interface HazardRow {
   id: string;
@@ -63,9 +67,63 @@ const DEFAULT_CCPS: CCPRow[] = [
 let rowId = 50;
 
 const HACCPTables = () => {
+  const { user } = useAuth();
   const [view, setView] = useState<"hazards" | "ccps">("hazards");
   const [hazards, setHazards] = useState<HazardRow[]>(DEFAULT_HAZARDS);
   const [ccps, setCCPs] = useState<CCPRow[]>(DEFAULT_CCPS);
+  const [planId, setPlanId] = useState<string | null>(null);
+  const [signature, setSignature] = useState<SignaturePayload | null>(null);
+  const [docNumber, setDocNumber] = useState("");
+  const [sigOpen, setSigOpen] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (!user) return;
+    (async () => {
+      const { data } = await supabase
+        .from("haccp_plans")
+        .select("*")
+        .eq("user_id", user.id)
+        .order("updated_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (data) {
+        setPlanId(data.id);
+        if (Array.isArray(data.hazards) && (data.hazards as any[]).length) setHazards(data.hazards as any);
+        if (Array.isArray(data.ccps) && (data.ccps as any[]).length) setCCPs(data.ccps as any);
+        setDocNumber(data.doc_number || "");
+        const sig = data.signature_data as any;
+        if (sig && sig.signed_at) setSignature(sig as SignaturePayload);
+      }
+    })();
+  }, [user]);
+
+  const savePlan = async (extra: Partial<{ signature_data: any; status: string }> = {}) => {
+    if (!user) { toast.error("يجب تسجيل الدخول"); return; }
+    setSaving(true);
+    const payload: any = {
+      user_id: user.id,
+      title: "خطة HACCP",
+      doc_number: docNumber || `HACCP-${Date.now().toString().slice(-6)}`,
+      hazards: hazards as any,
+      ccps: ccps as any,
+      ...extra,
+    };
+    const res = planId
+      ? await supabase.from("haccp_plans").update(payload).eq("id", planId).select().single()
+      : await supabase.from("haccp_plans").insert(payload).select().single();
+    setSaving(false);
+    if (res.error) { toast.error("فشل الحفظ: " + res.error.message); return; }
+    setPlanId(res.data.id);
+    setDocNumber(res.data.doc_number);
+    toast.success("تم الحفظ");
+  };
+
+  const onSigned = async (sig: SignaturePayload) => {
+    setSignature(sig);
+    await savePlan({ signature_data: sig, status: "approved" });
+  };
+
 
   const addHazard = () => {
     const id = String(++rowId);
@@ -140,15 +198,37 @@ const HACCPTables = () => {
           <Plus className="w-4 h-4" />
           إضافة صف
         </Button>
+        <Button variant="outline" size="sm" onClick={() => savePlan()} disabled={saving} className="gap-1.5">
+          <Save className="w-4 h-4" />
+          {saving ? "حفظ..." : "حفظ"}
+        </Button>
         <Button variant="outline" size="sm" onClick={exportTable} className="gap-1.5">
           <Download className="w-4 h-4" />
           تصدير PDF
         </Button>
+        {signature ? (
+          <Badge variant="default" className="gap-1.5">
+            <BadgeCheck className="w-3.5 h-3.5" />
+            معتمد — {signature.signer_name}
+          </Badge>
+        ) : (
+          <Button variant="default" size="sm" onClick={() => setSigOpen(true)} className="gap-1.5">
+            <ShieldCheck className="w-4 h-4" />
+            توقيع واعتماد
+          </Button>
+        )}
+        {docNumber && <span className="text-xs text-muted-foreground ms-auto">رقم الوثيقة: {docNumber}</span>}
       </div>
+
+      <SignatureDialog open={sigOpen} onOpenChange={setSigOpen} onSigned={onSigned} />
 
       {/* Table */}
       <ScrollArea className="flex-1">
         <div id="haccp-table-export" dir="rtl" style={{ fontFamily: "Cairo" }}>
+          <div className="p-3 border-b bg-muted/30 flex justify-between items-center text-xs">
+            <span className="font-bold">Alazwak FoodSafety — {view === "hazards" ? "تحليل المخاطر" : "خطة HACCP"}</span>
+            <span>رقم: {docNumber || "—"} | {signature ? `معتمد ${new Date(signature.signed_at).toLocaleDateString("ar-EG")}` : "مسودّة"}</span>
+          </div>
           {view === "hazards" ? (
             <Table>
               <TableHeader>
