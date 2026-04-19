@@ -207,7 +207,7 @@ const HACCPTables = () => {
           تصدير PDF
         </Button>
         {signature ? (
-          <Badge variant="default" className="gap-1.5 bg-green-600 hover:bg-green-700">
+          <Badge variant="default" className="gap-1.5">
             <BadgeCheck className="w-3.5 h-3.5" />
             معتمد — {signature.signer_name}
           </Badge>
