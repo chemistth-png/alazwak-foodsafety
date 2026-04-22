@@ -163,8 +163,9 @@ const FactoryLayoutBuilder = () => {
     <div className="flex flex-col h-full">
       {/* Toolbar */}
       <div className="flex items-center gap-2 p-3 border-b bg-card flex-wrap">
+        <Input value={title} onChange={(e) => setTitle(e.target.value)} className="w-40 h-9 text-sm" placeholder="عنوان المخطط" />
         <Select value={selectedZone} onValueChange={setSelectedZone}>
-          <SelectTrigger className="w-52 h-9 text-sm">
+          <SelectTrigger className="w-44 h-9 text-sm">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -175,11 +176,19 @@ const FactoryLayoutBuilder = () => {
         </Select>
         <Button variant="outline" size="sm" onClick={addZone} className="gap-1.5">
           <Plus className="w-4 h-4" />
-          إضافة منطقة
+          منطقة
         </Button>
-        <Button variant="outline" size="sm" onClick={() => setItems(DEFAULT_LAYOUT)} className="gap-1.5">
+        <Button variant="outline" size="sm" onClick={saveLayout} disabled={saving} className="gap-1.5">
+          <Save className="w-4 h-4" />
+          {saving ? "..." : "حفظ"}
+        </Button>
+        <Button variant="outline" size="sm" onClick={openLoadDialog} className="gap-1.5">
+          <FolderOpen className="w-4 h-4" />
+          تحميل
+        </Button>
+        <Button variant="outline" size="sm" onClick={() => { setItems(DEFAULT_LAYOUT); setCurrentId(null); }} className="gap-1.5">
           <RotateCcw className="w-4 h-4" />
-          إعادة تعيين
+          تعيين
         </Button>
         <div className="flex items-center gap-1 mr-auto">
           <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setScale((s) => Math.min(s + 0.1, 2))}>
@@ -191,6 +200,28 @@ const FactoryLayoutBuilder = () => {
           </Button>
         </div>
       </div>
+
+      <Dialog open={loadOpen} onOpenChange={setLoadOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>المخططات المحفوظة</DialogTitle>
+          </DialogHeader>
+          <div className="max-h-80 overflow-auto space-y-2">
+            {savedList.length === 0 && <p className="text-sm text-muted-foreground text-center py-4">لا توجد مخططات محفوظة</p>}
+            {savedList.map((s) => (
+              <div key={s.id} className="flex items-center gap-2 p-2 border rounded hover:bg-muted/50">
+                <button className="flex-1 text-right text-sm" onClick={() => loadLayout(s.id)}>
+                  <div className="font-medium">{s.title}</div>
+                  <div className="text-xs text-muted-foreground">{new Date(s.updated_at).toLocaleString("ar")}</div>
+                </button>
+                <Button size="icon" variant="ghost" onClick={() => deleteLayout(s.id)} className="h-8 w-8 text-destructive">
+                  <Trash2 className="w-4 h-4" />
+                </Button>
+              </div>
+            ))}
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Canvas */}
       <div className="flex-1 overflow-auto bg-muted/30">
