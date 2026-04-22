@@ -57,7 +57,58 @@ const FactoryLayoutBuilder = () => {
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const [selectedZone, setSelectedZone] = useState("production");
   const [scale, setScale] = useState(1);
+  const [title, setTitle] = useState("مخطط المصنع");
+  const [currentId, setCurrentId] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [loadOpen, setLoadOpen] = useState(false);
+  const [savedList, setSavedList] = useState<Array<{ id: string; title: string; updated_at: string }>>([]);
+  const { user } = useAuth();
   const canvasRef = useRef<HTMLDivElement>(null);
+
+  const saveLayout = async () => {
+    if (!user) { toast.error("يجب تسجيل الدخول"); return; }
+    setSaving(true);
+    const dataPayload = { items } as any;
+    const { data, error } = currentId
+      ? await supabase.from("flowcharts").update({ title, data: dataPayload, updated_at: new Date().toISOString() }).eq("id", currentId).select().single()
+      : await supabase.from("flowcharts").insert({ user_id: user.id, title, type: "factory_layout", data: dataPayload }).select().single();
+    setSaving(false);
+    if (error) { toast.error("فشل الحفظ: " + error.message); return; }
+    if (data) setCurrentId(data.id);
+    toast.success("تم حفظ المخطط");
+  };
+
+  const openLoadDialog = async () => {
+    if (!user) { toast.error("يجب تسجيل الدخول"); return; }
+    const { data, error } = await supabase
+      .from("flowcharts")
+      .select("id, title, updated_at")
+      .eq("user_id", user.id)
+      .eq("type", "factory_layout")
+      .order("updated_at", { ascending: false });
+    if (error) { toast.error(error.message); return; }
+    setSavedList(data || []);
+    setLoadOpen(true);
+  };
+
+  const loadLayout = async (id: string) => {
+    const { data, error } = await supabase.from("flowcharts").select("*").eq("id", id).single();
+    if (error || !data) { toast.error("فشل التحميل"); return; }
+    const d = data.data as any;
+    setItems(d?.items || []);
+    setTitle(data.title);
+    setCurrentId(data.id);
+    setLoadOpen(false);
+    toast.success("تم تحميل المخطط");
+  };
+
+  const deleteLayout = async (id: string) => {
+    const { error } = await supabase.from("flowcharts").delete().eq("id", id);
+    if (error) { toast.error(error.message); return; }
+    setSavedList((prev) => prev.filter((s) => s.id !== id));
+    if (currentId === id) setCurrentId(null);
+    toast.success("تم الحذف");
+  };
 
   const handleMouseDown = useCallback((id: string, e: React.MouseEvent) => {
     e.preventDefault();
