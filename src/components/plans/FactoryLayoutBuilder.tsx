@@ -1,7 +1,12 @@
 import { useState, useRef, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, RotateCcw, Move, ZoomIn, ZoomOut } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Plus, RotateCcw, Move, ZoomIn, ZoomOut, Save, FolderOpen, Trash2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+import { toast } from "sonner";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 interface LayoutItem {
   id: string;
@@ -52,7 +57,58 @@ const FactoryLayoutBuilder = () => {
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const [selectedZone, setSelectedZone] = useState("production");
   const [scale, setScale] = useState(1);
+  const [title, setTitle] = useState("مخطط المصنع");
+  const [currentId, setCurrentId] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [loadOpen, setLoadOpen] = useState(false);
+  const [savedList, setSavedList] = useState<Array<{ id: string; title: string; updated_at: string }>>([]);
+  const { user } = useAuth();
   const canvasRef = useRef<HTMLDivElement>(null);
+
+  const saveLayout = async () => {
+    if (!user) { toast.error("يجب تسجيل الدخول"); return; }
+    setSaving(true);
+    const dataPayload = { items } as any;
+    const { data, error } = currentId
+      ? await supabase.from("flowcharts").update({ title, data: dataPayload, updated_at: new Date().toISOString() }).eq("id", currentId).select().single()
+      : await supabase.from("flowcharts").insert({ user_id: user.id, title, type: "factory_layout", data: dataPayload }).select().single();
+    setSaving(false);
+    if (error) { toast.error("فشل الحفظ: " + error.message); return; }
+    if (data) setCurrentId(data.id);
+    toast.success("تم حفظ المخطط");
+  };
+
+  const openLoadDialog = async () => {
+    if (!user) { toast.error("يجب تسجيل الدخول"); return; }
+    const { data, error } = await supabase
+      .from("flowcharts")
+      .select("id, title, updated_at")
+      .eq("user_id", user.id)
+      .eq("type", "factory_layout")
+      .order("updated_at", { ascending: false });
+    if (error) { toast.error(error.message); return; }
+    setSavedList(data || []);
+    setLoadOpen(true);
+  };
+
+  const loadLayout = async (id: string) => {
+    const { data, error } = await supabase.from("flowcharts").select("*").eq("id", id).single();
+    if (error || !data) { toast.error("فشل التحميل"); return; }
+    const d = data.data as any;
+    setItems(d?.items || []);
+    setTitle(data.title);
+    setCurrentId(data.id);
+    setLoadOpen(false);
+    toast.success("تم تحميل المخطط");
+  };
+
+  const deleteLayout = async (id: string) => {
+    const { error } = await supabase.from("flowcharts").delete().eq("id", id);
+    if (error) { toast.error(error.message); return; }
+    setSavedList((prev) => prev.filter((s) => s.id !== id));
+    if (currentId === id) setCurrentId(null);
+    toast.success("تم الحذف");
+  };
 
   const handleMouseDown = useCallback((id: string, e: React.MouseEvent) => {
     e.preventDefault();
@@ -107,8 +163,9 @@ const FactoryLayoutBuilder = () => {
     <div className="flex flex-col h-full">
       {/* Toolbar */}
       <div className="flex items-center gap-2 p-3 border-b bg-card flex-wrap">
+        <Input value={title} onChange={(e) => setTitle(e.target.value)} className="w-40 h-9 text-sm" placeholder="عنوان المخطط" />
         <Select value={selectedZone} onValueChange={setSelectedZone}>
-          <SelectTrigger className="w-52 h-9 text-sm">
+          <SelectTrigger className="w-44 h-9 text-sm">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -119,11 +176,19 @@ const FactoryLayoutBuilder = () => {
         </Select>
         <Button variant="outline" size="sm" onClick={addZone} className="gap-1.5">
           <Plus className="w-4 h-4" />
-          إضافة منطقة
+          منطقة
         </Button>
-        <Button variant="outline" size="sm" onClick={() => setItems(DEFAULT_LAYOUT)} className="gap-1.5">
+        <Button variant="outline" size="sm" onClick={saveLayout} disabled={saving} className="gap-1.5">
+          <Save className="w-4 h-4" />
+          {saving ? "..." : "حفظ"}
+        </Button>
+        <Button variant="outline" size="sm" onClick={openLoadDialog} className="gap-1.5">
+          <FolderOpen className="w-4 h-4" />
+          تحميل
+        </Button>
+        <Button variant="outline" size="sm" onClick={() => { setItems(DEFAULT_LAYOUT); setCurrentId(null); }} className="gap-1.5">
           <RotateCcw className="w-4 h-4" />
-          إعادة تعيين
+          تعيين
         </Button>
         <div className="flex items-center gap-1 mr-auto">
           <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setScale((s) => Math.min(s + 0.1, 2))}>
@@ -135,6 +200,28 @@ const FactoryLayoutBuilder = () => {
           </Button>
         </div>
       </div>
+
+      <Dialog open={loadOpen} onOpenChange={setLoadOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>المخططات المحفوظة</DialogTitle>
+          </DialogHeader>
+          <div className="max-h-80 overflow-auto space-y-2">
+            {savedList.length === 0 && <p className="text-sm text-muted-foreground text-center py-4">لا توجد مخططات محفوظة</p>}
+            {savedList.map((s) => (
+              <div key={s.id} className="flex items-center gap-2 p-2 border rounded hover:bg-muted/50">
+                <button className="flex-1 text-right text-sm" onClick={() => loadLayout(s.id)}>
+                  <div className="font-medium">{s.title}</div>
+                  <div className="text-xs text-muted-foreground">{new Date(s.updated_at).toLocaleString("ar")}</div>
+                </button>
+                <Button size="icon" variant="ghost" onClick={() => deleteLayout(s.id)} className="h-8 w-8 text-destructive">
+                  <Trash2 className="w-4 h-4" />
+                </Button>
+              </div>
+            ))}
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Canvas */}
       <div className="flex-1 overflow-auto bg-muted/30">
