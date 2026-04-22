@@ -89,8 +89,14 @@ const TEMPLATES: Record<string, { nodes: Node[]; edges: Edge[] }> = {
 let nodeId = 100;
 
 const FlowChartBuilder = () => {
+  const { user } = useAuth();
   const [nodes, setNodes] = useState<Node[]>(TEMPLATES.haccp_flow.nodes);
   const [edges, setEdges] = useState<Edge[]>(TEMPLATES.haccp_flow.edges);
+  const [currentId, setCurrentId] = useState<string | null>(null);
+  const [title, setTitle] = useState("مخطط تدفق");
+  const [saving, setSaving] = useState(false);
+  const [loadOpen, setLoadOpen] = useState(false);
+  const [savedList, setSavedList] = useState<Array<{ id: string; title: string; updated_at: string }>>([]);
 
   const onNodesChange: OnNodesChange = useCallback(
     (changes) => setNodes((nds) => applyNodeChanges(changes, nds)),
@@ -131,6 +137,7 @@ const FlowChartBuilder = () => {
     if (t) {
       setNodes(t.nodes);
       setEdges(t.edges);
+      setCurrentId(null);
     }
   };
 
@@ -138,12 +145,59 @@ const FlowChartBuilder = () => {
     toast.success("يمكنك أخذ لقطة شاشة للمخطط الحالي (Ctrl+Shift+S)");
   };
 
+  const saveChart = async () => {
+    if (!user) { toast.error("يجب تسجيل الدخول"); return; }
+    setSaving(true);
+    const dataPayload = { nodes, edges } as any;
+    const { data, error } = currentId
+      ? await supabase.from("flowcharts").update({ title, data: dataPayload, updated_at: new Date().toISOString() }).eq("id", currentId).select().single()
+      : await supabase.from("flowcharts").insert({ user_id: user.id, title, type: "flowchart", data: dataPayload }).select().single();
+    setSaving(false);
+    if (error) { toast.error("فشل الحفظ: " + error.message); return; }
+    if (data) setCurrentId(data.id);
+    toast.success("تم حفظ المخطط");
+  };
+
+  const openLoadDialog = async () => {
+    if (!user) { toast.error("يجب تسجيل الدخول"); return; }
+    const { data, error } = await supabase
+      .from("flowcharts")
+      .select("id, title, updated_at")
+      .eq("user_id", user.id)
+      .eq("type", "flowchart")
+      .order("updated_at", { ascending: false });
+    if (error) { toast.error(error.message); return; }
+    setSavedList(data || []);
+    setLoadOpen(true);
+  };
+
+  const loadChart = async (id: string) => {
+    const { data, error } = await supabase.from("flowcharts").select("*").eq("id", id).single();
+    if (error || !data) { toast.error("فشل التحميل"); return; }
+    const d = data.data as any;
+    setNodes(d?.nodes || []);
+    setEdges(d?.edges || []);
+    setTitle(data.title);
+    setCurrentId(data.id);
+    setLoadOpen(false);
+    toast.success("تم تحميل المخطط");
+  };
+
+  const deleteChart = async (id: string) => {
+    const { error } = await supabase.from("flowcharts").delete().eq("id", id);
+    if (error) { toast.error(error.message); return; }
+    setSavedList((prev) => prev.filter((s) => s.id !== id));
+    if (currentId === id) setCurrentId(null);
+    toast.success("تم الحذف");
+  };
+
   return (
     <div className="flex flex-col h-full">
       {/* Toolbar */}
       <div className="flex items-center gap-2 p-3 border-b bg-card flex-wrap">
+        <Input value={title} onChange={(e) => setTitle(e.target.value)} className="w-40 h-9 text-sm" placeholder="عنوان المخطط" />
         <Select defaultValue="haccp_flow" onValueChange={loadTemplate}>
-          <SelectTrigger className="w-48 h-9 text-sm">
+          <SelectTrigger className="w-44 h-9 text-sm">
             <SelectValue placeholder="اختر قالب" />
           </SelectTrigger>
           <SelectContent>
@@ -154,9 +208,17 @@ const FlowChartBuilder = () => {
         </Select>
         <Button variant="outline" size="sm" onClick={addNode} className="gap-1.5">
           <Plus className="w-4 h-4" />
-          إضافة خطوة
+          خطوة
         </Button>
-        <Button variant="outline" size="sm" onClick={() => { setNodes([]); setEdges([]); }} className="gap-1.5">
+        <Button variant="outline" size="sm" onClick={saveChart} disabled={saving} className="gap-1.5">
+          <Save className="w-4 h-4" />
+          {saving ? "..." : "حفظ"}
+        </Button>
+        <Button variant="outline" size="sm" onClick={openLoadDialog} className="gap-1.5">
+          <FolderOpen className="w-4 h-4" />
+          تحميل
+        </Button>
+        <Button variant="outline" size="sm" onClick={() => { setNodes([]); setEdges([]); setCurrentId(null); }} className="gap-1.5">
           <RotateCcw className="w-4 h-4" />
           مسح
         </Button>
@@ -182,6 +244,28 @@ const FlowChartBuilder = () => {
           <Background variant={BackgroundVariant.Dots} gap={16} size={1} />
         </ReactFlow>
       </div>
+
+      <Dialog open={loadOpen} onOpenChange={setLoadOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>المخططات المحفوظة</DialogTitle>
+          </DialogHeader>
+          <div className="max-h-80 overflow-auto space-y-2">
+            {savedList.length === 0 && <p className="text-sm text-muted-foreground text-center py-4">لا توجد مخططات محفوظة</p>}
+            {savedList.map((s) => (
+              <div key={s.id} className="flex items-center gap-2 p-2 border rounded hover:bg-muted/50">
+                <button className="flex-1 text-right text-sm" onClick={() => loadChart(s.id)}>
+                  <div className="font-medium">{s.title}</div>
+                  <div className="text-xs text-muted-foreground">{new Date(s.updated_at).toLocaleString("ar")}</div>
+                </button>
+                <Button size="icon" variant="ghost" onClick={() => deleteChart(s.id)} className="h-8 w-8 text-destructive">
+                  <Trash2 className="w-4 h-4" />
+                </Button>
+              </div>
+            ))}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
