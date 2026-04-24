@@ -87,13 +87,44 @@ const TAB_META: Record<Category, { label: string; icon: typeof MapPin; color: st
 };
 
 const ReferenceLibrary = () => {
+  const { user } = useAuth();
   const [search, setSearch] = useState("");
-  const [tab, setTab] = useState<Category>("local");
+  const [tab, setTab] = useState<Category | "favorites">("local");
+  const [favorites, setFavorites] = useState<Set<string>>(new Set());
+
+  useEffect(() => {
+    if (!user) return;
+    supabase
+      .from("reference_favorites")
+      .select("reference_id")
+      .eq("user_id", user.id)
+      .then(({ data }) => {
+        if (data) setFavorites(new Set(data.map((r) => r.reference_id)));
+      });
+  }, [user]);
+
+  const toggleFav = async (id: string) => {
+    if (!user) {
+      toast.error("سجّل الدخول لحفظ المفضلة");
+      return;
+    }
+    const isFav = favorites.has(id);
+    const next = new Set(favorites);
+    if (isFav) {
+      next.delete(id);
+      setFavorites(next);
+      await supabase.from("reference_favorites").delete().eq("user_id", user.id).eq("reference_id", id);
+    } else {
+      next.add(id);
+      setFavorites(next);
+      await supabase.from("reference_favorites").insert({ user_id: user.id, reference_id: id });
+    }
+  };
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     return REFERENCES.filter((r) => {
-      if (r.category !== tab) return false;
+      if (tab === "favorites" ? !favorites.has(r.id) : r.category !== tab) return false;
       if (!q) return true;
       const haystack = [r.nameAr, r.nameEn, r.description, r.organization, ...r.keywords]
         .join(" ")
