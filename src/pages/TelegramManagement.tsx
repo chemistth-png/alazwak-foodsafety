@@ -1,26 +1,95 @@
-
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
-import { 
-  Send, Users, MessageSquare, Settings, Bell, 
-  ArrowLeft, RefreshCw, Search, Loader2, Construction
-} from "lucide-react";
+import { Send, Settings, ArrowLeft, Loader2, Bell, Save } from "lucide-react";
 import ThemeToggle from "@/components/ThemeToggle";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 
 const TelegramManagement = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { user } = useAuth();
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [sending, setSending] = useState(false);
+  const [settingsId, setSettingsId] = useState<string | null>(null);
+  const [botToken, setBotToken] = useState("");
+  const [chatId, setChatId] = useState("");
+  const [enabled, setEnabled] = useState(false);
   const [broadcastMsg, setBroadcastMsg] = useState("");
-  const [searchTerm, setSearchTerm] = useState("");
-  const [botEnabled, setBotEnabled] = useState(false);
+
+  useEffect(() => {
+    if (!user) return;
+    (async () => {
+      const { data, error } = await supabase
+        .from("telegram_settings")
+        .select("*")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      if (error) {
+        toast({ title: "تعذر تحميل الإعدادات", variant: "destructive" });
+      } else if (data) {
+        setSettingsId(data.id);
+        setBotToken(data.bot_token ?? "");
+        setChatId(data.chat_id ?? "");
+        setEnabled(data.enabled);
+      }
+      setLoading(false);
+    })();
+  }, [user, toast]);
+
+  const saveSettings = async () => {
+    if (!user) return;
+    setSaving(true);
+    const payload = {
+      user_id: user.id,
+      bot_token: botToken.trim() || null,
+      chat_id: chatId.trim() || null,
+      enabled,
+    };
+    const res = settingsId
+      ? await supabase.from("telegram_settings").update(payload).eq("id", settingsId)
+      : await supabase.from("telegram_settings").insert(payload).select("id").single();
+    if (res.error) {
+      toast({ title: "فشل الحفظ", description: res.error.message, variant: "destructive" });
+    } else {
+      if (!settingsId && "data" in res && res.data) setSettingsId((res.data as any).id);
+      toast({ title: "تم حفظ الإعدادات" });
+    }
+    setSaving(false);
+  };
+
+  const sendBroadcast = async () => {
+    if (!botToken || !chatId) {
+      toast({ title: "أدخل التوكن ومعرف المحادثة أولاً", variant: "destructive" });
+      return;
+    }
+    if (!broadcastMsg.trim()) return;
+    setSending(true);
+    try {
+      const r = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ chat_id: chatId, text: broadcastMsg, parse_mode: "HTML" }),
+      });
+      const j = await r.json();
+      if (!j.ok) throw new Error(j.description || "Telegram error");
+      toast({ title: "تم إرسال الرسالة" });
+      setBroadcastMsg("");
+    } catch (e: any) {
+      toast({ title: "فشل الإرسال", description: e.message, variant: "destructive" });
+    } finally {
+      setSending(false);
+    }
+  };
 
   return (
     <div dir="rtl" className="min-h-screen bg-background pb-20 md:pb-6">
@@ -32,7 +101,7 @@ const TelegramManagement = () => {
             </div>
             <div>
               <h1 className="text-base font-bold text-foreground">إدارة التليجرام</h1>
-              <p className="text-[10px] text-muted-foreground">التحكم في البوت والمشتركين</p>
+              <p className="text-[10px] text-muted-foreground">إعدادات البوت والإشعارات</p>
             </div>
           </div>
           <div className="flex items-center gap-1">
@@ -44,139 +113,76 @@ const TelegramManagement = () => {
         </div>
       </header>
 
-      <div className="max-w-7xl mx-auto px-4 py-5 space-y-5">
-        {/* Placeholder notice */}
-        <Card className="border-dashed border-2 border-muted-foreground/30">
-          <CardContent className="p-6 flex flex-col items-center gap-3 text-center">
-            <Construction className="w-10 h-10 text-muted-foreground" />
-            <h2 className="text-lg font-semibold text-foreground">قيد التطوير</h2>
-            <p className="text-sm text-muted-foreground max-w-md">
-              ميزة إدارة التليجرام قيد التطوير. سيتم ربط البوت بقاعدة البيانات قريباً لإدارة المشتركين والرسائل.
-            </p>
-          </CardContent>
-        </Card>
+      <div className="max-w-3xl mx-auto px-4 py-5 space-y-5">
+        {loading ? (
+          <div className="flex justify-center py-16"><Loader2 className="w-6 h-6 animate-spin text-primary" /></div>
+        ) : (
+          <Tabs defaultValue="settings" className="w-full">
+            <TabsList className="grid w-full grid-cols-2 mb-4">
+              <TabsTrigger value="settings">الإعدادات</TabsTrigger>
+              <TabsTrigger value="broadcast">إرسال رسالة</TabsTrigger>
+            </TabsList>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Card>
-            <CardContent className="p-4 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-primary/10 rounded-lg">
-                  <Users className="w-5 h-5 text-primary" />
-                </div>
-                <div>
-                  <p className="text-sm font-medium">المشتركين</p>
-                  <p className="text-2xl font-bold">0</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-4 flex items-center gap-3">
-              <div className="p-2 bg-secondary/10 rounded-lg">
-                <MessageSquare className="w-5 h-5 text-secondary-foreground" />
-              </div>
-              <div>
-                <p className="text-sm font-medium">الرسائل اليوم</p>
-                <p className="text-2xl font-bold">0</p>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-4 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-accent rounded-lg">
-                  <Settings className="w-5 h-5 text-accent-foreground" />
-                </div>
-                <div>
-                  <p className="text-sm font-medium">حالة البوت</p>
-                  <p className="text-xs text-muted-foreground">{botEnabled ? "نشط" : "متوقف"}</p>
-                </div>
-              </div>
-              <Switch 
-                checked={botEnabled} 
-                onCheckedChange={(v) => {
-                  setBotEnabled(v);
-                  toast({ title: v ? "تم تفعيل البوت" : "تم تعطيل البوت" });
-                }}
-              />
-            </CardContent>
-          </Card>
-        </div>
-
-        <Tabs defaultValue="broadcast" className="w-full">
-          <TabsList className="grid w-full grid-cols-2 mb-4">
-            <TabsTrigger value="broadcast">بث رسالة</TabsTrigger>
-            <TabsTrigger value="users">المشتركين</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="broadcast">
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <Bell className="w-5 h-5 text-primary" />
-                  إرسال تنبيه عام
-                </CardTitle>
-                <CardDescription>سيتم إرسال هذه الرسالة إلى جميع مستخدمي البوت النشطين</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <Textarea 
-                  placeholder="اكتب رسالتك هنا..." 
-                  className="min-h-[150px] text-right"
-                  value={broadcastMsg}
-                  onChange={(e) => setBroadcastMsg(e.target.value)}
-                  disabled
-                />
-                <div className="flex justify-end">
-                  <Button disabled>
-                    <Send className="ml-2 w-4 h-4" />
-                    إرسال الآن
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="users">
-            <Card>
-              <CardHeader className="pb-3">
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-lg">قائمة المشتركين</CardTitle>
-                  <div className="relative w-64">
-                    <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                    <Input 
-                      placeholder="بحث عن مشترك..." 
-                      className="pr-9"
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                    />
+            <TabsContent value="settings">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <Settings className="w-5 h-5 text-primary" /> إعدادات البوت الخاص بك
+                  </CardTitle>
+                  <CardDescription>كل مستخدم لديه بوت ومحادثة منفصلة (عزل كامل عبر RLS)</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div>
+                    <Label htmlFor="token">Bot Token</Label>
+                    <Input id="token" type="password" value={botToken} onChange={(e) => setBotToken(e.target.value)} placeholder="123456:ABC-DEF..." dir="ltr" />
                   </div>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="rounded-md border overflow-hidden">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead className="text-right">الاسم</TableHead>
-                        <TableHead className="text-right">المعرف</TableHead>
-                        <TableHead className="text-right">الحالة</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      <TableRow>
-                        <TableCell colSpan={3} className="text-center py-10 text-muted-foreground">
-                          لا يوجد مشتركين بعد
-                        </TableCell>
-                      </TableRow>
-                    </TableBody>
-                  </Table>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
+                  <div>
+                    <Label htmlFor="chat">Chat ID</Label>
+                    <Input id="chat" value={chatId} onChange={(e) => setChatId(e.target.value)} placeholder="-1001234567890" dir="ltr" />
+                  </div>
+                  <div className="flex items-center justify-between rounded-lg border p-3">
+                    <div>
+                      <p className="text-sm font-medium">تفعيل البوت</p>
+                      <p className="text-xs text-muted-foreground">{enabled ? "نشط" : "متوقف"}</p>
+                    </div>
+                    <Switch checked={enabled} onCheckedChange={setEnabled} />
+                  </div>
+                  <Button onClick={saveSettings} disabled={saving} className="w-full">
+                    {saving ? <Loader2 className="w-4 h-4 animate-spin ml-2" /> : <Save className="w-4 h-4 ml-2" />}
+                    حفظ الإعدادات
+                  </Button>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="broadcast">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <Bell className="w-5 h-5 text-primary" /> إرسال تنبيه
+                  </CardTitle>
+                  <CardDescription>سيتم الإرسال إلى Chat ID المحدد في الإعدادات</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <Textarea
+                    placeholder="اكتب رسالتك هنا..."
+                    className="min-h-[150px] text-right"
+                    value={broadcastMsg}
+                    onChange={(e) => setBroadcastMsg(e.target.value)}
+                    disabled={!enabled}
+                  />
+                  <div className="flex justify-end">
+                    <Button onClick={sendBroadcast} disabled={sending || !enabled || !broadcastMsg.trim()}>
+                      {sending ? <Loader2 className="w-4 h-4 animate-spin ml-2" /> : <Send className="w-4 h-4 ml-2" />}
+                      إرسال الآن
+                    </Button>
+                  </div>
+                  {!enabled && <p className="text-xs text-muted-foreground">فعّل البوت من تبويب الإعدادات أولاً</p>}
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </Tabs>
+        )}
       </div>
     </div>
   );

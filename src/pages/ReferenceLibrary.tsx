@@ -1,10 +1,13 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Search, ExternalLink, BookOpen, Globe, Droplets, MapPin } from "lucide-react";
+import { Search, ExternalLink, BookOpen, Globe, Droplets, MapPin, Star } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+import { toast } from "sonner";
 
 type Category = "local" | "international" | "water";
 
@@ -84,13 +87,44 @@ const TAB_META: Record<Category, { label: string; icon: typeof MapPin; color: st
 };
 
 const ReferenceLibrary = () => {
+  const { user } = useAuth();
   const [search, setSearch] = useState("");
-  const [tab, setTab] = useState<Category>("local");
+  const [tab, setTab] = useState<Category | "favorites">("local");
+  const [favorites, setFavorites] = useState<Set<string>>(new Set());
+
+  useEffect(() => {
+    if (!user) return;
+    supabase
+      .from("reference_favorites")
+      .select("reference_id")
+      .eq("user_id", user.id)
+      .then(({ data }) => {
+        if (data) setFavorites(new Set(data.map((r) => r.reference_id)));
+      });
+  }, [user]);
+
+  const toggleFav = async (id: string) => {
+    if (!user) {
+      toast.error("سجّل الدخول لحفظ المفضلة");
+      return;
+    }
+    const isFav = favorites.has(id);
+    const next = new Set(favorites);
+    if (isFav) {
+      next.delete(id);
+      setFavorites(next);
+      await supabase.from("reference_favorites").delete().eq("user_id", user.id).eq("reference_id", id);
+    } else {
+      next.add(id);
+      setFavorites(next);
+      await supabase.from("reference_favorites").insert({ user_id: user.id, reference_id: id });
+    }
+  };
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     return REFERENCES.filter((r) => {
-      if (r.category !== tab) return false;
+      if (tab === "favorites" ? !favorites.has(r.id) : r.category !== tab) return false;
       if (!q) return true;
       const haystack = [r.nameAr, r.nameEn, r.description, r.organization, ...r.keywords]
         .join(" ")
@@ -146,8 +180,8 @@ const ReferenceLibrary = () => {
         </div>
 
         {/* Tabs */}
-        <Tabs value={tab} onValueChange={(v) => setTab(v as Category)} className="w-full">
-          <TabsList className="grid grid-cols-3 w-full h-auto p-1 mb-6">
+        <Tabs value={tab} onValueChange={(v) => setTab(v as Category | "favorites")} className="w-full">
+          <TabsList className="grid grid-cols-4 w-full h-auto p-1 mb-6">
             {(Object.keys(TAB_META) as Category[]).map((key) => {
               const { label, icon: Icon } = TAB_META[key];
               return (
@@ -158,64 +192,66 @@ const ReferenceLibrary = () => {
                 >
                   <Icon className="w-4 h-4" />
                   <span>{label}</span>
-                  <Badge
-                    variant="secondary"
-                    className="h-5 min-w-5 px-1.5 text-[10px] font-semibold"
-                  >
+                  <Badge variant="secondary" className="h-5 min-w-5 px-1.5 text-[10px] font-semibold">
                     {counts[key]}
                   </Badge>
                 </TabsTrigger>
               );
             })}
+            <TabsTrigger value="favorites" className="flex flex-col md:flex-row items-center gap-1.5 md:gap-2 py-2.5 text-xs md:text-sm">
+              <Star className="w-4 h-4" />
+              <span>المفضلة</span>
+              <Badge variant="secondary" className="h-5 min-w-5 px-1.5 text-[10px] font-semibold">{favorites.size}</Badge>
+            </TabsTrigger>
           </TabsList>
 
-          {(Object.keys(TAB_META) as Category[]).map((key) => (
+          {([...(Object.keys(TAB_META) as Category[]), "favorites"] as const).map((key) => (
             <TabsContent key={key} value={key} className="mt-0">
               {filtered.length === 0 ? (
                 <div className="text-center py-16 text-muted-foreground">
                   <BookOpen className="w-12 h-12 mx-auto mb-3 opacity-30" />
-                  <p className="text-sm">لا توجد مراجع مطابقة لبحثك في هذا القسم</p>
+                  <p className="text-sm">{key === "favorites" ? "لا توجد مراجع في المفضلة بعد" : "لا توجد مراجع مطابقة لبحثك في هذا القسم"}</p>
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {filtered.map((ref) => (
-                    <Card
-                      key={ref.id}
-                      className="flex flex-col hover:shadow-md hover:border-primary/40 transition-all group"
-                    >
-                      <CardHeader className="pb-3">
-                        <div className="flex items-start justify-between gap-2 mb-2">
-                          <Badge variant="outline" className="text-[10px] font-medium">
-                            {ref.organization}
-                          </Badge>
-                          <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-primary/10 text-primary shrink-0">
-                            {(() => {
-                              const Icon = TAB_META[ref.category].icon;
-                              return <Icon className="w-4 h-4" />;
-                            })()}
+                  {filtered.map((ref) => {
+                    const isFav = favorites.has(ref.id);
+                    return (
+                      <Card key={ref.id} className="flex flex-col hover:shadow-md hover:border-primary/40 transition-all group">
+                        <CardHeader className="pb-3">
+                          <div className="flex items-start justify-between gap-2 mb-2">
+                            <Badge variant="outline" className="text-[10px] font-medium">{ref.organization}</Badge>
+                            <div className="flex items-center gap-1">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="w-8 h-8"
+                                onClick={() => toggleFav(ref.id)}
+                                title={isFav ? "إزالة من المفضلة" : "إضافة للمفضلة"}
+                              >
+                                <Star className={`w-4 h-4 ${isFav ? "fill-primary text-primary" : "text-muted-foreground"}`} />
+                              </Button>
+                              <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-primary/10 text-primary shrink-0">
+                                {(() => {
+                                  const Icon = TAB_META[ref.category].icon;
+                                  return <Icon className="w-4 h-4" />;
+                                })()}
+                              </div>
+                            </div>
                           </div>
-                        </div>
-                        <CardTitle className="text-base md:text-lg leading-snug text-foreground">
-                          {ref.nameAr}
-                        </CardTitle>
-                        <CardDescription className="text-xs font-medium text-muted-foreground/80" dir="ltr">
-                          {ref.nameEn}
-                        </CardDescription>
-                      </CardHeader>
-                      <CardContent className="flex flex-col flex-1 justify-between gap-4">
-                        <p className="text-sm text-muted-foreground leading-relaxed">
-                          {ref.description}
-                        </p>
-                        <Button
-                          onClick={() => window.open(ref.url, "_blank", "noopener,noreferrer")}
-                          className="w-full gap-2 group-hover:bg-primary/90"
-                        >
-                          <ExternalLink className="w-4 h-4" />
-                          فتح المرجع
-                        </Button>
-                      </CardContent>
-                    </Card>
-                  ))}
+                          <CardTitle className="text-base md:text-lg leading-snug text-foreground">{ref.nameAr}</CardTitle>
+                          <CardDescription className="text-xs font-medium text-muted-foreground/80" dir="ltr">{ref.nameEn}</CardDescription>
+                        </CardHeader>
+                        <CardContent className="flex flex-col flex-1 justify-between gap-4">
+                          <p className="text-sm text-muted-foreground leading-relaxed">{ref.description}</p>
+                          <Button onClick={() => window.open(ref.url, "_blank", "noopener,noreferrer")} className="w-full gap-2 group-hover:bg-primary/90">
+                            <ExternalLink className="w-4 h-4" />
+                            فتح المرجع
+                          </Button>
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
                 </div>
               )}
             </TabsContent>
