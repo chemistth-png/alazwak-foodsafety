@@ -25,13 +25,12 @@ export async function logAudit(entry: AuditEntry) {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
 
-    await supabase.from("audit_logs").insert({
-      user_id: user.id,
-      action: entry.action,
-      entity_type: entry.entity_type,
-      entity_id: entry.entity_id || null,
-      entity_title: entry.entity_title || null,
-      details: entry.details || {},
+    await supabase.rpc("log_audit_event", {
+      p_action: entry.action,
+      p_entity_type: entry.entity_type,
+      p_entity_id: entry.entity_id || null,
+      p_entity_title: entry.entity_title || null,
+      p_details: (entry.details || {}) as any,
     });
   } catch (e) {
     console.error("Audit log error:", e);
