@@ -1,0 +1,103 @@
+import { Toaster } from "@/components/ui/toaster";
+import { Toaster as Sonner } from "@/components/ui/sonner";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { ThemeProvider } from "next-themes";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { AuthProvider, useAuth } from "@/hooks/useAuth";
+import Index from "./pages/Index";
+import Auth from "./pages/Auth";
+import Landing from "./pages/Landing";
+import Documents from "./pages/Documents";
+import Plans from "./pages/Plans";
+import SOPTemplate from "./pages/SOPTemplate";
+import SOPsPage from "./pages/SOPsPage";
+import AgentDashboard from "./pages/AgentDashboard";
+import Dashboard from "./pages/Dashboard";
+import AuditLogPage from "./pages/AuditLogPage";
+import ReferenceLibrary from "./pages/ReferenceLibrary";
+import GroundwaterSystems from "./pages/GroundwaterSystems";
+import MasterDocumentList from "./pages/MasterDocumentList";
+import NCReports from "./pages/NCReports";
+import QMSTemplates from "./pages/QMSTemplates";
+import ResetPassword from "./pages/ResetPassword";
+import BottomNav from "./components/BottomNav";
+import DesktopSidebar from "./components/DesktopSidebar";
+import NotFound from "./pages/NotFound";
+import Install from "./pages/Install";
+import { Loader2 } from "lucide-react";
+import { useState, useCallback } from "react";
+import SplashScreen from "@/components/SplashScreen";
+
+const queryClient = new QueryClient();
+
+const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
+  const { user, loading } = useAuth();
+  if (loading) return (
+    <div className="flex items-center justify-center h-screen">
+      <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+    </div>
+  );
+  if (!user) return <Navigate to="/auth" replace />;
+  return <>{children}</>;
+};
+
+const AuthRoute = ({ children }: { children: React.ReactNode }) => {
+  const { user, loading } = useAuth();
+  if (loading) return null;
+  if (user) return <Navigate to="/" replace />;
+  return <>{children}</>;
+};
+
+const PublicRoute = ({ children }: { children: React.ReactNode }) => {
+  return <>{children}</>;
+};
+
+const App = () => {
+  const [showSplash, setShowSplash] = useState(true);
+  const handleSplashFinish = useCallback(() => setShowSplash(false), []);
+
+  return (
+    <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false}>
+      <QueryClientProvider client={queryClient}>
+        <AuthProvider>
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
+            {showSplash && <SplashScreen onFinish={handleSplashFinish} />}
+            <BrowserRouter>
+              <div className="flex flex-row-reverse h-full">
+                <DesktopSidebar />
+                <div className="flex-1 min-w-0 flex flex-col h-full">
+                  <Routes>
+                    <Route path="/landing" element={<PublicRoute><Landing /></PublicRoute>} />
+                    <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
+                    <Route path="/documents" element={<ProtectedRoute><Documents /></ProtectedRoute>} />
+                    <Route path="/plans" element={<ProtectedRoute><Plans /></ProtectedRoute>} />
+                    <Route path="/sops" element={<ProtectedRoute><SOPsPage /></ProtectedRoute>} />
+                    <Route path="/sop" element={<ProtectedRoute><SOPTemplate /></ProtectedRoute>} />
+                    <Route path="/agent" element={<ProtectedRoute><AgentDashboard /></ProtectedRoute>} />
+                    <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+                    <Route path="/audit" element={<ProtectedRoute><AuditLogPage /></ProtectedRoute>} />
+                    <Route path="/library" element={<ProtectedRoute><ReferenceLibrary /></ProtectedRoute>} />
+                    <Route path="/groundwater" element={<ProtectedRoute><GroundwaterSystems /></ProtectedRoute>} />
+                    <Route path="/master-list" element={<ProtectedRoute><MasterDocumentList /></ProtectedRoute>} />
+                    <Route path="/nc-reports" element={<ProtectedRoute><NCReports /></ProtectedRoute>} />
+                    <Route path="/qms-templates" element={<ProtectedRoute><QMSTemplates /></ProtectedRoute>} />
+                    <Route path="/auth" element={<AuthRoute><Auth /></AuthRoute>} />
+                    <Route path="/reset-password" element={<ResetPassword />} />
+                    <Route path="/install" element={<Install />} />
+                    <Route path="*" element={<NotFound />} />
+                  </Routes>
+                </div>
+              </div>
+              <BottomNav />
+            </BrowserRouter>
+          </TooltipProvider>
+        </AuthProvider>
+      </QueryClientProvider>
+    </ThemeProvider>
+  );
+};
+
+export default App;
