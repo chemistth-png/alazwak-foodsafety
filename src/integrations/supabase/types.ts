@@ -554,6 +554,16 @@ export type Database = {
         }
         Returns: boolean
       }
+      log_audit_event: {
+        Args: {
+          p_action: string
+          p_details?: Json
+          p_entity_id?: string
+          p_entity_title?: string
+          p_entity_type: string
+        }
+        Returns: string
+      }
       search_document_chunks: {
         Args: { p_limit?: number; p_query: string }
         Returns: {
