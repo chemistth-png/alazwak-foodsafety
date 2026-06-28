@@ -20,6 +20,7 @@ import GroundwaterSystems from "./pages/GroundwaterSystems";
 import MasterDocumentList from "./pages/MasterDocumentList";
 import NCReports from "./pages/NCReports";
 import QMSTemplates from "./pages/QMSTemplates";
+import HorusProcedures from "./pages/HorusProcedures";
 import ResetPassword from "./pages/ResetPassword";
 import BottomNav from "./components/BottomNav";
 import DesktopSidebar from "./components/DesktopSidebar";
