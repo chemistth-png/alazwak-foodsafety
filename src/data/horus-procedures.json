@@ -1,0 +1,146 @@
+[
+  {
+    "code": "FSP-02",
+    "title": "ضبط المعلومات الموثقة Control of Documented Inform",
+    "md": "/horus-procedures/FSP-02_ضبط_المعلومات_الموثقة_Control_of_Documented_Inform.md",
+    "docx": "/horus-procedures/FSP-02_ضبط_المعلومات_الموثقة_Control_of_Documented_Inform.docx"
+  },
+  {
+    "code": "FSP-03",
+    "title": "تحديد أهداف نظام إدارة سلامة الغذاء والجودة والتخط",
+    "md": "/horus-procedures/FSP-03_تحديد_أهداف_نظام_إدارة_سلامة_الغذاء_والجودة_والتخط.md",
+    "docx": "/horus-procedures/FSP-03_تحديد_أهداف_نظام_إدارة_سلامة_الغذاء_والجودة_والتخط.docx"
+  },
+  {
+    "code": "FSP-04",
+    "title": "التواصل الداخلي والخارجي",
+    "md": "/horus-procedures/FSP-04_التواصل_الداخلي_والخارجي.md",
+    "docx": "/horus-procedures/FSP-04_التواصل_الداخلي_والخارجي.docx"
+  },
+  {
+    "code": "FSP-05",
+    "title": "الاستعداد والاستجابة لحالات الطوارئ",
+    "md": "/horus-procedures/FSP-05_الاستعداد_والاستجابة_لحالات_الطوارئ.md",
+    "docx": "/horus-procedures/FSP-05_الاستعداد_والاستجابة_لحالات_الطوارئ.docx"
+  },
+  {
+    "code": "FSP-06",
+    "title": "مراجعة الإدارة Management Review",
+    "md": "/horus-procedures/FSP-06_مراجعة_الإدارة_Management_Review.md",
+    "docx": "/horus-procedures/FSP-06_مراجعة_الإدارة_Management_Review.docx"
+  },
+  {
+    "code": "FSP-07",
+    "title": "إدارة الموارد Resource Management",
+    "md": "/horus-procedures/FSP-07_إدارة_الموارد_Resource_Management.md",
+    "docx": "/horus-procedures/FSP-07_إدارة_الموارد_Resource_Management.docx"
+  },
+  {
+    "code": "FSP-08",
+    "title": "إدارة الصلاحية، التدريب والتوعية",
+    "md": "/horus-procedures/FSP-08_إدارة_الصلاحية،_التدريب_والتوعية.md",
+    "docx": "/horus-procedures/FSP-08_إدارة_الصلاحية،_التدريب_والتوعية.docx"
+  },
+  {
+    "code": "FSP-09",
+    "title": "الصيانة",
+    "md": "/horus-procedures/FSP-09_الصيانة.md",
+    "docx": "/horus-procedures/FSP-09_الصيانة.docx"
+  },
+  {
+    "code": "FSP-10",
+    "title": "المشتريات وتقييم الموردين",
+    "md": "/horus-procedures/FSP-10_المشتريات_وتقييم_الموردين.md",
+    "docx": "/horus-procedures/FSP-10_المشتريات_وتقييم_الموردين.docx"
+  },
+  {
+    "code": "FSP-11",
+    "title": "اعتماد ما قبل الشحن",
+    "md": "/horus-procedures/FSP-11_اعتماد_ما_قبل_الشحن.md",
+    "docx": "/horus-procedures/FSP-11_اعتماد_ما_قبل_الشحن.docx"
+  },
+  {
+    "code": "FSP-12",
+    "title": "التتبع والاستدعاء Traceability and Recall Procedur",
+    "md": "/horus-procedures/FSP-12_التتبع_والاستدعاء_Traceability_and_Recall_Procedur.md",
+    "docx": "/horus-procedures/FSP-12_التتبع_والاستدعاء_Traceability_and_Recall_Procedur.docx"
+  },
+  {
+    "code": "FSP-13",
+    "title": "إدارة حالات عدم المطابقة والإجراءات التصحيحية",
+    "md": "/horus-procedures/FSP-13_إدارة_حالات_عدم_المطابقة_والإجراءات_التصحيحية.md",
+    "docx": "/horus-procedures/FSP-13_إدارة_حالات_عدم_المطابقة_والإجراءات_التصحيحية.docx"
+  },
+  {
+    "code": "FSP-14",
+    "title": "إدارة المنتجات والمواد غير المطابقة",
+    "md": "/horus-procedures/FSP-14_إدارة_المنتجات_والمواد_غير_المطابقة.md",
+    "docx": "/horus-procedures/FSP-14_إدارة_المنتجات_والمواد_غير_المطابقة.docx"
+  },
+  {
+    "code": "FSP-15",
+    "title": "إدارة متطلبات العملاء، شكاوى المستهلكين، وقياس رضا",
+    "md": "/horus-procedures/FSP-15_إدارة_متطلبات_العملاء،_شكاوى_المستهلكين،_وقياس_رضا.md",
+    "docx": "/horus-procedures/FSP-15_إدارة_متطلبات_العملاء،_شكاوى_المستهلكين،_وقياس_رضا.docx"
+  },
+  {
+    "code": "FSP-16",
+    "title": "تصديق التدابير التحكمية",
+    "md": "/horus-procedures/FSP-16_تصديق_التدابير_التحكمية.md",
+    "docx": "/horus-procedures/FSP-16_تصديق_التدابير_التحكمية.docx"
+  },
+  {
+    "code": "FSP-17",
+    "title": "المراجعة الداخلية Internal Audit",
+    "md": "/horus-procedures/FSP-17_المراجعة_الداخلية_Internal_Audit.md",
+    "docx": "/horus-procedures/FSP-17_المراجعة_الداخلية_Internal_Audit.docx"
+  },
+  {
+    "code": "FSP-18",
+    "title": "برنامج المتطلبات الأولية PRPs",
+    "md": "/horus-procedures/FSP-18_برنامج_المتطلبات_الأولية_PRPs.md",
+    "docx": "/horus-procedures/FSP-18_برنامج_المتطلبات_الأولية_PRPs.docx"
+  },
+  {
+    "code": "FSP-19",
+    "title": "تحديث نظام إدارة سلامة الغذاء والتحسين المستمر",
+    "md": "/horus-procedures/FSP-19_تحديث_نظام_إدارة_سلامة_الغذاء_والتحسين_المستمر.md",
+    "docx": "/horus-procedures/FSP-19_تحديث_نظام_إدارة_سلامة_الغذاء_والتحسين_المستمر.docx"
+  },
+  {
+    "code": "FSP-20",
+    "title": "إدارة التحسين المستمر للنظام وتقييم الأداء",
+    "md": "/horus-procedures/FSP-20_إدارة_التحسين_المستمر_للنظام_وتقييم_الأداء.md",
+    "docx": "/horus-procedures/FSP-20_إدارة_التحسين_المستمر_للنظام_وتقييم_الأداء.docx"
+  },
+  {
+    "code": "FSP-21",
+    "title": "إدارة المخازن والتخزين",
+    "md": "/horus-procedures/FSP-21_إدارة_المخازن_والتخزين.md",
+    "docx": "/horus-procedures/FSP-21_إدارة_المخازن_والتخزين.docx"
+  },
+  {
+    "code": "FSP-22",
+    "title": "التنظيف والتطهير",
+    "md": "/horus-procedures/FSP-22_التنظيف_والتطهير.md",
+    "docx": "/horus-procedures/FSP-22_التنظيف_والتطهير.docx"
+  },
+  {
+    "code": "FSP-23",
+    "title": "التحكم التشغيلي والإنتاج الآمن لمياه الشرب المعبأة",
+    "md": "/horus-procedures/FSP-23_التحكم_التشغيلي_والإنتاج_الآمن_لمياه_الشرب_المعبأة.md",
+    "docx": "/horus-procedures/FSP-23_التحكم_التشغيلي_والإنتاج_الآمن_لمياه_الشرب_المعبأة.docx"
+  },
+  {
+    "code": "FSP-24",
+    "title": "مراقبة الجودة",
+    "md": "/horus-procedures/FSP-24_مراقبة_الجودة.md",
+    "docx": "/horus-procedures/FSP-24_مراقبة_الجودة.docx"
+  },
+  {
+    "code": "FSP-26",
+    "title": "تطوير وتطبيق خطة تحليل المخاطر وتحديد النقاط الحرج",
+    "md": "/horus-procedures/FSP-26_تطوير_وتطبيق_خطة_تحليل_المخاطر_وتحديد_النقاط_الحرج.md",
+    "docx": "/horus-procedures/FSP-26_تطوير_وتطبيق_خطة_تحليل_المخاطر_وتحديد_النقاط_الحرج.docx"
+  }
+]

@@ -1,5 +1,5 @@
 import { useNavigate, useLocation } from "react-router-dom";
-import { MessageSquare, FolderOpen, FileText, Bot, PieChart, LogOut, Droplets, ClipboardList, BookOpen, Waves, ListChecks, AlertTriangle } from "lucide-react";
+import { MessageSquare, FolderOpen, FileText, Bot, PieChart, LogOut, Droplets, ClipboardList, BookOpen, Waves, ListChecks, AlertTriangle, ShieldCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
 import ThemeToggle from "@/components/ThemeToggle";
@@ -11,6 +11,7 @@ const NAV_ITEMS = [
   { path: "/documents", label: "المستندات", icon: FolderOpen },
   { path: "/master-list", label: "قائمة الوثائق F-01-1", icon: ListChecks },
   { path: "/nc-reports", label: "تقارير عدم المطابقة", icon: AlertTriangle },
+  { path: "/horus-procedures", label: "إجراءات حورس FSMS", icon: ShieldCheck },
   { path: "/sops", label: "SOPs", icon: FileText },
   { path: "/plans", label: "المخططات", icon: ClipboardList },
   { path: "/library", label: "المكتبة المرجعية", icon: BookOpen },
