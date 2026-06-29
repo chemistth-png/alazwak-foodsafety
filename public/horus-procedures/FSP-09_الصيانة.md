@@ -2,8 +2,8 @@
 
 <div align="center">
 
-# شركة حورس لإنتاج وتعبئة المياه الطبيعية
-## Horus Natural Water Co.
+# شركة  لإنتاج وتعبئة المياه الطبيعية
+## Company Co.
 
 <br/>
 
