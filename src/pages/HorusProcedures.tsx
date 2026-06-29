@@ -105,7 +105,7 @@ const HorusProcedures = () => {
             </div>
             <div>
               <h1 className="text-base font-bold text-foreground leading-tight">
-                إجراءات حورس FSMS
+                إجراءات FSMS
               </h1>
               <p className="text-[11px] text-muted-foreground">
                 24 إجراء محدث وفق ISO 22000:2018 / FSSC 22000 v6 / NFSA
