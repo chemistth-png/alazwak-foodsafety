@@ -26,11 +26,11 @@ const DocumentHeader = ({
               {/* Logo placeholder — replace with /horus-logo.png when provided */}
               <div className="flex flex-col items-center justify-center gap-1">
                 <Droplets className="w-8 h-8" />
-                <div className="font-bold text-[10px]">HORUS</div>
+                <div className="font-bold text-[10px]">ALAZWAK</div>
               </div>
             </td>
             <td className="border border-black p-2 text-center font-bold" colSpan={2}>
-              {title || "وثيقة رسمية - مصنع حورس"}
+              {title || "وثيقة رسمية"}
             </td>
           </tr>
           <tr>
