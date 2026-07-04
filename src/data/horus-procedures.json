@@ -1,13 +1,13 @@
 [
   {
     "code": "FSP-02",
-    "title": "ضبط المعلومات الموثقة Control of Documented Inform",
+    "title": "ضبط المعلومات الموثقة (Control of Documented Information)",
     "md": "/horus-procedures/FSP-02_ضبط_المعلومات_الموثقة_Control_of_Documented_Inform.md",
     "docx": "/horus-procedures/FSP-02_ضبط_المعلومات_الموثقة_Control_of_Documented_Inform.docx"
   },
   {
     "code": "FSP-03",
-    "title": "تحديد أهداف نظام إدارة سلامة الغذاء والجودة والتخط",
+    "title": "تحديد أهداف نظام إدارة سلامة الغذاء والجودة والتخطيط لتحقيقها",
     "md": "/horus-procedures/FSP-03_تحديد_أهداف_نظام_إدارة_سلامة_الغذاء_والجودة_والتخط.md",
     "docx": "/horus-procedures/FSP-03_تحديد_أهداف_نظام_إدارة_سلامة_الغذاء_والجودة_والتخط.docx"
   },
@@ -25,13 +25,13 @@
   },
   {
     "code": "FSP-06",
-    "title": "مراجعة الإدارة Management Review",
+    "title": "مراجعة الإدارة (Management Review)",
     "md": "/horus-procedures/FSP-06_مراجعة_الإدارة_Management_Review.md",
     "docx": "/horus-procedures/FSP-06_مراجعة_الإدارة_Management_Review.docx"
   },
   {
     "code": "FSP-07",
-    "title": "إدارة الموارد Resource Management",
+    "title": "إدارة الموارد (Resource Management)",
     "md": "/horus-procedures/FSP-07_إدارة_الموارد_Resource_Management.md",
     "docx": "/horus-procedures/FSP-07_إدارة_الموارد_Resource_Management.docx"
   },
@@ -61,7 +61,7 @@
   },
   {
     "code": "FSP-12",
-    "title": "التتبع والاستدعاء Traceability and Recall Procedur",
+    "title": "التتبع والاستدعاء (Traceability and Recall Procedure)",
     "md": "/horus-procedures/FSP-12_التتبع_والاستدعاء_Traceability_and_Recall_Procedur.md",
     "docx": "/horus-procedures/FSP-12_التتبع_والاستدعاء_Traceability_and_Recall_Procedur.docx"
   },
@@ -79,7 +79,7 @@
   },
   {
     "code": "FSP-15",
-    "title": "إدارة متطلبات العملاء، شكاوى المستهلكين، وقياس رضا",
+    "title": "إدارة متطلبات العملاء، شكاوى المستهلكين، وقياس رضا العملاء",
     "md": "/horus-procedures/FSP-15_إدارة_متطلبات_العملاء،_شكاوى_المستهلكين،_وقياس_رضا.md",
     "docx": "/horus-procedures/FSP-15_إدارة_متطلبات_العملاء،_شكاوى_المستهلكين،_وقياس_رضا.docx"
   },
@@ -91,13 +91,13 @@
   },
   {
     "code": "FSP-17",
-    "title": "المراجعة الداخلية Internal Audit",
+    "title": "المراجعة الداخلية (Internal Audit)",
     "md": "/horus-procedures/FSP-17_المراجعة_الداخلية_Internal_Audit.md",
     "docx": "/horus-procedures/FSP-17_المراجعة_الداخلية_Internal_Audit.docx"
   },
   {
     "code": "FSP-18",
-    "title": "برنامج المتطلبات الأولية PRPs",
+    "title": "برنامج المتطلبات الأولية (PRPs)",
     "md": "/horus-procedures/FSP-18_برنامج_المتطلبات_الأولية_PRPs.md",
     "docx": "/horus-procedures/FSP-18_برنامج_المتطلبات_الأولية_PRPs.docx"
   },
@@ -127,7 +127,7 @@
   },
   {
     "code": "FSP-23",
-    "title": "التحكم التشغيلي والإنتاج الآمن لمياه الشرب المعبأة",
+    "title": "التحكم التشغيلي والإنتاج الآمن لمياه الشرب المعبأة والمياه المعدنية الطبيعية",
     "md": "/horus-procedures/FSP-23_التحكم_التشغيلي_والإنتاج_الآمن_لمياه_الشرب_المعبأة.md",
     "docx": "/horus-procedures/FSP-23_التحكم_التشغيلي_والإنتاج_الآمن_لمياه_الشرب_المعبأة.docx"
   },
@@ -139,7 +139,7 @@
   },
   {
     "code": "FSP-26",
-    "title": "تطوير وتطبيق خطة تحليل المخاطر وتحديد النقاط الحرج",
+    "title": "تطوير وتطبيق خطة تحليل المخاطر وتحديد النقاط الحرجة (HACCP)",
     "md": "/horus-procedures/FSP-26_تطوير_وتطبيق_خطة_تحليل_المخاطر_وتحديد_النقاط_الحرج.md",
     "docx": "/horus-procedures/FSP-26_تطوير_وتطبيق_خطة_تحليل_المخاطر_وتحديد_النقاط_الحرج.docx"
   }
