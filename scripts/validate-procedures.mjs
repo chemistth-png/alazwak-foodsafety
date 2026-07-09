@@ -11,7 +11,7 @@
  * Exits with code 1 on any mismatch.
  */
 import { execSync } from "node:child_process";
-import { readFileSync, existsSync, appendFileSync } from "node:fs";
+import { readFileSync, existsSync, appendFileSync, mkdirSync, writeFileSync } from "node:fs";
 import { resolve, dirname, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 
