@@ -14,7 +14,7 @@ import {
   Bot, ArrowRight, Loader2, CheckCircle2, Edit3, Trash2, Plus, 
   Sparkles, ClipboardCheck, GraduationCap, ShieldAlert, Droplets,
   BarChart3, FileText, ChevronRight, Clock, AlertTriangle, Menu,
-  Download, FileSpreadsheet, FileType
+  Download, FileSpreadsheet, FileType, RotateCcw
 } from "lucide-react";
 import { exportToWord, exportToExcel } from "@/lib/exportAgent";
 import { logAudit } from "@/lib/auditLog";
