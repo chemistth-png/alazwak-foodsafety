@@ -47,7 +47,7 @@ const ImageGenerator = () => {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="ghost" size="icon" title="إنتاج صورة بالذكاء الاصطناعي">
+        <Button variant="ghost" size="icon" title="إنتاج صورة بالذكاء الاصطناعي" aria-label="إنتاج صورة بالذكاء الاصطناعي">
           <ImagePlus className="w-4 h-4" />
         </Button>
       </DialogTrigger>
