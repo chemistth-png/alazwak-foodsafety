@@ -251,7 +251,7 @@ const Index = () => {
         {/* Header */}
         <header className="flex items-center justify-between gap-3 border-b px-4 py-3 bg-card shadow-sm">
           <div className="flex items-center gap-3">
-            <Button variant="ghost" size="icon" className="md:hidden" onClick={() => setSidebarOpen(true)}>
+            <Button variant="ghost" size="icon" className="md:hidden" onClick={() => setSidebarOpen(true)} aria-label="فتح قائمة المحادثات">
               <Menu className="w-5 h-5" />
             </Button>
             <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-primary text-primary-foreground">
@@ -259,10 +259,10 @@ const Index = () => {
             </div>
             <div className="min-w-0">
               <h1 className="text-sm sm:text-base font-bold text-foreground leading-tight whitespace-nowrap">
-                Alazwak FoodSafety
+                Alazwak FoodSafety — مساعدك الذكي لسلامة الغذاء
               </h1>
               <p className="hidden sm:block text-xs text-muted-foreground">
-                مساعدك الذكي لسلامة الغذاء
+                خطط HACCP وإدارة الجودة للمصانع الغذائية
               </p>
             </div>
           </div>
@@ -272,16 +272,18 @@ const Index = () => {
             <ThemeToggle />
             {messages.length > 0 && (
               <>
-                <Button variant="ghost" size="icon" onClick={exportPDF} title="تصدير كـ PDF" disabled={isExporting}>
+                <Button variant="ghost" size="icon" onClick={exportPDF} title="تصدير كـ PDF" aria-label="تصدير المحادثة كـ PDF" disabled={isExporting}>
                   {isExporting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
                 </Button>
-                <Button variant="ghost" size="icon" onClick={clearChat} title="مسح المحادثة">
+                <Button variant="ghost" size="icon" onClick={clearChat} title="مسح المحادثة" aria-label="مسح المحادثة">
                   <Trash2 className="w-4 h-4" />
                 </Button>
               </>
             )}
           </div>
         </header>
+
+        <main className="flex flex-col flex-1 min-h-0">
 
         {/* Messages */}
         <ScrollArea className="flex-1 px-4">
@@ -406,6 +408,7 @@ const Index = () => {
             </div>
           </div>
         </div>
+        </main>
       </div>
     </div>
   );

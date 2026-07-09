@@ -271,7 +271,7 @@ const GembaWalk = () => {
               {photoFile ? "تغيير الصورة" : "التقاط صورة للانحراف"}
             </Button>
             {photoPreview && (
-              <img src={photoPreview} alt="preview" className="w-full h-48 object-cover rounded-lg border" />
+              <img src={photoPreview} alt="صورة معاينة للانحراف المرصود" className="w-full h-48 object-cover rounded-lg border" />
             )}
             <Textarea
               value={deviationNote}
