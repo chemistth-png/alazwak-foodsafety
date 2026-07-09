@@ -216,9 +216,12 @@ const AgentDashboard = () => {
         </div>
 
         {/* Quick Actions */}
-        <div className="p-3 border-b">
+        <div className="p-3 border-b space-y-2">
           <Button className="w-full gap-2" onClick={() => { setSelectedTask(null); setShowNewTask(true); setMobileView("detail"); }}>
             <Plus className="w-4 h-4" /> مهمة جديدة
+          </Button>
+          <Button variant="outline" size="sm" className="w-full gap-2 text-xs" onClick={handleResetStuck} title="إلغاء المهام العالقة منذ أكثر من 5 دقائق">
+            <RotateCcw className="w-3.5 h-3.5" /> إعادة تعيين المهام العالقة
           </Button>
         </div>
 
