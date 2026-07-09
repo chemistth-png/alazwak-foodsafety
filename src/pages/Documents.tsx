@@ -104,7 +104,7 @@ const Documents = () => {
       {/* Header */}
       <header className="flex items-center justify-between gap-3 border-b px-4 py-3 bg-card shadow-sm">
         <div className="flex items-center gap-3">
-          <Button variant="ghost" size="icon" onClick={() => navigate("/")}>
+          <Button variant="ghost" size="icon" onClick={() => navigate("/")} aria-label="العودة إلى الصفحة الرئيسية">
             <ArrowRight className="w-5 h-5" />
           </Button>
           <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-primary text-primary-foreground">
