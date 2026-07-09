@@ -464,7 +464,16 @@ const AgentDashboard = () => {
                 {selectedTask.status === "generating" || selectedTask.status === "revision" ? (
                   <div className="flex flex-col items-center justify-center py-20 gap-3 text-muted-foreground">
                     <Loader2 className="w-8 h-8 animate-spin" />
-                    <p className="text-sm">الوكيل الذكي يعمل على مهمتك...</p>
+                    <p className="text-sm font-medium">
+                      {agentSpeed === "accurate" ? "جاري التحسين العميق... قد يستغرق 60 ثانية" : "الوكيل الذكي يعمل على مهمتك..."}
+                    </p>
+                    <p className="text-[11px]">يتم التحديث تلقائياً كل 5 ثوانٍ</p>
+                  </div>
+                ) : selectedTask.status === "canceled" ? (
+                  <div className="flex flex-col items-center justify-center py-20 gap-3 text-destructive">
+                    <AlertTriangle className="w-8 h-8" />
+                    <p className="text-sm font-medium">تم إلغاء هذه المهمة بسبب انتهاء المهلة</p>
+                    <p className="text-xs text-muted-foreground">أعد إنشاء المهمة بوضع "سريع" للحصول على استجابة أسرع</p>
                   </div>
                 ) : selectedTask.ai_output ? (
                   <div className="prose prose-sm max-w-none dark:prose-invert prose-p:my-1.5 prose-ul:my-1 prose-ol:my-1 prose-li:my-0.5 prose-headings:my-3 prose-table:my-2">
