@@ -187,6 +187,7 @@ const Documents = () => {
                         setExpandedId(expandedId === doc.id ? null : doc.id)
                       }
                       title="معاينة المحتوى"
+                      aria-label={expandedId === doc.id ? "إخفاء معاينة المستند" : "عرض معاينة المستند"}
                     >
                       {expandedId === doc.id ? (
                         <ChevronUp className="w-4 h-4" />
@@ -201,6 +202,7 @@ const Documents = () => {
                           size="icon"
                           className="h-8 w-8 text-destructive hover:text-destructive"
                           title="حذف المستند"
+                          aria-label="حذف المستند"
                         >
                           <Trash2 className="w-4 h-4" />
                         </Button>
