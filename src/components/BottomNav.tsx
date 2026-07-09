@@ -1,5 +1,5 @@
 import { useNavigate, useLocation } from "react-router-dom";
-import { MessageSquare, FolderOpen, FileText, Bot, PieChart, ListChecks, AlertTriangle, MoreHorizontal, ClipboardList, BookOpen, Waves, LogOut } from "lucide-react";
+import { MessageSquare, FolderOpen, FileText, Bot, PieChart, ListChecks, AlertTriangle, MoreHorizontal, ClipboardList, BookOpen, Waves, LogOut, Camera } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
