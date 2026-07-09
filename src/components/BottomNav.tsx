@@ -1,5 +1,5 @@
 import { useNavigate, useLocation } from "react-router-dom";
-import { MessageSquare, FolderOpen, FileText, Bot, PieChart, ListChecks, AlertTriangle, MoreHorizontal, ClipboardList, BookOpen, Waves, LogOut } from "lucide-react";
+import { MessageSquare, FolderOpen, FileText, Bot, PieChart, ListChecks, AlertTriangle, MoreHorizontal, ClipboardList, BookOpen, Waves, LogOut, Camera } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
@@ -15,6 +15,7 @@ const MORE_NAV_ITEMS = [
   { path: "/sops", label: "إجراءات التشغيل SOPs", icon: FileText },
   { path: "/master-list", label: "القائمة الرئيسية للوثائق", icon: ListChecks },
   { path: "/nc-reports", label: "تقارير عدم المطابقة", icon: AlertTriangle },
+  { path: "/gemba", label: "جولة Gemba (تفتيش ميداني)", icon: Camera },
   { path: "/plans", label: "المخططات", icon: ClipboardList },
   { path: "/library", label: "المكتبة المرجعية", icon: BookOpen },
   { path: "/groundwater", label: "المياه الجوفية", icon: Waves },

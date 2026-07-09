@@ -14,7 +14,7 @@ import {
   Bot, ArrowRight, Loader2, CheckCircle2, Edit3, Trash2, Plus, 
   Sparkles, ClipboardCheck, GraduationCap, ShieldAlert, Droplets,
   BarChart3, FileText, ChevronRight, Clock, AlertTriangle, Menu,
-  Download, FileSpreadsheet, FileType
+  Download, FileSpreadsheet, FileType, RotateCcw
 } from "lucide-react";
 import { exportToWord, exportToExcel } from "@/lib/exportAgent";
 import { logAudit } from "@/lib/auditLog";
@@ -52,6 +52,7 @@ const STATUS_MAP: Record<string, { label: string; variant: "default" | "secondar
   approved: { label: "تمت الموافقة", variant: "secondary" },
   revision: { label: "جاري التعديل...", variant: "secondary" },
   completed: { label: "مكتمل", variant: "outline" },
+  canceled: { label: "ملغاة (مهلة)", variant: "destructive" },
 };
 
 const AgentDashboard = () => {
@@ -77,6 +78,29 @@ const AgentDashboard = () => {
   }, []);
 
   useEffect(() => { loadTasks(); }, [loadTasks]);
+
+  // Polling every 5s while any task is generating/revising
+  useEffect(() => {
+    const hasActive = tasks.some(t => t.status === "generating" || t.status === "revision");
+    if (!hasActive) return;
+    const id = setInterval(() => { loadTasks(); }, 5000);
+    return () => clearInterval(id);
+  }, [tasks, loadTasks]);
+
+  const handleResetStuck = async () => {
+    const cutoff = new Date(Date.now() - 5 * 60 * 1000).toISOString();
+    const { data, error } = await supabase
+      .from("agent_tasks")
+      .update({ status: "canceled" })
+      .in("status", ["generating", "revision"])
+      .lt("created_at", cutoff)
+      .select("id");
+    if (error) { toast.error("فشل إعادة التعيين"); return; }
+    const n = data?.length || 0;
+    if (n === 0) toast.info("لا توجد مهام عالقة");
+    else toast.success(`تم إلغاء ${n} مهمة عالقة`);
+    loadTasks();
+  };
 
   const callAgent = async (body: Record<string, any>) => {
     const { data: { session } } = await supabase.auth.getSession();
@@ -192,9 +216,12 @@ const AgentDashboard = () => {
         </div>
 
         {/* Quick Actions */}
-        <div className="p-3 border-b">
+        <div className="p-3 border-b space-y-2">
           <Button className="w-full gap-2" onClick={() => { setSelectedTask(null); setShowNewTask(true); setMobileView("detail"); }}>
             <Plus className="w-4 h-4" /> مهمة جديدة
+          </Button>
+          <Button variant="outline" size="sm" className="w-full gap-2 text-xs" onClick={handleResetStuck} title="إلغاء المهام العالقة منذ أكثر من 5 دقائق">
+            <RotateCcw className="w-3.5 h-3.5" /> إعادة تعيين المهام العالقة
           </Button>
         </div>
 
@@ -437,7 +464,16 @@ const AgentDashboard = () => {
                 {selectedTask.status === "generating" || selectedTask.status === "revision" ? (
                   <div className="flex flex-col items-center justify-center py-20 gap-3 text-muted-foreground">
                     <Loader2 className="w-8 h-8 animate-spin" />
-                    <p className="text-sm">الوكيل الذكي يعمل على مهمتك...</p>
+                    <p className="text-sm font-medium">
+                      {agentSpeed === "accurate" ? "جاري التحسين العميق... قد يستغرق 60 ثانية" : "الوكيل الذكي يعمل على مهمتك..."}
+                    </p>
+                    <p className="text-[11px]">يتم التحديث تلقائياً كل 5 ثوانٍ</p>
+                  </div>
+                ) : selectedTask.status === "canceled" ? (
+                  <div className="flex flex-col items-center justify-center py-20 gap-3 text-destructive">
+                    <AlertTriangle className="w-8 h-8" />
+                    <p className="text-sm font-medium">تم إلغاء هذه المهمة بسبب انتهاء المهلة</p>
+                    <p className="text-xs text-muted-foreground">أعد إنشاء المهمة بوضع "سريع" للحصول على استجابة أسرع</p>
                   </div>
                 ) : selectedTask.ai_output ? (
                   <div className="prose prose-sm max-w-none dark:prose-invert prose-p:my-1.5 prose-ul:my-1 prose-ol:my-1 prose-li:my-0.5 prose-headings:my-3 prose-table:my-2">
