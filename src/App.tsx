@@ -87,6 +87,7 @@ const App = () => {
                     <Route path="/nc-reports" element={<ProtectedRoute><NCReports /></ProtectedRoute>} />
                     <Route path="/qms-templates" element={<ProtectedRoute><QMSTemplates /></ProtectedRoute>} />
                     <Route path="/horus-procedures" element={<ProtectedRoute><HorusProcedures /></ProtectedRoute>} />
+                    <Route path="/gemba" element={<ProtectedRoute><GembaWalk /></ProtectedRoute>} />
                     <Route path="/auth" element={<AuthRoute><Auth /></AuthRoute>} />
                     <Route path="/reset-password" element={<ResetPassword />} />
                     <Route path="/install" element={<Install />} />
