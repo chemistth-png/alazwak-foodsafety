@@ -74,10 +74,10 @@ const ImageGenerator = () => {
             <div className="relative rounded-xl overflow-hidden border border-border">
               <img src={imageUrl} alt={prompt} className="w-full h-auto" />
               <div className="absolute top-2 left-2 flex gap-1">
-                <Button size="icon" variant="secondary" className="h-8 w-8" onClick={downloadImage}>
+                <Button size="icon" variant="secondary" className="h-8 w-8" onClick={downloadImage} aria-label="تنزيل الصورة">
                   <Download className="w-4 h-4" />
                 </Button>
-                <Button size="icon" variant="secondary" className="h-8 w-8" onClick={() => setImageUrl(null)}>
+                <Button size="icon" variant="secondary" className="h-8 w-8" onClick={() => setImageUrl(null)} aria-label="إغلاق معاينة الصورة">
                   <X className="w-4 h-4" />
                 </Button>
               </div>
