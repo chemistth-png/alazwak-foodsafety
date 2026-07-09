@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8" />
+<title>FSMS Procedures Validation Report</title>
+<style>
+  @page { size: A4; margin: 18mm 14mm; }
+  * { box-sizing: border-box; }
+  body {
+    font-family: "Noto Naskh Arabic", "Amiri", "DejaVu Sans", "Arial", sans-serif;
+    color: #111;
+    font-size: 11pt;
+    line-height: 1.55;
+  }
+  h1 { font-size: 20pt; margin: 0 0 4px; }
+  h2 { font-size: 14pt; margin: 22px 0 8px; border-bottom: 1px solid #ddd; padding-bottom: 4px; }
+  .meta { color: #555; font-size: 10pt; margin-bottom: 12px; }
+  .summary { display: flex; gap: 12px; flex-wrap: wrap; margin: 12px 0 6px; }
+  .card {
+    border: 1px solid #e5e5e5; border-radius: 6px; padding: 10px 14px;
+    min-width: 110px; text-align: center;
+  }
+  .card .n { font-size: 18pt; font-weight: 700; }
+  .card.pass .n { color: #137333; }
+  .card.fail .n { color: #b3261e; }
+  .badge {
+    display: inline-block; padding: 3px 10px; border-radius: 999px;
+    font-weight: 700; font-size: 10pt; vertical-align: middle; margin-inline-start: 8px;
+  }
+  .badge.pass { background: #e6f4ea; color: #137333; }
+  .badge.fail { background: #fce8e6; color: #b3261e; }
+  table { width: 100%; border-collapse: collapse; margin-top: 6px; font-size: 9.5pt; }
+  th, td { border: 1px solid #d9d9d9; padding: 6px 8px; vertical-align: top; text-align: right; }
+  th { background: #f5f5f5; font-weight: 700; }
+  td.code, td.mono { font-family: "DejaVu Sans Mono", "Consolas", monospace; direction: ltr; text-align: left; white-space: nowrap; }
+  td.expected { background: #f1f8f3; }
+  td.actual   { background: #fdecea; }
+  .empty { color: #555; font-style: italic; padding: 8px 0; }
+  footer { margin-top: 20px; color: #777; font-size: 9pt; text-align: center; }
+</style>
+</head>
+<body>
+  <h1>تقرير التحقق من إجراءات نظام إدارة سلامة الغذاء <span class="badge pass">✓ PASS</span></h1>
+  <div class="meta">
+    مقارنة نص ملفات Word مع <code>src/data/horus-procedures.json</code> · تاريخ التوليد: 2026-07-09 09:38:18 UTC
+  </div>
+
+  <div class="summary">
+    <div class="card"><div class="n">24</div><div>الإجمالي</div></div>
+    <div class="card pass"><div class="n">24</div><div>ناجحة</div></div>
+    <div class="card fail"><div class="n">0</div><div>فاشلة</div></div>
+  </div>
+
+  <h2>الاختلافات (0)</h2>
+  <div class="empty">✅ لا توجد اختلافات — كل ملفات Word مطابقة للفهرس.</div>
+
+  <h2>الإجراءات الناجحة (24)</h2>
+  <table>
+      <thead><tr><th>الكود</th><th>الإجراء</th><th>الملف</th></tr></thead>
+      <tbody>
+    <tr>
+      <td class="code">FSP-02</td>
+      <td>ضبط المعلومات الموثقة (Control of Documented Information)</td>
+      <td class="mono">public/horus-procedures/FSP-02_ضبط_المعلومات_الموثقة_Control_of_Documented_Inform.docx</td>
+    </tr>
+    <tr>
+      <td class="code">FSP-03</td>
+      <td>تحديد أهداف نظام إدارة سلامة الغذاء والجودة والتخطيط لتحقيقها</td>
+      <td class="mono">public/horus-procedures/FSP-03_تحديد_أهداف_نظام_إدارة_سلامة_الغذاء_والجودة_والتخط.docx</td>
+    </tr>
+    <tr>
+      <td class="code">FSP-04</td>
+      <td>التواصل الداخلي والخارجي</td>
+      <td class="mono">public/horus-procedures/FSP-04_التواصل_الداخلي_والخارجي.docx</td>
+    </tr>
+    <tr>
+      <td class="code">FSP-05</td>
+      <td>الاستعداد والاستجابة لحالات الطوارئ</td>
+      <td class="mono">public/horus-procedures/FSP-05_الاستعداد_والاستجابة_لحالات_الطوارئ.docx</td>
+    </tr>
+    <tr>
+      <td class="code">FSP-06</td>
+      <td>مراجعة الإدارة (Management Review)</td>
+      <td class="mono">public/horus-procedures/FSP-06_مراجعة_الإدارة_Management_Review.docx</td>
+    </tr>
+    <tr>
+      <td class="code">FSP-07</td>
+      <td>إدارة الموارد (Resource Management)</td>
+      <td class="mono">public/horus-procedures/FSP-07_إدارة_الموارد_Resource_Management.docx</td>
+    </tr>
+    <tr>
+      <td class="code">FSP-08</td>
+      <td>إدارة الصلاحية، التدريب والتوعية</td>
+      <td class="mono">public/horus-procedures/FSP-08_إدارة_الصلاحية،_التدريب_والتوعية.docx</td>
+    </tr>
+    <tr>
+      <td class="code">FSP-09</td>
+      <td>الصيانة</td>
+      <td class="mono">public/horus-procedures/FSP-09_الصيانة.docx</td>
+    </tr>
+    <tr>
+      <td class="code">FSP-10</td>
+      <td>المشتريات وتقييم الموردين</td>
+      <td class="mono">public/horus-procedures/FSP-10_المشتريات_وتقييم_الموردين.docx</td>
+    </tr>
+    <tr>
+      <td class="code">FSP-11</td>
+      <td>اعتماد ما قبل الشحن</td>
+      <td class="mono">public/horus-procedures/FSP-11_اعتماد_ما_قبل_الشحن.docx</td>
+    </tr>
+    <tr>
+      <td class="code">FSP-12</td>
+      <td>التتبع والاستدعاء (Traceability and Recall Procedure)</td>
+      <td class="mono">public/horus-procedures/FSP-12_التتبع_والاستدعاء_Traceability_and_Recall_Procedur.docx</td>
+    </tr>
+    <tr>
+      <td class="code">FSP-13</td>
+      <td>إدارة حالات عدم المطابقة والإجراءات التصحيحية</td>
+      <td class="mono">public/horus-procedures/FSP-13_إدارة_حالات_عدم_المطابقة_والإجراءات_التصحيحية.docx</td>
+    </tr>
+    <tr>
+      <td class="code">FSP-14</td>
+      <td>إدارة المنتجات والمواد غير المطابقة</td>
+      <td class="mono">public/horus-procedures/FSP-14_إدارة_المنتجات_والمواد_غير_المطابقة.docx</td>
+    </tr>
+    <tr>
+      <td class="code">FSP-15</td>
+      <td>إدارة متطلبات العملاء، شكاوى المستهلكين، وقياس رضا العملاء</td>
+      <td class="mono">public/horus-procedures/FSP-15_إدارة_متطلبات_العملاء،_شكاوى_المستهلكين،_وقياس_رضا.docx</td>
+    </tr>
+    <tr>
+      <td class="code">FSP-16</td>
+      <td>تصديق التدابير التحكمية</td>
+      <td class="mono">public/horus-procedures/FSP-16_تصديق_التدابير_التحكمية.docx</td>
+    </tr>
+    <tr>
+      <td class="code">FSP-17</td>
+      <td>المراجعة الداخلية (Internal Audit)</td>
+      <td class="mono">public/horus-procedures/FSP-17_المراجعة_الداخلية_Internal_Audit.docx</td>
+    </tr>
+    <tr>
+      <td class="code">FSP-18</td>
+      <td>برنامج المتطلبات الأولية (PRPs)</td>
+      <td class="mono">public/horus-procedures/FSP-18_برنامج_المتطلبات_الأولية_PRPs.docx</td>
+    </tr>
+    <tr>
+      <td class="code">FSP-19</td>
+      <td>تحديث نظام إدارة سلامة الغذاء والتحسين المستمر</td>
+      <td class="mono">public/horus-procedures/FSP-19_تحديث_نظام_إدارة_سلامة_الغذاء_والتحسين_المستمر.docx</td>
+    </tr>
+    <tr>
+      <td class="code">FSP-20</td>
+      <td>إدارة التحسين المستمر للنظام وتقييم الأداء</td>
+      <td class="mono">public/horus-procedures/FSP-20_إدارة_التحسين_المستمر_للنظام_وتقييم_الأداء.docx</td>
+    </tr>
+    <tr>
+      <td class="code">FSP-21</td>
+      <td>إدارة المخازن والتخزين</td>
+      <td class="mono">public/horus-procedures/FSP-21_إدارة_المخازن_والتخزين.docx</td>
+    </tr>
+    <tr>
+      <td class="code">FSP-22</td>
+      <td>التنظيف والتطهير</td>
+      <td class="mono">public/horus-procedures/FSP-22_التنظيف_والتطهير.docx</td>
+    </tr>
+    <tr>
+      <td class="code">FSP-23</td>
+      <td>التحكم التشغيلي والإنتاج الآمن لمياه الشرب المعبأة والمياه المعدنية الطبيعية</td>
+      <td class="mono">public/horus-procedures/FSP-23_التحكم_التشغيلي_والإنتاج_الآمن_لمياه_الشرب_المعبأة.docx</td>
+    </tr>
+    <tr>
+      <td class="code">FSP-24</td>
+      <td>مراقبة الجودة</td>
+      <td class="mono">public/horus-procedures/FSP-24_مراقبة_الجودة.docx</td>
+    </tr>
+    <tr>
+      <td class="code">FSP-26</td>
+      <td>تطوير وتطبيق خطة تحليل المخاطر وتحديد النقاط الحرجة (HACCP)</td>
+      <td class="mono">public/horus-procedures/FSP-26_تطوير_وتطبيق_خطة_تحليل_المخاطر_وتحديد_النقاط_الحرج.docx</td>
+    </tr></tbody>
+    </table>
+
+  <footer>Generated by scripts/validate-procedures.mjs</footer>
+</body>
+</html>
