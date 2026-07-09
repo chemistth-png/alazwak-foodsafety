@@ -52,6 +52,7 @@ const STATUS_MAP: Record<string, { label: string; variant: "default" | "secondar
   approved: { label: "تمت الموافقة", variant: "secondary" },
   revision: { label: "جاري التعديل...", variant: "secondary" },
   completed: { label: "مكتمل", variant: "outline" },
+  canceled: { label: "ملغاة (مهلة)", variant: "destructive" },
 };
 
 const AgentDashboard = () => {
