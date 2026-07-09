@@ -27,8 +27,53 @@ jobs:
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
-      - name: Ensure unzip is available
-        run: unzip -v >/dev/null
+      - name: Install unzip, wkhtmltopdf and Arabic fonts
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            unzip wkhtmltopdf \
+            fonts-noto fonts-noto-core fonts-noto-cjk fonts-dejavu \
+            fonts-hosny-amiri
+          unzip -v >/dev/null
+          wkhtmltopdf --version
 
       - name: Validate procedures
+        id: validate
+        continue-on-error: true
         run: bun run validate:procedures
+
+      - name: Render PDF report
+        if: always()
+        run: |
+          mkdir -p reports
+          if [ ! -f reports/validation-report.html ]; then
+            echo "::error::validation-report.html was not produced by the validation script"
+            exit 1
+          fi
+          wkhtmltopdf \
+            --encoding utf-8 \
+            --enable-local-file-access \
+            --print-media-type \
+            --margin-top 15mm --margin-bottom 15mm \
+            --margin-left 12mm --margin-right 12mm \
+            reports/validation-report.html \
+            reports/validation-report.pdf
+          ls -la reports/
+
+      - name: Upload validation report artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: fsms-validation-report
+          path: |
+            reports/validation-report.pdf
+            reports/validation-report.html
+            reports/validation-report.md
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Fail job if validation failed
+        if: always() && steps.validate.outcome != 'success'
+        run: |
+          echo "::error::Procedure validation failed — see the fsms-validation-report artifact for the full PDF."
+          exit 1
