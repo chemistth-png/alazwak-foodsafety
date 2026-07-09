@@ -79,6 +79,29 @@ const AgentDashboard = () => {
 
   useEffect(() => { loadTasks(); }, [loadTasks]);
 
+  // Polling every 5s while any task is generating/revising
+  useEffect(() => {
+    const hasActive = tasks.some(t => t.status === "generating" || t.status === "revision");
+    if (!hasActive) return;
+    const id = setInterval(() => { loadTasks(); }, 5000);
+    return () => clearInterval(id);
+  }, [tasks, loadTasks]);
+
+  const handleResetStuck = async () => {
+    const cutoff = new Date(Date.now() - 5 * 60 * 1000).toISOString();
+    const { data, error } = await supabase
+      .from("agent_tasks")
+      .update({ status: "canceled" })
+      .in("status", ["generating", "revision"])
+      .lt("created_at", cutoff)
+      .select("id");
+    if (error) { toast.error("فشل إعادة التعيين"); return; }
+    const n = data?.length || 0;
+    if (n === 0) toast.info("لا توجد مهام عالقة");
+    else toast.success(`تم إلغاء ${n} مهمة عالقة`);
+    loadTasks();
+  };
+
   const callAgent = async (body: Record<string, any>) => {
     const { data: { session } } = await supabase.auth.getSession();
     const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/smart-agent`, {
