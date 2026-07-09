@@ -21,6 +21,7 @@ import MasterDocumentList from "./pages/MasterDocumentList";
 import NCReports from "./pages/NCReports";
 import QMSTemplates from "./pages/QMSTemplates";
 import HorusProcedures from "./pages/HorusProcedures";
+import GembaWalk from "./pages/GembaWalk";
 import ResetPassword from "./pages/ResetPassword";
 import BottomNav from "./components/BottomNav";
 import DesktopSidebar from "./components/DesktopSidebar";
