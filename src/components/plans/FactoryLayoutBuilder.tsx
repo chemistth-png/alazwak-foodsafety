@@ -54,6 +54,7 @@ let itemId = 100;
 const FactoryLayoutBuilder = () => {
   const [items, setItems] = useState<LayoutItem[]>(DEFAULT_LAYOUT);
   const [dragging, setDragging] = useState<string | null>(null);
+  const [resizing, setResizing] = useState<string | null>(null);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const [selectedZone, setSelectedZone] = useState("production");
   const [scale, setScale] = useState(1);
@@ -64,6 +65,20 @@ const FactoryLayoutBuilder = () => {
   const [savedList, setSavedList] = useState<Array<{ id: string; title: string; updated_at: string }>>([]);
   const { user } = useAuth();
   const canvasRef = useRef<HTMLDivElement>(null);
+
+  const newLayout = () => {
+    setItems([]);
+    setTitle("مخطط جديد");
+    setCurrentId(null);
+    toast.success("تم إنشاء مخطط جديد فارغ");
+  };
+
+  const editLabel = (id: string) => {
+    const item = items.find((i) => i.id === id);
+    if (!item) return;
+    const name = prompt("اسم المنطقة:", item.label);
+    if (name) setItems((prev) => prev.map((i) => (i.id === id ? { ...i, label: name } : i)));
+  };
 
   const saveLayout = async () => {
     if (!user) { toast.error("يجب تسجيل الدخول"); return; }
