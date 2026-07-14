@@ -2,7 +2,7 @@ import { useState, useRef, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
-import { Plus, RotateCcw, Move, ZoomIn, ZoomOut, Save, FolderOpen, Trash2, FilePlus, Pencil } from "lucide-react";
+import { Plus, RotateCcw, Move, ZoomIn, ZoomOut, Save, FolderOpen, Trash2, FilePlus, Pencil, Download, Upload } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
