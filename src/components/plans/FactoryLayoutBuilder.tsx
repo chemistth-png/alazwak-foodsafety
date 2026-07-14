@@ -2,7 +2,7 @@ import { useState, useRef, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
-import { Plus, RotateCcw, Move, ZoomIn, ZoomOut, Save, FolderOpen, Trash2 } from "lucide-react";
+import { Plus, RotateCcw, Move, ZoomIn, ZoomOut, Save, FolderOpen, Trash2, FilePlus, Pencil } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
@@ -54,6 +54,7 @@ let itemId = 100;
 const FactoryLayoutBuilder = () => {
   const [items, setItems] = useState<LayoutItem[]>(DEFAULT_LAYOUT);
   const [dragging, setDragging] = useState<string | null>(null);
+  const [resizing, setResizing] = useState<string | null>(null);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const [selectedZone, setSelectedZone] = useState("production");
   const [scale, setScale] = useState(1);
@@ -64,6 +65,20 @@ const FactoryLayoutBuilder = () => {
   const [savedList, setSavedList] = useState<Array<{ id: string; title: string; updated_at: string }>>([]);
   const { user } = useAuth();
   const canvasRef = useRef<HTMLDivElement>(null);
+
+  const newLayout = () => {
+    setItems([]);
+    setTitle("مخطط جديد");
+    setCurrentId(null);
+    toast.success("تم إنشاء مخطط جديد فارغ");
+  };
+
+  const editLabel = (id: string) => {
+    const item = items.find((i) => i.id === id);
+    if (!item) return;
+    const name = prompt("اسم المنطقة:", item.label);
+    if (name) setItems((prev) => prev.map((i) => (i.id === id ? { ...i, label: name } : i)));
+  };
 
   const saveLayout = async () => {
     if (!user) { toast.error("يجب تسجيل الدخول"); return; }
@@ -122,19 +137,37 @@ const FactoryLayoutBuilder = () => {
     });
   }, [items, scale]);
 
-  const handleMouseMove = useCallback((e: React.MouseEvent) => {
-    if (!dragging || !canvasRef.current) return;
-    const rect = canvasRef.current.getBoundingClientRect();
-    const x = (e.clientX - rect.left) / scale - dragOffset.x;
-    const y = (e.clientY - rect.top) / scale - dragOffset.y;
-    setItems((prev) =>
-      prev.map((item) =>
-        item.id === dragging ? { ...item, x: Math.max(0, x), y: Math.max(0, y) } : item
-      )
-    );
-  }, [dragging, dragOffset, scale]);
+  const handleResizeDown = useCallback((id: string, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setResizing(id);
+  }, []);
 
-  const handleMouseUp = useCallback(() => setDragging(null), []);
+  const handleMouseMove = useCallback((e: React.MouseEvent) => {
+    if (!canvasRef.current) return;
+    const rect = canvasRef.current.getBoundingClientRect();
+    if (dragging) {
+      const x = (e.clientX - rect.left) / scale - dragOffset.x;
+      const y = (e.clientY - rect.top) / scale - dragOffset.y;
+      setItems((prev) =>
+        prev.map((item) =>
+          item.id === dragging ? { ...item, x: Math.max(0, x), y: Math.max(0, y) } : item
+        )
+      );
+    } else if (resizing) {
+      const px = (e.clientX - rect.left) / scale;
+      const py = (e.clientY - rect.top) / scale;
+      setItems((prev) =>
+        prev.map((item) =>
+          item.id === resizing
+            ? { ...item, width: Math.max(60, px - item.x), height: Math.max(50, py - item.y) }
+            : item
+        )
+      );
+    }
+  }, [dragging, resizing, dragOffset, scale]);
+
+  const handleMouseUp = useCallback(() => { setDragging(null); setResizing(null); }, []);
 
   const addZone = () => {
     const zone = ZONE_TYPES[selectedZone];
@@ -178,6 +211,10 @@ const FactoryLayoutBuilder = () => {
           <Plus className="w-4 h-4" />
           منطقة
         </Button>
+        <Button variant="outline" size="sm" onClick={newLayout} className="gap-1.5">
+          <FilePlus className="w-4 h-4" />
+          جديد
+        </Button>
         <Button variant="outline" size="sm" onClick={saveLayout} disabled={saving} className="gap-1.5">
           <Save className="w-4 h-4" />
           {saving ? "..." : "حفظ"}
@@ -188,7 +225,7 @@ const FactoryLayoutBuilder = () => {
         </Button>
         <Button variant="outline" size="sm" onClick={() => { setItems(DEFAULT_LAYOUT); setCurrentId(null); }} className="gap-1.5">
           <RotateCcw className="w-4 h-4" />
-          تعيين
+          افتراضي
         </Button>
         <div className="flex items-center gap-1 mr-auto">
           <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setScale((s) => Math.min(s + 0.1, 2))}>
@@ -264,27 +301,40 @@ const FactoryLayoutBuilder = () => {
                 fontWeight: 600,
               }}
               onMouseDown={(e) => handleMouseDown(item.id, e)}
-              onDoubleClick={() => {
-                const name = prompt("اسم المنطقة:", item.label);
-                if (name) setItems((prev) => prev.map((i) => (i.id === item.id ? { ...i, label: name } : i)));
-              }}
+              onDoubleClick={() => editLabel(item.id)}
             >
               <Move className="opacity-0 group-hover:opacity-40 absolute" style={{ width: 16 * scale, height: 16 * scale, top: 4 * scale, left: 4 * scale }} />
               <button
-                className="absolute opacity-0 group-hover:opacity-70 hover:!opacity-100 text-destructive font-bold"
+                className="absolute opacity-70 hover:!opacity-100 text-foreground/70 hover:text-foreground"
+                style={{ top: 2 * scale, right: 24 * scale, fontSize: 12 * scale }}
+                onClick={(e) => { e.stopPropagation(); editLabel(item.id); }}
+                title="تعديل الاسم"
+              >
+                <Pencil style={{ width: 12 * scale, height: 12 * scale }} />
+              </button>
+              <button
+                className="absolute opacity-70 hover:!opacity-100 text-destructive font-bold"
                 style={{ top: 2 * scale, right: 6 * scale, fontSize: 14 * scale }}
                 onClick={(e) => { e.stopPropagation(); removeItem(item.id); }}
+                title="حذف"
               >
                 ✕
               </button>
               <span className="px-1 leading-tight">{item.label}</span>
+              {/* Resize handle */}
+              <div
+                onMouseDown={(e) => handleResizeDown(item.id, e)}
+                className="absolute bg-primary/60 hover:bg-primary cursor-nwse-resize rounded-tl"
+                style={{ width: 14 * scale, height: 14 * scale, bottom: 0, left: 0 }}
+                title="تغيير الحجم"
+              />
             </div>
           ))}
         </div>
       </div>
 
       <div className="p-2 border-t bg-card text-xs text-muted-foreground text-center">
-        اسحب المناطق لتحريكها • انقر مزدوجاً لتعديل الاسم • اضغط ✕ للحذف
+        اسحب للتحريك • اسحب الزاوية لتغيير الحجم • ✎ لتعديل الاسم • ✕ للحذف
       </div>
     </div>
   );
