@@ -267,6 +267,21 @@ const FactoryLayoutBuilder = () => {
           <FolderOpen className="w-4 h-4" />
           تحميل
         </Button>
+        <Button variant="outline" size="sm" onClick={exportLayout} className="gap-1.5">
+          <Download className="w-4 h-4" />
+          تصدير JSON
+        </Button>
+        <Button variant="outline" size="sm" onClick={() => importInputRef.current?.click()} className="gap-1.5">
+          <Upload className="w-4 h-4" />
+          استيراد JSON
+        </Button>
+        <input
+          ref={importInputRef}
+          type="file"
+          accept="application/json,.json"
+          onChange={handleImportFile}
+          className="hidden"
+        />
         <Button variant="outline" size="sm" onClick={() => { setItems(DEFAULT_LAYOUT); setCurrentId(null); }} className="gap-1.5">
           <RotateCcw className="w-4 h-4" />
           افتراضي
