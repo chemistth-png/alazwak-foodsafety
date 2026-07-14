@@ -474,6 +474,16 @@ const FactoryLayoutBuilder = () => {
           onMouseUp={handleMouseUp}
           onMouseLeave={handleMouseUp}
         >
+          {/* Background image (imported PDF page) */}
+          {backgroundImage && (
+            <img
+              src={backgroundImage}
+              alt="مخطط مرجعي مستورد"
+              className="absolute inset-0 w-full h-full object-contain pointer-events-none select-none"
+              style={{ opacity: bgOpacity }}
+              draggable={false}
+            />
+          )}
           {/* Grid */}
           <svg className="absolute inset-0 w-full h-full pointer-events-none" style={{ opacity: 0.15 }}>
             <defs>
