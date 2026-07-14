@@ -301,27 +301,40 @@ const FactoryLayoutBuilder = () => {
                 fontWeight: 600,
               }}
               onMouseDown={(e) => handleMouseDown(item.id, e)}
-              onDoubleClick={() => {
-                const name = prompt("اسم المنطقة:", item.label);
-                if (name) setItems((prev) => prev.map((i) => (i.id === item.id ? { ...i, label: name } : i)));
-              }}
+              onDoubleClick={() => editLabel(item.id)}
             >
               <Move className="opacity-0 group-hover:opacity-40 absolute" style={{ width: 16 * scale, height: 16 * scale, top: 4 * scale, left: 4 * scale }} />
               <button
-                className="absolute opacity-0 group-hover:opacity-70 hover:!opacity-100 text-destructive font-bold"
+                className="absolute opacity-70 hover:!opacity-100 text-foreground/70 hover:text-foreground"
+                style={{ top: 2 * scale, right: 24 * scale, fontSize: 12 * scale }}
+                onClick={(e) => { e.stopPropagation(); editLabel(item.id); }}
+                title="تعديل الاسم"
+              >
+                <Pencil style={{ width: 12 * scale, height: 12 * scale }} />
+              </button>
+              <button
+                className="absolute opacity-70 hover:!opacity-100 text-destructive font-bold"
                 style={{ top: 2 * scale, right: 6 * scale, fontSize: 14 * scale }}
                 onClick={(e) => { e.stopPropagation(); removeItem(item.id); }}
+                title="حذف"
               >
                 ✕
               </button>
               <span className="px-1 leading-tight">{item.label}</span>
+              {/* Resize handle */}
+              <div
+                onMouseDown={(e) => handleResizeDown(item.id, e)}
+                className="absolute bg-primary/60 hover:bg-primary cursor-nwse-resize rounded-tl"
+                style={{ width: 14 * scale, height: 14 * scale, bottom: 0, left: 0 }}
+                title="تغيير الحجم"
+              />
             </div>
           ))}
         </div>
       </div>
 
       <div className="p-2 border-t bg-card text-xs text-muted-foreground text-center">
-        اسحب المناطق لتحريكها • انقر مزدوجاً لتعديل الاسم • اضغط ✕ للحذف
+        اسحب للتحريك • اسحب الزاوية لتغيير الحجم • ✎ لتعديل الاسم • ✕ للحذف
       </div>
     </div>
   );
