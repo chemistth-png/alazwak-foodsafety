@@ -211,6 +211,10 @@ const FactoryLayoutBuilder = () => {
           <Plus className="w-4 h-4" />
           منطقة
         </Button>
+        <Button variant="outline" size="sm" onClick={newLayout} className="gap-1.5">
+          <FilePlus className="w-4 h-4" />
+          جديد
+        </Button>
         <Button variant="outline" size="sm" onClick={saveLayout} disabled={saving} className="gap-1.5">
           <Save className="w-4 h-4" />
           {saving ? "..." : "حفظ"}
@@ -221,7 +225,7 @@ const FactoryLayoutBuilder = () => {
         </Button>
         <Button variant="outline" size="sm" onClick={() => { setItems(DEFAULT_LAYOUT); setCurrentId(null); }} className="gap-1.5">
           <RotateCcw className="w-4 h-4" />
-          تعيين
+          افتراضي
         </Button>
         <div className="flex items-center gap-1 mr-auto">
           <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setScale((s) => Math.min(s + 0.1, 2))}>
