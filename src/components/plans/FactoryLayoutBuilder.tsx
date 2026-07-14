@@ -65,6 +65,117 @@ const FactoryLayoutBuilder = () => {
   const [savedList, setSavedList] = useState<Array<{ id: string; title: string; updated_at: string }>>([]);
   const { user } = useAuth();
   const canvasRef = useRef<HTMLDivElement>(null);
+  const [backgroundImage, setBackgroundImage] = useState<string | null>(null);
+  const [bgOpacity, setBgOpacity] = useState(0.35);
+  const [importing, setImporting] = useState(false);
+  const docInputRef = useRef<HTMLInputElement>(null);
+
+  const CANVAS_W = 900;
+  const CANVAS_H = 700;
+
+  const renderPdfFirstPage = async (file: File): Promise<string | null> => {
+    try {
+      const pdfjs: any = await import("pdfjs-dist");
+      const workerUrl = (await import("pdfjs-dist/build/pdf.worker.min.mjs?url")).default;
+      pdfjs.GlobalWorkerOptions.workerSrc = workerUrl;
+      const buf = await file.arrayBuffer();
+      const pdf = await pdfjs.getDocument({ data: buf }).promise;
+      const page = await pdf.getPage(1);
+      const viewport = page.getViewport({ scale: 1.5 });
+      const canvas = document.createElement("canvas");
+      canvas.width = viewport.width;
+      canvas.height = viewport.height;
+      const ctx = canvas.getContext("2d")!;
+      await page.render({ canvasContext: ctx, viewport, canvas }).promise;
+      return canvas.toDataURL("image/jpeg", 0.8);
+    } catch (e) {
+      console.error("PDF render failed:", e);
+      return null;
+    }
+  };
+
+  const importFromDoc = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (docInputRef.current) docInputRef.current.value = "";
+    if (!file) return;
+    if (!user) { toast.error("يجب تسجيل الدخول"); return; }
+
+    const ext = file.name.split(".").pop()?.toLowerCase() || "";
+    if (!["pdf", "doc", "docx"].includes(ext)) {
+      toast.error("الصيغ المدعومة: PDF, DOC, DOCX");
+      return;
+    }
+    if (file.size > 20 * 1024 * 1024) {
+      toast.error("حجم الملف يتجاوز 20 ميجابايت");
+      return;
+    }
+
+    setImporting(true);
+    const loadingToast = toast.loading("جارٍ استيراد المخطط بالذكاء الاصطناعي...");
+    try {
+      // 1) Render PDF as background (client-side) in parallel with upload
+      const bgPromise = ext === "pdf" ? renderPdfFirstPage(file) : Promise.resolve(null);
+
+      // 2) Upload file
+      const filePath = `${user.id}/${crypto.randomUUID()}-${Date.now()}.${ext}`;
+      const { error: upErr } = await supabase.storage.from("chat-files").upload(filePath, file);
+      if (upErr) throw upErr;
+
+      // 3) Call AI to extract zones
+      const { data: { session } } = await supabase.auth.getSession();
+      const authToken = session?.access_token || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+      const resp = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/layout-from-doc`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${authToken}` },
+          body: JSON.stringify({ filePath, fileName: file.name }),
+        }
+      );
+      if (!resp.ok) {
+        const err = await resp.json().catch(() => ({ error: "فشل" }));
+        throw new Error(err.error || "فشل التحليل");
+      }
+      const { items: rawItems } = await resp.json();
+      if (!Array.isArray(rawItems) || rawItems.length === 0) {
+        throw new Error("لم يتم اكتشاف أي مناطق في الملف");
+      }
+
+      const bg = await bgPromise;
+      if (bg) setBackgroundImage(bg);
+
+      const mapped: LayoutItem[] = rawItems.map((it: any, idx: number) => {
+        const type = ZONE_TYPES[it.type] ? it.type : "production";
+        const color = ZONE_TYPES[type]?.color || "hsl(199 89% 85%)";
+        const nx = Math.max(0, Math.min(1, Number(it.x) || 0));
+        const ny = Math.max(0, Math.min(1, Number(it.y) || 0));
+        const nw = Math.max(0.03, Math.min(1 - nx, Number(it.width) || 0.15));
+        const nh = Math.max(0.03, Math.min(1 - ny, Number(it.height) || 0.12));
+        return {
+          id: String(++itemId),
+          type,
+          label: String(it.label || ZONE_TYPES[type]?.label || `منطقة ${idx + 1}`),
+          x: Math.round(nx * CANVAS_W),
+          y: Math.round(ny * CANVAS_H),
+          width: Math.round(nw * CANVAS_W),
+          height: Math.round(nh * CANVAS_H),
+          color,
+        };
+      });
+      setItems(mapped);
+      setTitle(file.name.replace(/\.[^.]+$/, ""));
+      setCurrentId(null);
+      toast.dismiss(loadingToast);
+      toast.success(`تم استيراد ${mapped.length} منطقة${bg ? " مع صورة خلفية للتتبع" : ""}`);
+    } catch (err: any) {
+      toast.dismiss(loadingToast);
+      console.error("Import error:", err);
+      toast.error(err?.message || "فشل استيراد المخطط");
+    } finally {
+      setImporting(false);
+    }
+  };
+
 
   const newLayout = () => {
     setItems([]);
