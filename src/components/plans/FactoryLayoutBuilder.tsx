@@ -393,6 +393,36 @@ const FactoryLayoutBuilder = () => {
           onChange={handleImportFile}
           className="hidden"
         />
+        <Button variant="outline" size="sm" onClick={() => docInputRef.current?.click()} disabled={importing} className="gap-1.5">
+          <FileText className="w-4 h-4" />
+          {importing ? "جارٍ التحليل..." : "استيراد PDF/Word"}
+        </Button>
+        <input
+          ref={docInputRef}
+          type="file"
+          accept=".pdf,.doc,.docx,application/pdf"
+          onChange={importFromDoc}
+          className="hidden"
+        />
+        {backgroundImage && (
+          <>
+            <div className="flex items-center gap-1 text-xs">
+              <span className="text-muted-foreground">شفافية:</span>
+              <input
+                type="range"
+                min={0}
+                max={1}
+                step={0.05}
+                value={bgOpacity}
+                onChange={(e) => setBgOpacity(Number(e.target.value))}
+                className="w-20"
+              />
+            </div>
+            <Button variant="outline" size="sm" onClick={() => setBackgroundImage(null)} className="gap-1.5">
+              إزالة الخلفية
+            </Button>
+          </>
+        )}
         <Button variant="outline" size="sm" onClick={() => { setItems(DEFAULT_LAYOUT); setCurrentId(null); }} className="gap-1.5">
           <RotateCcw className="w-4 h-4" />
           افتراضي
