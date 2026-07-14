@@ -11,3 +11,6 @@ verify_jwt = false
 
 [functions.generate-image]
 verify_jwt = false
+
+[functions.layout-from-doc]
+verify_jwt = false
