@@ -137,19 +137,37 @@ const FactoryLayoutBuilder = () => {
     });
   }, [items, scale]);
 
-  const handleMouseMove = useCallback((e: React.MouseEvent) => {
-    if (!dragging || !canvasRef.current) return;
-    const rect = canvasRef.current.getBoundingClientRect();
-    const x = (e.clientX - rect.left) / scale - dragOffset.x;
-    const y = (e.clientY - rect.top) / scale - dragOffset.y;
-    setItems((prev) =>
-      prev.map((item) =>
-        item.id === dragging ? { ...item, x: Math.max(0, x), y: Math.max(0, y) } : item
-      )
-    );
-  }, [dragging, dragOffset, scale]);
+  const handleResizeDown = useCallback((id: string, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setResizing(id);
+  }, []);
 
-  const handleMouseUp = useCallback(() => setDragging(null), []);
+  const handleMouseMove = useCallback((e: React.MouseEvent) => {
+    if (!canvasRef.current) return;
+    const rect = canvasRef.current.getBoundingClientRect();
+    if (dragging) {
+      const x = (e.clientX - rect.left) / scale - dragOffset.x;
+      const y = (e.clientY - rect.top) / scale - dragOffset.y;
+      setItems((prev) =>
+        prev.map((item) =>
+          item.id === dragging ? { ...item, x: Math.max(0, x), y: Math.max(0, y) } : item
+        )
+      );
+    } else if (resizing) {
+      const px = (e.clientX - rect.left) / scale;
+      const py = (e.clientY - rect.top) / scale;
+      setItems((prev) =>
+        prev.map((item) =>
+          item.id === resizing
+            ? { ...item, width: Math.max(60, px - item.x), height: Math.max(50, py - item.y) }
+            : item
+        )
+      );
+    }
+  }, [dragging, resizing, dragOffset, scale]);
+
+  const handleMouseUp = useCallback(() => { setDragging(null); setResizing(null); }, []);
 
   const addZone = () => {
     const zone = ZONE_TYPES[selectedZone];
