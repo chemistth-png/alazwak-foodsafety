@@ -2,7 +2,7 @@ import { useState, useRef, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
-import { Plus, RotateCcw, Move, ZoomIn, ZoomOut, Save, FolderOpen, Trash2, FilePlus, Pencil } from "lucide-react";
+import { Plus, RotateCcw, Move, ZoomIn, ZoomOut, Save, FolderOpen, Trash2, FilePlus, Pencil, Download, Upload } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
@@ -78,6 +78,50 @@ const FactoryLayoutBuilder = () => {
     if (!item) return;
     const name = prompt("اسم المنطقة:", item.label);
     if (name) setItems((prev) => prev.map((i) => (i.id === id ? { ...i, label: name } : i)));
+  };
+
+  const importInputRef = useRef<HTMLInputElement>(null);
+
+  const exportLayout = () => {
+    try {
+      const payload = { title, type: "factory_layout", version: 1, exportedAt: new Date().toISOString(), items };
+      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      const safe = (title || "factory_layout").replace(/[\\/:*?"<>|]+/g, "_");
+      a.href = url;
+      a.download = `${safe}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      toast.success("تم تصدير المخطط");
+    } catch (e: any) {
+      toast.error("فشل التصدير: " + (e?.message || ""));
+    }
+  };
+
+  const handleImportFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (importInputRef.current) importInputRef.current.value = "";
+    if (!file) return;
+    try {
+      const text = await file.text();
+      const parsed = JSON.parse(text);
+      const importedItems: LayoutItem[] = Array.isArray(parsed) ? parsed : parsed.items;
+      if (!Array.isArray(importedItems)) throw new Error("صيغة ملف غير صالحة");
+      const valid = importedItems.every(
+        (i) => i && typeof i.id === "string" && typeof i.x === "number" && typeof i.y === "number" &&
+               typeof i.width === "number" && typeof i.height === "number"
+      );
+      if (!valid) throw new Error("عناصر المخطط غير صالحة");
+      setItems(importedItems);
+      if (parsed.title && typeof parsed.title === "string") setTitle(parsed.title);
+      setCurrentId(null);
+      toast.success("تم استيراد المخطط");
+    } catch (e: any) {
+      toast.error("فشل الاستيراد: " + (e?.message || "ملف غير صالح"));
+    }
   };
 
   const saveLayout = async () => {
@@ -223,6 +267,21 @@ const FactoryLayoutBuilder = () => {
           <FolderOpen className="w-4 h-4" />
           تحميل
         </Button>
+        <Button variant="outline" size="sm" onClick={exportLayout} className="gap-1.5">
+          <Download className="w-4 h-4" />
+          تصدير JSON
+        </Button>
+        <Button variant="outline" size="sm" onClick={() => importInputRef.current?.click()} className="gap-1.5">
+          <Upload className="w-4 h-4" />
+          استيراد JSON
+        </Button>
+        <input
+          ref={importInputRef}
+          type="file"
+          accept="application/json,.json"
+          onChange={handleImportFile}
+          className="hidden"
+        />
         <Button variant="outline" size="sm" onClick={() => { setItems(DEFAULT_LAYOUT); setCurrentId(null); }} className="gap-1.5">
           <RotateCcw className="w-4 h-4" />
           افتراضي
