@@ -73,25 +73,65 @@ const FactoryLayoutBuilder = () => {
   const CANVAS_W = 900;
   const CANVAS_H = 700;
 
-  const renderPdfFirstPage = async (file: File): Promise<string | null> => {
+  const renderPdfPages = async (
+    file: File,
+    maxPages = 3,
+    scale = 2.0,
+  ): Promise<{ images: string[]; firstPagePreview: string | null }> => {
     try {
       const pdfjs: any = await import("pdfjs-dist");
       const workerUrl = (await import("pdfjs-dist/build/pdf.worker.min.mjs?url")).default;
       pdfjs.GlobalWorkerOptions.workerSrc = workerUrl;
       const buf = await file.arrayBuffer();
       const pdf = await pdfjs.getDocument({ data: buf }).promise;
-      const page = await pdf.getPage(1);
-      const viewport = page.getViewport({ scale: 1.5 });
-      const canvas = document.createElement("canvas");
-      canvas.width = viewport.width;
-      canvas.height = viewport.height;
-      const ctx = canvas.getContext("2d")!;
-      await page.render({ canvasContext: ctx, viewport, canvas }).promise;
-      return canvas.toDataURL("image/jpeg", 0.8);
+      const pageCount = Math.min(pdf.numPages, maxPages);
+      const images: string[] = [];
+      let firstPagePreview: string | null = null;
+      for (let i = 1; i <= pageCount; i++) {
+        const page = await pdf.getPage(i);
+        const viewport = page.getViewport({ scale });
+        const canvas = document.createElement("canvas");
+        canvas.width = viewport.width;
+        canvas.height = viewport.height;
+        const ctx = canvas.getContext("2d")!;
+        // White background so transparent PDFs render cleanly for AI vision.
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        await page.render({ canvasContext: ctx, viewport, canvas }).promise;
+        // Higher-quality PNG for the AI (better edge detection), JPEG for preview.
+        images.push(canvas.toDataURL("image/png"));
+        if (i === 1) firstPagePreview = canvas.toDataURL("image/jpeg", 0.85);
+      }
+      return { images, firstPagePreview };
     } catch (e) {
       console.error("PDF render failed:", e);
-      return null;
+      return { images: [], firstPagePreview: null };
     }
+  };
+
+  // Resolve heavy overlaps on the canvas by nudging later items to the side.
+  const resolveOverlaps = (arr: LayoutItem[]): LayoutItem[] => {
+    const out = arr.map((i) => ({ ...i }));
+    for (let i = 0; i < out.length; i++) {
+      for (let j = 0; j < i; j++) {
+        const a = out[j], b = out[i];
+        const x1 = Math.max(a.x, b.x);
+        const y1 = Math.max(a.y, b.y);
+        const x2 = Math.min(a.x + a.width, b.x + b.width);
+        const y2 = Math.min(a.y + a.height, b.y + b.height);
+        const inter = Math.max(0, x2 - x1) * Math.max(0, y2 - y1);
+        const areaB = b.width * b.height;
+        if (areaB > 0 && inter / areaB > 0.6) {
+          // Move b just below a if room, else to the right.
+          if (a.y + a.height + b.height + 8 <= CANVAS_H) {
+            b.y = a.y + a.height + 8;
+          } else {
+            b.x = Math.min(CANVAS_W - b.width, a.x + a.width + 8);
+          }
+        }
+      }
+    }
+    return out;
   };
 
   const importFromDoc = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -111,17 +151,26 @@ const FactoryLayoutBuilder = () => {
     }
 
     setImporting(true);
-    const loadingToast = toast.loading("جارٍ استيراد المخطط بالذكاء الاصطناعي...");
+    const loadingToast = toast.loading("جارٍ تحليل المخطط بدقة عالية...");
     try {
-      // 1) Render PDF as background (client-side) in parallel with upload
-      const bgPromise = ext === "pdf" ? renderPdfFirstPage(file) : Promise.resolve(null);
+      let images: string[] = [];
+      let firstPagePreview: string | null = null;
+      let filePath: string | null = null;
 
-      // 2) Upload file
-      const filePath = `${user.id}/${crypto.randomUUID()}-${Date.now()}.${ext}`;
-      const { error: upErr } = await supabase.storage.from("chat-files").upload(filePath, file);
-      if (upErr) throw upErr;
+      if (ext === "pdf") {
+        // Render pages client-side at 2x for high spatial accuracy.
+        const rendered = await renderPdfPages(file, 3, 2.0);
+        images = rendered.images;
+        firstPagePreview = rendered.firstPagePreview;
+      }
 
-      // 3) Call AI to extract zones
+      // For DOC/DOCX (or PDF fallback), upload the file so the backend can read it.
+      if (images.length === 0) {
+        filePath = `${user.id}/${crypto.randomUUID()}-${Date.now()}.${ext}`;
+        const { error: upErr } = await supabase.storage.from("chat-files").upload(filePath, file);
+        if (upErr) throw upErr;
+      }
+
       const { data: { session } } = await supabase.auth.getSession();
       const authToken = session?.access_token || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
       const resp = await fetch(
@@ -129,7 +178,7 @@ const FactoryLayoutBuilder = () => {
         {
           method: "POST",
           headers: { "Content-Type": "application/json", Authorization: `Bearer ${authToken}` },
-          body: JSON.stringify({ filePath, fileName: file.name }),
+          body: JSON.stringify({ filePath, fileName: file.name, images }),
         }
       );
       if (!resp.ok) {
@@ -141,14 +190,13 @@ const FactoryLayoutBuilder = () => {
         throw new Error("لم يتم اكتشاف أي مناطق في الملف");
       }
 
-      const bg = await bgPromise;
-      if (bg) setBackgroundImage(bg);
+      if (firstPagePreview) setBackgroundImage(firstPagePreview);
 
       const mapped: LayoutItem[] = rawItems.map((it: any, idx: number) => {
         const type = ZONE_TYPES[it.type] ? it.type : "production";
         const color = ZONE_TYPES[type]?.color || "hsl(199 89% 85%)";
-        const nx = Math.max(0, Math.min(1, Number(it.x) || 0));
-        const ny = Math.max(0, Math.min(1, Number(it.y) || 0));
+        const nx = Math.max(0, Math.min(0.98, Number(it.x) || 0));
+        const ny = Math.max(0, Math.min(0.98, Number(it.y) || 0));
         const nw = Math.max(0.03, Math.min(1 - nx, Number(it.width) || 0.15));
         const nh = Math.max(0.03, Math.min(1 - ny, Number(it.height) || 0.12));
         return {
@@ -157,16 +205,17 @@ const FactoryLayoutBuilder = () => {
           label: String(it.label || ZONE_TYPES[type]?.label || `منطقة ${idx + 1}`),
           x: Math.round(nx * CANVAS_W),
           y: Math.round(ny * CANVAS_H),
-          width: Math.round(nw * CANVAS_W),
-          height: Math.round(nh * CANVAS_H),
+          width: Math.max(60, Math.round(nw * CANVAS_W)),
+          height: Math.max(50, Math.round(nh * CANVAS_H)),
           color,
         };
       });
-      setItems(mapped);
+      const finalItems = resolveOverlaps(mapped);
+      setItems(finalItems);
       setTitle(file.name.replace(/\.[^.]+$/, ""));
       setCurrentId(null);
       toast.dismiss(loadingToast);
-      toast.success(`تم استيراد ${mapped.length} منطقة${bg ? " مع صورة خلفية للتتبع" : ""}`);
+      toast.success(`تم استيراد ${finalItems.length} منطقة${firstPagePreview ? " مع صورة خلفية للتتبع" : ""}`);
     } catch (err: any) {
       toast.dismiss(loadingToast);
       console.error("Import error:", err);
@@ -175,6 +224,7 @@ const FactoryLayoutBuilder = () => {
       setImporting(false);
     }
   };
+
 
 
   const newLayout = () => {
