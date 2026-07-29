@@ -352,13 +352,17 @@ export type Database = {
       }
       nc_reports: {
         Row: {
+          batch_number: string
           category: string
+          ccp_ref: string
           closed_at: string | null
           corrective_action: string
           created_at: string
           description: string
           detected_at: string
+          hazard_type: string
           id: string
+          lot_code: string
           report_number: string
           responsible: string
           severity: string
@@ -366,15 +370,21 @@ export type Database = {
           title: string
           updated_at: string
           user_id: string
+          verified_at: string | null
+          verified_by: string
         }
         Insert: {
+          batch_number?: string
           category?: string
+          ccp_ref?: string
           closed_at?: string | null
           corrective_action?: string
           created_at?: string
           description?: string
           detected_at?: string
+          hazard_type?: string
           id?: string
+          lot_code?: string
           report_number?: string
           responsible?: string
           severity?: string
@@ -382,15 +392,21 @@ export type Database = {
           title?: string
           updated_at?: string
           user_id: string
+          verified_at?: string | null
+          verified_by?: string
         }
         Update: {
+          batch_number?: string
           category?: string
+          ccp_ref?: string
           closed_at?: string | null
           corrective_action?: string
           created_at?: string
           description?: string
           detected_at?: string
+          hazard_type?: string
           id?: string
+          lot_code?: string
           report_number?: string
           responsible?: string
           severity?: string
@@ -398,6 +414,8 @@ export type Database = {
           title?: string
           updated_at?: string
           user_id?: string
+          verified_at?: string | null
+          verified_by?: string
         }
         Relationships: []
       }

@@ -49,7 +49,7 @@ const BottomNav = () => {
                     setShowMore(false);
                   }}
                   className={cn(
-                    "w-full flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors text-right",
+                    "w-full flex items-center gap-3 rounded-lg px-3 py-3.5 min-h-[48px] text-sm transition-colors text-right",
                     isActive
                       ? "bg-accent text-primary font-semibold"
                       : "text-muted-foreground hover:bg-muted hover:text-foreground"
@@ -67,7 +67,7 @@ const BottomNav = () => {
                 setShowMore(false);
                 signOut();
               }}
-              className="w-full flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-destructive hover:bg-destructive/10 transition-colors text-right"
+              className="w-full flex items-center gap-3 rounded-lg px-3 py-3.5 min-h-[48px] text-sm text-destructive hover:bg-destructive/10 transition-colors text-right"
               dir="rtl"
             >
               <LogOut className="w-5 h-5 shrink-0" />
@@ -79,7 +79,7 @@ const BottomNav = () => {
 
       {/* Bottom navigation bar */}
       <nav className="fixed bottom-0 left-0 right-0 z-40 border-t bg-card/95 backdrop-blur-sm md:hidden safe-area-bottom overflow-hidden">
-        <div className="flex flex-nowrap items-stretch justify-between h-14 w-full px-0.5 gap-0.5">
+        <div className="flex flex-nowrap items-stretch justify-between h-16 w-full px-0.5 gap-0.5">
           {MAIN_NAV_ITEMS.map(({ path, label, icon: Icon }) => {
             const isActive = path === "/" ? location.pathname === "/" : location.pathname.startsWith(path);
             return (
