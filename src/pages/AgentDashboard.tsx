@@ -79,13 +79,11 @@ const AgentDashboard = () => {
 
   useEffect(() => { loadTasks(); }, [loadTasks]);
 
-  // Polling every 5s while any task is generating/revising
+  // Polling every 5s - always active for real-time task updates
   useEffect(() => {
-    const hasActive = tasks.some(t => t.status === "generating" || t.status === "revision");
-    if (!hasActive) return;
     const id = setInterval(() => { loadTasks(); }, 5000);
     return () => clearInterval(id);
-  }, [tasks, loadTasks]);
+  }, [loadTasks]);
 
   const handleResetStuck = async () => {
     const cutoff = new Date(Date.now() - 5 * 60 * 1000).toISOString();
