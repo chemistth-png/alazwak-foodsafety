@@ -64,10 +64,15 @@ const AgentDashboard = () => {
   const [newType, setNewType] = useState("cleaning_plan");
   const [newTitle, setNewTitle] = useState("");
   const [newDesc, setNewDesc] = useState("");
-  const [agentSpeed, setAgentSpeed] = useState<"fast" | "accurate">("fast");
+  const [agentSpeed, setAgentSpeed] = useState<"fast" | "accurate">(() => {
+    const saved = typeof window !== "undefined" ? localStorage.getItem("agentSpeed") : null;
+    return saved === "accurate" ? "accurate" : "fast"; // الوضع السريع افتراضياً
+  });
   const [feedback, setFeedback] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
   const [mobileView, setMobileView] = useState<"list" | "detail">("list");
+
+  useEffect(() => { localStorage.setItem("agentSpeed", agentSpeed); }, [agentSpeed]);
 
   const loadTasks = useCallback(async () => {
     const { data } = await supabase
@@ -79,11 +84,30 @@ const AgentDashboard = () => {
 
   useEffect(() => { loadTasks(); }, [loadTasks]);
 
-  // Polling every 5s - always active for real-time task updates
+  const hasPending = tasks.some((t) => t.status === "generating" || t.status === "revision");
+
+  // Polling: كل 3 ثوانٍ أثناء وجود مهام قيد التنفيذ، وإلا كل 15 ثانية
   useEffect(() => {
-    const id = setInterval(() => { loadTasks(); }, 5000);
+    const id = setInterval(() => { loadTasks(); }, hasPending ? 3000 : 15000);
     return () => clearInterval(id);
-  }, [loadTasks]);
+  }, [loadTasks, hasPending]);
+
+  // مزامنة المهمة المحددة مع آخر حالة من الـ polling
+  useEffect(() => {
+    if (!selectedTask) return;
+    const fresh = tasks.find((t) => t.id === selectedTask.id);
+    if (!fresh) return;
+    if (fresh.updated_at !== selectedTask.updated_at || fresh.status !== selectedTask.status) {
+      setSelectedTask(fresh);
+      if (
+        (selectedTask.status === "generating" || selectedTask.status === "revision") &&
+        fresh.status !== "generating" && fresh.status !== "revision"
+      ) {
+        toast.success("اكتملت المهمة ✅");
+      }
+    }
+  }, [tasks, selectedTask]);
+
 
   const handleResetStuck = async () => {
     const cutoff = new Date(Date.now() - 5 * 60 * 1000).toISOString();
