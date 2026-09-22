@@ -19,7 +19,25 @@ export async function handleDocument(req: Request, deps: Dependencies): Promise<
     const userId = await deps.authenticate();
     if (!userId) return response(401, { error: "Unauthorized" });
     let input: unknown;
-    try { input = await req.json(); } catch { return response(400, { error: "Invalid JSON" }); }
+    try {
+      // Bound the actual stream, not the untrusted Content-Length header.
+      const reader = req.body?.getReader();
+      if (!reader) return response(400, { error: "Invalid JSON" });
+      const decoder = new TextDecoder("utf-8", { fatal: true });
+      let bytes = 0;
+      let body = "";
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        bytes += value.byteLength;
+        if (bytes > 8192) {
+          await reader.cancel();
+          return response(413, { error: "Request body too large" });
+        }
+        body += decoder.decode(value, { stream: true });
+      }
+      input = JSON.parse(body + decoder.decode());
+    } catch { return response(400, { error: "Invalid JSON" }); }
     if (!input || typeof input !== "object") return response(400, { error: "Invalid request" });
     const { filePath, fileName } = input as Record<string, unknown>;
     if (typeof filePath !== "string" || typeof fileName !== "string" || !fileName.trim() || fileName.length > 255 || filePath.length > 1024) {

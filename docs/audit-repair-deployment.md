@@ -37,3 +37,11 @@ open. Do not represent this batch as closure of the complete audit.
 
 The public master list now says approval is unverified. That change does not
 secure the separate HACCP/CAPA signature workflows.
+
+## Controlled verification plan
+
+See [QV-APP-001](control-verification-plan-ar.md), [local results](verification-results.md),
+and [read-only preflight SQL](preflight-document-repair.sql).
+Database regression is now reproducible with `npm ci --prefix tools/database-tests --ignore-scripts`
+and `npm test --prefix tools/database-tests`; it uses selected source migrations and
+checks two-user RLS in an isolated PostgreSQL engine. CI binds evidence to commit SHA.

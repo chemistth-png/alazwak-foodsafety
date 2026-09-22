@@ -1,0 +1,7 @@
+{
+  "name": "alazwak-database-regression",
+  "private": true,
+  "type": "module",
+  "scripts": { "test": "node --test --test-concurrency=1 regression.test.mjs" },
+  "devDependencies": { "@electric-sql/pglite": "0.5.8" }
+}

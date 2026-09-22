@@ -25,3 +25,6 @@ dist-ssr
 
 # Validation reports (generated in CI)
 reports/
+
+# Supabase CLI local cache
+supabase/.temp/
