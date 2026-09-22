@@ -220,7 +220,7 @@ const HorusProcedures = () => {
                 </DialogTitle>
               </div>
               <div className="flex items-center gap-2">
-                <Button size="sm" variant="outline" onClick={() => window.print()}>
+                <Button size="sm" variant="outline" onClick={handlePrint} disabled={loadingMd || !mdContent}>
                   <Printer className="w-3.5 h-3.5 ms-1" /> طباعة
                 </Button>
                 {active?.docx && (
@@ -239,7 +239,7 @@ const HorusProcedures = () => {
                 <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
               </div>
             ) : (
-              <article className="prose prose-sm dark:prose-invert max-w-none prose-headings:text-foreground prose-table:text-xs prose-th:bg-muted prose-th:text-right prose-td:text-right prose-th:border prose-td:border prose-th:border-border prose-td:border-border prose-th:p-2 prose-td:p-2">
+              <article ref={articleRef} className="prose prose-sm dark:prose-invert max-w-none prose-headings:text-foreground prose-table:text-xs prose-th:bg-muted prose-th:text-right prose-td:text-right prose-th:border prose-td:border prose-th:border-border prose-td:border-border prose-th:p-2 prose-td:p-2">
                 <ReactMarkdown remarkPlugins={[remarkGfm]}>
                   {mdContent}
                 </ReactMarkdown>
