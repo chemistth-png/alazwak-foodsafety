@@ -110,10 +110,6 @@ const NCReports = () => {
   const [saving, setSaving] = useState(false);
   const [capaReport, setCapaReport] = useState<NCReport | null>(null);
   const [capaOpen, setCapaOpen] = useState(false);
-  const [verifyOpen, setVerifyOpen] = useState(false);
-  const [verifyReport, setVerifyReport] = useState<NCReport | null>(null);
-  const [verifiedBy, setVerifiedBy] = useState("");
-
   const load = async () => {
     setLoading(true);
     const { data, error } = await supabase
@@ -151,34 +147,11 @@ const NCReports = () => {
   };
 
   const updateStatus = async (id: string, status: string) => {
-    const patch: any = { status };
+    const patch: { status: string; closed_at: string | null } = { status, closed_at: null };
     if (status === "closed") patch.closed_at = new Date().toISOString();
     const { error } = await supabase.from("nc_reports").update(patch).eq("id", id);
     if (error) return toast.error("فشل التحديث", { duration: 8000 });
     toast.success("تم التحديث");
-    load();
-  };
-
-  const handleVerify = (report: NCReport) => {
-    setVerifyReport(report);
-    setVerifiedBy("");
-    setVerifyOpen(true);
-  };
-
-  const submitVerification = async () => {
-    if (!verifyReport) return;
-    if (!verifiedBy.trim()) return toast.error("أدخل اسم المحقق", { duration: 8000 });
-    const { error } = await supabase
-      .from("nc_reports")
-      .update({
-        status: "verified",
-        verified_by: verifiedBy,
-        verified_at: new Date().toISOString(),
-      })
-      .eq("id", verifyReport.id);
-    if (error) return toast.error("فشل التحقق", { duration: 8000 });
-    toast.success("تم التحقق من فعالية الإجراء التصحيحي");
-    setVerifyOpen(false);
     load();
   };
 
@@ -222,7 +195,7 @@ const NCReports = () => {
     if (s === "verified")
       return (
         <Badge variant="outline" className="gap-1 border-green-600 text-green-700">
-          <ShieldCheck className="w-3 h-3" /> تم التحقق
+          <ShieldCheck className="w-3 h-3" /> تحقق سابق غير موثّق
         </Badge>
       );
     if (s === "closed")
@@ -315,7 +288,7 @@ const NCReports = () => {
       {r.verified_by && (
         <div className="text-xs border-t pt-2 text-green-700">
           <ShieldCheck className="w-3 h-3 inline ml-1" />
-          تحقق بواسطة: {r.verified_by}
+          بيان تحقق سابق غير موثّق: {r.verified_by}
         </div>
       )}
 
@@ -328,18 +301,6 @@ const NCReports = () => {
         <span className="truncate">إنشاء إجراء تصحيحي (CAPA)</span>
       </Button>
 
-      {r.status === "closed" && !r.verified_by && (
-        <Button
-          size="default"
-          variant="outline"
-          className="w-full min-h-14 gap-2 rounded-lg border-green-600 text-green-700 text-sm font-semibold"
-          onClick={() => handleVerify(r)}
-        >
-          <ShieldCheck className="w-4 h-4 shrink-0" />
-          <span>تحقق من فعالية CAPA</span>
-        </Button>
-      )}
-
       <div className="flex items-center gap-2 pt-2 border-t">
         <Select value={r.status} onValueChange={(v) => updateStatus(r.id, v)}>
           <SelectTrigger className="min-h-14 flex-1 text-sm">
@@ -349,7 +310,7 @@ const NCReports = () => {
             <SelectItem value="open">مفتوح</SelectItem>
             <SelectItem value="in_progress">قيد المعالجة</SelectItem>
             <SelectItem value="closed">مغلق</SelectItem>
-            <SelectItem value="verified">تم التحقق</SelectItem>
+
           </SelectContent>
         </Select>
         <Button
@@ -629,20 +590,9 @@ const NCReports = () => {
                                   <SelectItem value="open">مفتوح</SelectItem>
                                   <SelectItem value="in_progress">قيد المعالجة</SelectItem>
                                   <SelectItem value="closed">مغلق</SelectItem>
-                                  <SelectItem value="verified">تم التحقق</SelectItem>
+
                                 </SelectContent>
                               </Select>
-                              {r.status === "closed" && !r.verified_by && (
-                                <Button
-                                  variant="outline"
-                                  size="icon"
-                                  className="h-10 w-10 text-green-700 border-green-600"
-                                  onClick={() => handleVerify(r)}
-                                  title="تحقق من فعالية CAPA"
-                                >
-                                  <ShieldCheck className="w-4 h-4" />
-                                </Button>
-                              )}
                               <Button
                                 variant="ghost"
                                 size="icon"
@@ -718,38 +668,7 @@ const NCReports = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Verification Dialog */}
-      <Dialog open={verifyOpen} onOpenChange={setVerifyOpen}>
-        <DialogContent className="max-w-sm" dir="rtl">
-          <DialogHeader>
-            <DialogTitle className="text-right flex items-center gap-2">
-              <ShieldCheck className="w-5 h-5 text-green-600" />
-              تحقق من فعالية CAPA
-            </DialogTitle>
-          </DialogHeader>
-          <div className="space-y-3 py-2">
-            <p className="text-sm text-muted-foreground">
-              تأكيد أن الإجراء التصحيحي لـ <strong>{verifyReport?.report_number}</strong> تم تنفيذه بفعالية ولم يتكرر عدم المطابقة.
-            </p>
-            <div>
-              <Label>اسم المحقق (QA Manager) *</Label>
-              <Input
-                value={verifiedBy}
-                onChange={(e) => setVerifiedBy(e.target.value)}
-                placeholder="أدخل اسمك الكامل"
-                maxLength={100}
-                className="min-h-12"
-              />
-            </div>
-          </div>
-          <DialogFooter className="flex-row-reverse gap-2">
-            <Button onClick={submitVerification} className="min-h-12 bg-green-600 hover:bg-green-700">
-              تأكيد التحقق
-            </Button>
-            <Button variant="outline" className="min-h-12" onClick={() => setVerifyOpen(false)}>إلغاء</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+
     </div>
   );
 };

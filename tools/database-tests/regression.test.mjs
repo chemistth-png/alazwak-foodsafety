@@ -5,6 +5,7 @@ import { before, after, test } from 'node:test';
 const root = new URL('../../', import.meta.url);
 const migration = name => readFileSync(new URL('supabase/migrations/' + name, root), 'utf8');
 const repair = migration('20260922163518_repair_document_persistence.sql');
+const quarantine = migration('20260922184249_quarantine_unverified_approvals.sql');
 const A = '00000000-0000-4000-8000-000000000001';
 const B = '00000000-0000-4000-8000-000000000002';
 let db;
@@ -22,6 +23,7 @@ before(async () => {
   await db.exec(migration('20260419033043_98b4e74e-8412-4acc-9518-38951dea6078.sql'));
   await db.exec(migration('20260501220130_2bbc6d54-9ddc-465d-85ac-7a1a1b9798e6.sql'));
   await db.exec(repair);
+  await db.exec(quarantine);
   await db.exec(`GRANT USAGE ON SCHEMA public, auth TO authenticated, anon;
     GRANT SELECT,INSERT,UPDATE,DELETE ON ALL TABLES IN SCHEMA public TO authenticated, anon;`);
 });
@@ -89,4 +91,45 @@ test('repair migration is repeatable and new NCR fields round-trip under owner R
   assert.equal(rows[0].batch_number,'B1'); assert.equal(rows[0].lot_code,'L1');
   assert.equal(rows[0].hazard_type,'biological');assert.equal(rows[0].ccp_ref,'CCP1');assert.equal(rows[0].verified_at,null);
   assert.equal((await asUser(B,()=>db.query('SELECT * FROM nc_reports WHERE id=$1',[rows[0].id]))).rows.length,0);
+});
+
+test('HACCP drafts save but forged approval and signature inserts fail', async () => {
+  const insertPlan = (status, signature) => asUser(A, () => db.query(
+    'INSERT INTO haccp_plans(user_id,status,signature_data) VALUES ($1,$2,$3) RETURNING id', [A,status,signature]));
+  const {rows} = await insertPlan('draft', {});
+  await assert.rejects(insertPlan('approved', {}), e => e.code === '42501');
+  await assert.rejects(insertPlan('draft', {signer_name:'forged',signed_at:'2026-01-01'}), e => e.code === '42501');
+  await assert.rejects(asUser(A,()=>db.query("UPDATE haccp_plans SET status='approved' WHERE id=$1",[rows[0].id])), e=>e.code==='42501');
+  await assert.rejects(asUser(A,()=>db.query(`UPDATE haccp_plans SET signature_data='{"signer_name":"forged"}' WHERE id=$1`,[rows[0].id])), e=>e.code==='42501');
+  assert.equal((await asUser(B,()=>db.query('SELECT id FROM haccp_plans WHERE id=$1',[rows[0].id]))).rows.length,0);
+});
+test('NCR cannot bypass verification guard through insert or direct update', async () => {
+  const {rows}=await asUser(A,()=>db.query("INSERT INTO nc_reports(user_id,status) VALUES ($1,'closed') RETURNING id",[A]));
+  for(const patch of ["status='verified'", "verified_by='forged'", "verified_at=now()"]){
+    await assert.rejects(asUser(A,()=>db.query(`UPDATE nc_reports SET ${patch} WHERE id=$1`,[rows[0].id])),e=>e.code==='42501');
+  }
+  await assert.rejects(asUser(A,()=>db.query("INSERT INTO nc_reports(user_id,status) VALUES ($1,'verified')",[A])),e=>e.code==='42501');
+  await assert.rejects(asUser(A,()=>db.query("INSERT INTO nc_reports(user_id,verified_by) VALUES ($1,'forged')",[A])),e=>e.code==='42501');
+  await asUser(A,()=>db.query("UPDATE nc_reports SET status='in_progress' WHERE id=$1",[rows[0].id]));
+});
+test('quarantine is repeatable and trigger function is not API-callable', async () => {
+  await db.exec(quarantine);
+  const {rows}=await db.query("SELECT has_function_privilege('authenticated','public.guard_unverified_approval()','EXECUTE') AS allowed");
+  assert.equal(rows[0].allowed,false);
+});
+test('existing approval evidence is preserved and can only return to draft/open', async () => {
+  // Seed pre-migration records as administrator inside a transaction.
+  await db.exec('BEGIN');
+  try {
+    await db.exec('ALTER TABLE haccp_plans DISABLE TRIGGER guard_haccp_approval; ALTER TABLE nc_reports DISABLE TRIGGER guard_nc_verification;');
+    const plan=(await db.query(`INSERT INTO haccp_plans(user_id,status,signature_data) VALUES ($1,'approved','{"signer_name":"legacy"}') RETURNING id`,[A])).rows[0].id;
+    const nc=(await db.query("INSERT INTO nc_reports(user_id,status,verified_by) VALUES ($1,'verified','legacy') RETURNING id",[A])).rows[0].id;
+    await db.exec('ALTER TABLE haccp_plans ENABLE TRIGGER guard_haccp_approval; ALTER TABLE nc_reports ENABLE TRIGGER guard_nc_verification; COMMIT;');
+    await db.exec(quarantine);
+    assert.equal((await db.query('SELECT status FROM haccp_plans WHERE id=$1',[plan])).rows[0].status,'approved');
+    await asUser(A,()=>db.query("UPDATE haccp_plans SET status='draft',title='Edited draft' WHERE id=$1",[plan]));
+    await asUser(A,()=>db.query("UPDATE nc_reports SET status='open' WHERE id=$1",[nc]));
+    assert.deepEqual((await db.query('SELECT signature_data FROM haccp_plans WHERE id=$1',[plan])).rows[0].signature_data,{signer_name:'legacy'});
+    assert.equal((await db.query('SELECT verified_by FROM nc_reports WHERE id=$1',[nc])).rows[0].verified_by,'legacy');
+  } catch(error) { await db.exec('ROLLBACK'); throw error; }
 });
