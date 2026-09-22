@@ -196,7 +196,8 @@ const HACCPTables = () => {
           <Download className="w-4 h-4" />
           تصدير PDF
         </Button>
-        <Badge variant="outline">مسودة — الاعتماد الإلكتروني غير متاح</Badge>
+        <Badge variant="outline">مسودة تحرير — راجع سجل الاعتماد</Badge>
+        {planId && <a className="text-sm underline" href={`/approvals/haccp/${planId}`}>مراجعة الإصدار المحفوظ واعتماده</a>}
         {docNumber && <span className="text-xs text-muted-foreground ms-auto">رقم الوثيقة: {docNumber}</span>}
       </div>
 

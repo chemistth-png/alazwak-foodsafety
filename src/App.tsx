@@ -18,6 +18,7 @@ import AuditLogPage from "./pages/AuditLogPage";
 import ReferenceLibrary from "./pages/ReferenceLibrary";
 import GroundwaterSystems from "./pages/GroundwaterSystems";
 import MasterDocumentList from "./pages/MasterDocumentList";
+import ApprovalRecord from "./pages/ApprovalRecord";
 import NCReports from "./pages/NCReports";
 import QMSTemplates from "./pages/QMSTemplates";
 import HorusProcedures from "./pages/HorusProcedures";
@@ -84,6 +85,7 @@ const App = () => {
                     <Route path="/library" element={<ProtectedRoute><ReferenceLibrary /></ProtectedRoute>} />
                     <Route path="/groundwater" element={<ProtectedRoute><GroundwaterSystems /></ProtectedRoute>} />
                     <Route path="/master-list" element={<ProtectedRoute><MasterDocumentList /></ProtectedRoute>} />
+                    <Route path="/approvals/:kind/:id" element={<ProtectedRoute><ApprovalRecord /></ProtectedRoute>} />
                     <Route path="/nc-reports" element={<ProtectedRoute><NCReports /></ProtectedRoute>} />
                     <Route path="/qms-templates" element={<ProtectedRoute><QMSTemplates /></ProtectedRoute>} />
                     <Route path="/horus-procedures" element={<ProtectedRoute><HorusProcedures /></ProtectedRoute>} />

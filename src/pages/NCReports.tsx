@@ -285,6 +285,7 @@ const NCReports = () => {
         <p className="text-xs text-muted-foreground border-t pt-2 leading-relaxed">{r.description}</p>
       )}
 
+      <a className="text-sm underline" href={`/approvals/nc/${r.id}`}>سجل مراجعة فعالية CAPA</a>
       {r.verified_by && (
         <div className="text-xs border-t pt-2 text-green-700">
           <ShieldCheck className="w-3 h-3 inline ml-1" />
@@ -578,6 +579,7 @@ const NCReports = () => {
                             {new Date(r.created_at).toLocaleDateString("ar-EG")}
                           </TableCell>
                           <TableCell className="print:hidden px-3">
+                            <a className="block text-sm underline" href={`/approvals/nc/${r.id}`}>سجل الاعتماد</a>
                             <div className="flex items-center gap-1">
                               <Select
                                 value={r.status}
@@ -604,6 +606,7 @@ const NCReports = () => {
                             </div>
                           </TableCell>
                           <TableCell className="print:hidden px-3">
+                            <a className="block text-sm underline" href={`/approvals/nc/${r.id}`}>سجل الاعتماد</a>
                             <Button
                               variant="outline"
                               size="sm"

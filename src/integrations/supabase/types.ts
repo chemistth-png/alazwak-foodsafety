@@ -565,6 +565,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      record_approval: {
+        Args: { p_kind: string; p_id: string; p_action: string; p_revision?: number; p_evidence?: string }
+        Returns: Json
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
