@@ -56,13 +56,32 @@ const HorusProcedures = () => {
 
   useEffect(() => {
     if (!active) return;
+    let cancelled = false;
     setLoadingMd(true);
     setMdContent("");
     fetch(active.md)
-      .then((r) => r.text())
-      .then(setMdContent)
-      .catch(() => setMdContent("تعذر تحميل المحتوى."))
-      .finally(() => setLoadingMd(false));
+      .then((r) => {
+        if (!r.ok) throw new Error(String(r.status));
+        return r.text();
+      })
+      .then((text) => {
+        if (cancelled) return;
+        // A missing file is served the SPA shell by the dev/static server.
+        if (/^\s*<(!doctype|html)/i.test(text)) {
+          setMdContent("تعذر تحميل المحتوى: الملف غير متوفر.");
+          return;
+        }
+        setMdContent(text);
+      })
+      .catch(() => {
+        if (!cancelled) setMdContent("تعذر تحميل المحتوى.");
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingMd(false);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [active]);
 
   const handlePrint = () => {
