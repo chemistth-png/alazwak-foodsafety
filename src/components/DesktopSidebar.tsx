@@ -1,5 +1,5 @@
 import { useNavigate, useLocation } from "react-router-dom";
-import { MessageSquare, FolderOpen, FileText, Bot, PieChart, LogOut, Droplets, ClipboardList, BookOpen, Waves, ListChecks, AlertTriangle, ShieldCheck, Camera } from "lucide-react";
+import { MessageSquare, FolderOpen, FileText, Bot, PieChart, LogOut, Droplets, ClipboardList, BookOpen, Waves, ListChecks, AlertTriangle, ShieldCheck, Camera, LayoutTemplate } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
 import ThemeToggle from "@/components/ThemeToggle";
@@ -14,6 +14,7 @@ const NAV_ITEMS = [
   { path: "/gemba", label: "جولة Gemba", icon: Camera },
   { path: "/horus-procedures", label: "إجراءات FSMS", icon: ShieldCheck },
   { path: "/sops", label: "SOPs", icon: FileText },
+  { path: "/qms-templates", label: "نماذج نظام الجودة", icon: LayoutTemplate },
   { path: "/plans", label: "المخططات", icon: ClipboardList },
   { path: "/library", label: "المكتبة المرجعية", icon: BookOpen },
   { path: "/groundwater", label: "المياه الجوفية", icon: Waves },
@@ -25,7 +26,8 @@ const DesktopSidebar = () => {
   const location = useLocation();
   const { signOut } = useAuth();
 
-  if (location.pathname === "/auth" || location.pathname === "/landing" || location.pathname === "/install") return null;
+  const PUBLIC_PATHS = ["/auth", "/landing", "/install", "/reset-password"];
+  if (PUBLIC_PATHS.includes(location.pathname)) return null;
 
   return (
     <aside className="hidden md:flex flex-col w-56 border-s bg-card h-full shrink-0">
@@ -35,7 +37,7 @@ const DesktopSidebar = () => {
           <Droplets className="w-5 h-5" />
         </div>
         <div>
-          <h1 className="text-sm font-bold text-foreground leading-tight">Alazwak</h1>
+          <p className="text-sm font-bold text-foreground leading-tight">Alazwak</p>
           <p className="text-[10px] text-muted-foreground">سلامة الغذاء</p>
         </div>
       </div>

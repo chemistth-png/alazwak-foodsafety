@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -24,6 +24,7 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import ThemeToggle from "@/components/ThemeToggle";
+import { toast } from "sonner";
 import procedures from "@/data/horus-procedures.json";
 
 type Procedure = {
@@ -39,6 +40,7 @@ const HorusProcedures = () => {
   const [active, setActive] = useState<Procedure | null>(null);
   const [mdContent, setMdContent] = useState<string>("");
   const [loadingMd, setLoadingMd] = useState(false);
+  const articleRef = useRef<HTMLElement>(null);
 
   const list = procedures as Procedure[];
 
@@ -54,42 +56,75 @@ const HorusProcedures = () => {
 
   useEffect(() => {
     if (!active) return;
+    let cancelled = false;
     setLoadingMd(true);
     setMdContent("");
     fetch(active.md)
-      .then((r) => r.text())
-      .then(setMdContent)
-      .catch(() => setMdContent("تعذر تحميل المحتوى."))
-      .finally(() => setLoadingMd(false));
+      .then((r) => {
+        if (!r.ok) throw new Error(String(r.status));
+        return r.text();
+      })
+      .then((text) => {
+        if (cancelled) return;
+        // A missing file is served the SPA shell by the dev/static server.
+        if (/^\s*<(!doctype|html)/i.test(text)) {
+          setMdContent("تعذر تحميل المحتوى: الملف غير متوفر.");
+          return;
+        }
+        setMdContent(text);
+      })
+      .catch(() => {
+        if (!cancelled) setMdContent("تعذر تحميل المحتوى.");
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingMd(false);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [active]);
 
   const handlePrint = () => {
-    const w = window.open("", "_blank");
-    if (!w) return;
-    w.document.write(`<!doctype html><html dir="rtl" lang="ar"><head><meta charset="utf-8"><title>${active?.code} - ${active?.title}</title>
-    <style>
-      body{font-family:'Cairo','Tahoma',sans-serif;padding:24px;line-height:1.8;color:#000}
-      h1,h2,h3{margin-top:1.2em}
-      table{border-collapse:collapse;width:100%;margin:1em 0}
-      th,td{border:1px solid #444;padding:6px 8px;text-align:right}
-      thead{background:#eee}
-      @media print{button{display:none}}
-    </style></head><body>
-    <div id="c"></div>
-    <script>document.getElementById('c').innerText = ${JSON.stringify(mdContent)};</script>
-    </body></html>`);
-    // Better: render the markdown HTML by passing through DOM
-    const container = w.document.getElementById("c");
-    if (container) {
-      container.innerHTML = "";
-      container.appendChild(w.document.createTextNode(""));
+    const html = articleRef.current?.innerHTML;
+    if (!html || !active) return;
+
+    const w = window.open("", "_blank", "width=900,height=1000");
+    if (!w) {
+      toast.error("تعذر فتح نافذة الطباعة. يرجى السماح بالنوافذ المنبثقة.");
+      return;
     }
-    // Simple fallback: print current dialog
-    setTimeout(() => {
-      w.document.close();
+
+    const escape = (s: string) =>
+      s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
+    w.document.open();
+    w.document.write(
+      `<!doctype html><html dir="rtl" lang="ar"><head><meta charset="utf-8">` +
+        `<title>${escape(active.code)} - ${escape(active.title)}</title>` +
+        `<style>
+          body{font-family:'Cairo','Tahoma',sans-serif;padding:28px;line-height:1.9;color:#000;background:#fff}
+          header{border-bottom:2px solid #333;padding-bottom:10px;margin-bottom:20px}
+          header .code{font-family:monospace;font-size:13px;color:#555}
+          header h1{font-size:18px;margin:6px 0 0}
+          h1,h2,h3{margin-top:1.2em}
+          table{border-collapse:collapse;width:100%;margin:1em 0;font-size:13px}
+          th,td{border:1px solid #444;padding:6px 8px;text-align:right;vertical-align:top}
+          thead th{background:#eee}
+          img{max-width:100%}
+        </style></head><body>` +
+        `<header><div class="code">${escape(active.code)}</div>` +
+        `<h1>${escape(active.title)}</h1></header>` +
+        html +
+        `</body></html>`
+    );
+    w.document.close();
+
+    const run = () => {
       w.focus();
       w.print();
-    }, 250);
+    };
+    if (w.document.readyState === "complete") setTimeout(run, 150);
+    else w.addEventListener("load", () => setTimeout(run, 150));
   };
 
   return (
@@ -204,7 +239,7 @@ const HorusProcedures = () => {
                 </DialogTitle>
               </div>
               <div className="flex items-center gap-2">
-                <Button size="sm" variant="outline" onClick={() => window.print()}>
+                <Button size="sm" variant="outline" onClick={handlePrint} disabled={loadingMd || !mdContent}>
                   <Printer className="w-3.5 h-3.5 ms-1" /> طباعة
                 </Button>
                 {active?.docx && (
@@ -223,7 +258,7 @@ const HorusProcedures = () => {
                 <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
               </div>
             ) : (
-              <article className="prose prose-sm dark:prose-invert max-w-none prose-headings:text-foreground prose-table:text-xs prose-th:bg-muted prose-th:text-right prose-td:text-right prose-th:border prose-td:border prose-th:border-border prose-td:border-border prose-th:p-2 prose-td:p-2">
+              <article ref={articleRef} className="prose prose-sm dark:prose-invert max-w-none prose-headings:text-foreground prose-table:text-xs prose-th:bg-muted prose-th:text-right prose-td:text-right prose-th:border prose-td:border prose-th:border-border prose-td:border-border prose-th:p-2 prose-td:p-2">
                 <ReactMarkdown remarkPlugins={[remarkGfm]}>
                   {mdContent}
                 </ReactMarkdown>

@@ -16,18 +16,36 @@ const ResetPassword = () => {
   const [valid, setValid] = useState(false);
 
   useEffect(() => {
-    const hash = window.location.hash;
-    const hasRecovery = hash.includes("type=recovery");
-    if (!hasRecovery) {
+    let settled = false;
+    const finish = (ok: boolean) => {
+      if (settled) return;
+      settled = true;
+      setValid(ok);
       setChecking(false);
-      return;
-    }
+    };
+
+    // The recovery link may arrive as a hash fragment (implicit flow) or as a
+    // ?code= query param (PKCE). The Supabase client strips either one while
+    // establishing the session, so we cannot rely on reading the URL alone.
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === "PASSWORD_RECOVERY" || (event === "SIGNED_IN" && session)) {
+        finish(true);
+      }
+    });
+
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) {
-        setValid(true);
+        finish(true);
+        return;
       }
-      setChecking(false);
+      // Give the client a moment to exchange the link for a session.
+      setTimeout(async () => {
+        const { data } = await supabase.auth.getSession();
+        finish(!!data.session);
+      }, 1500);
     });
+
+    return () => subscription.unsubscribe();
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
