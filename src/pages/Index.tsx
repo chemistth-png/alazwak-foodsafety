@@ -36,7 +36,9 @@ const Index = () => {
   const [attachedFiles, setAttachedFiles] = useState<{ name: string; text: string }[]>([]);
   const [selectedModel, setSelectedModel] = useState("google/gemini-3-flash-preview");
   const [messageSources, setMessageSources] = useState<Record<number, Source[]>>({});
-  const scrollRef = useRef<HTMLDivElement>(null);
+  // Invalidate async loads/stream callbacks when the displayed conversation changes.
+  const requestVersion = useRef(0);
+  useEffect(() => () => { requestVersion.current += 1; }, []);
   const bottomRef = useRef<HTMLDivElement>(null);
 
   const exportPDF = useCallback(async () => {
@@ -94,31 +96,50 @@ const Index = () => {
   }, [messages]);
 
   const loadConversation = useCallback(async (id: string) => {
-    const { data } = await supabase
-      .from("messages")
-      .select("role, content")
-      .eq("conversation_id", id)
-      .order("created_at", { ascending: true });
-    if (data) {
-      setMessages(data as Msg[]);
-      setConversationId(id);
+    const version = ++requestVersion.current;
+    setMessages([]);
+    setMessageSources({});
+    setConversationId(id);
+    setInput("");
+    setAttachedFiles([]);
+    setIsLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from("messages")
+        .select("role, content")
+        .eq("conversation_id", id)
+        .order("created_at", { ascending: true });
+      if (error) throw error;
+      if (version === requestVersion.current) setMessages((data ?? []) as Msg[]);
+    } catch {
+      if (version === requestVersion.current) toast.error("تعذر تحميل المحادثة. أعد اختيارها للمحاولة مجدداً.");
+    } finally {
+      if (version === requestVersion.current) setIsLoading(false);
     }
   }, []);
 
   const startNew = useCallback(() => {
+    requestVersion.current += 1;
     setMessages([]);
     setConversationId(null);
     setMessageSources({});
+    setIsLoading(false);
+    setInput("");
+    setAttachedFiles([]);
   }, []);
 
   const saveMessage = async (convId: string, role: string, content: string) => {
-    await supabase.from("messages").insert({ conversation_id: convId, role, content });
+    const { error } = await supabase.from("messages").insert({ conversation_id: convId, role, content });
+    if (error) throw error;
   };
 
   const send = useCallback(async (text: string) => {
     const trimmed = text.trim();
     if (!trimmed && attachedFiles.length === 0) return;
-    if (isLoading) return;
+    if (isLoading || !user) return;
+    const version = ++requestVersion.current;
+    const isCurrent = () => version === requestVersion.current;
+    const assistantIdx = messages.length + 1;
 
     // Build message content with files if attached
     let messageContent = trimmed;
@@ -143,45 +164,51 @@ const Index = () => {
 
     let convId = conversationId;
 
-    // Create conversation if new
-    if (!convId) {
-      const titleText = trimmed || (attachedFiles.length > 0 ? attachedFiles[0].name : "محادثة جديدة");
-      const title = titleText.length > 50 ? titleText.slice(0, 50) + "..." : titleText;
-      const { data } = await supabase
-        .from("conversations")
-        .insert({ user_id: user!.id, title })
-        .select("id")
-        .single();
-      if (data) {
-        convId = data.id;
-        setConversationId(convId);
-      }
-    } else {
-      await supabase
-        .from("conversations")
-        .update({ updated_at: new Date().toISOString() })
-        .eq("id", convId);
-    }
-
-    if (convId) await saveMessage(convId, "user", displayContent);
-
-    let assistantSoFar = "";
-    const upsertAssistant = (chunk: string) => {
-      assistantSoFar += chunk;
-      setMessages((prev) => {
-        const last = prev[prev.length - 1];
-        if (last?.role === "assistant") {
-          return prev.map((m, i) =>
-            i === prev.length - 1 ? { ...m, content: assistantSoFar } : m
-          );
-        }
-        return [...prev, { role: "assistant", content: assistantSoFar }];
-      });
-    };
-
     try {
+      // Create conversation if new
+      if (!convId) {
+        const titleText = trimmed || (attachedFiles.length > 0 ? attachedFiles[0].name : "محادثة جديدة");
+        const title = titleText.length > 50 ? titleText.slice(0, 50) + "..." : titleText;
+        const { data, error } = await supabase
+          .from("conversations")
+          .insert({ user_id: user.id, title })
+          .select("id")
+          .single();
+        if (error) throw error;
+        if (!data) throw new Error("تعذر إنشاء المحادثة");
+        convId = data.id;
+        if (!isCurrent()) return;
+        setConversationId(convId);
+      } else {
+        await supabase
+          .from("conversations")
+          .update({ updated_at: new Date().toISOString() })
+          .eq("id", convId);
+      }
+
+      if (!isCurrent()) return;
+      if (convId) await saveMessage(convId, "user", displayContent);
+      if (!isCurrent()) return;
+
+      let assistantSoFar = "";
+      const upsertAssistant = (chunk: string) => {
+        if (!isCurrent()) return;
+        assistantSoFar += chunk;
+        setMessages((prev) => {
+          const last = prev[prev.length - 1];
+          if (last?.role === "assistant") {
+            return prev.map((m, i) =>
+              i === prev.length - 1 ? { ...m, content: assistantSoFar } : m
+            );
+          }
+          return [...prev, { role: "assistant", content: assistantSoFar }];
+        });
+      };
+
       // Get auth token for document context
-      const { data: { session } } = await supabase.auth.getSession();
+      const { data: { session }, error } = await supabase.auth.getSession();
+      if (error) throw error;
+      if (!isCurrent()) return;
       
       await streamChat({
         messages: [...messages, aiMsg],
@@ -189,23 +216,17 @@ const Index = () => {
         authToken: session?.access_token,
         model: selectedModel,
         onSources: (sources) => {
-          setMessages((prev) => {
-            const assistantIdx = prev.length - (prev[prev.length - 1]?.role === "assistant" ? 1 : 0);
-            setMessageSources((old) => ({ ...old, [assistantIdx]: sources }));
-            return prev;
-          });
+          if (isCurrent()) setMessageSources((old) => ({ ...old, [assistantIdx]: sources }));
         },
-        onDone: async () => {
-          setIsLoading(false);
-          if (convId && assistantSoFar) {
-            await saveMessage(convId, "assistant", assistantSoFar);
-          }
-        },
+        onDone: () => {},
       });
-    } catch (e: any) {
-      console.error(e);
-      toast.error(e.message || "حدث خطأ أثناء الاتصال");
-      setIsLoading(false);
+      if (isCurrent() && convId && assistantSoFar) {
+        await saveMessage(convId, "assistant", assistantSoFar);
+      }
+    } catch (error: unknown) {
+      if (isCurrent()) toast.error(error instanceof Error ? error.message : "حدث خطأ أثناء الاتصال أو حفظ المحادثة");
+    } finally {
+      if (isCurrent()) setIsLoading(false);
     }
   }, [messages, isLoading, conversationId, user, attachedFiles, selectedModel]);
 
