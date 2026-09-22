@@ -26,7 +26,8 @@ const DesktopSidebar = () => {
   const location = useLocation();
   const { signOut } = useAuth();
 
-  if (location.pathname === "/auth" || location.pathname === "/landing" || location.pathname === "/install") return null;
+  const PUBLIC_PATHS = ["/auth", "/landing", "/install", "/reset-password"];
+  if (PUBLIC_PATHS.includes(location.pathname)) return null;
 
   return (
     <aside className="hidden md:flex flex-col w-56 border-s bg-card h-full shrink-0">
@@ -36,7 +37,7 @@ const DesktopSidebar = () => {
           <Droplets className="w-5 h-5" />
         </div>
         <div>
-          <h1 className="text-sm font-bold text-foreground leading-tight">Alazwak</h1>
+          <p className="text-sm font-bold text-foreground leading-tight">Alazwak</p>
           <p className="text-[10px] text-muted-foreground">سلامة الغذاء</p>
         </div>
       </div>

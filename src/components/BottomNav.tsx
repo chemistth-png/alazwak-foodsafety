@@ -1,5 +1,5 @@
 import { useNavigate, useLocation } from "react-router-dom";
-import { MessageSquare, FolderOpen, FileText, Bot, PieChart, ListChecks, AlertTriangle, MoreHorizontal, ClipboardList, BookOpen, Waves, LogOut, Camera } from "lucide-react";
+import { MessageSquare, FolderOpen, FileText, Bot, PieChart, ListChecks, AlertTriangle, MoreHorizontal, ClipboardList, BookOpen, Waves, LogOut, Camera, ShieldCheck, LayoutTemplate } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
@@ -13,6 +13,8 @@ const MAIN_NAV_ITEMS = [
 
 const MORE_NAV_ITEMS = [
   { path: "/sops", label: "إجراءات التشغيل SOPs", icon: FileText },
+  { path: "/horus-procedures", label: "إجراءات FSMS", icon: ShieldCheck },
+  { path: "/qms-templates", label: "نماذج نظام الجودة", icon: LayoutTemplate },
   { path: "/master-list", label: "القائمة الرئيسية للوثائق", icon: ListChecks },
   { path: "/nc-reports", label: "تقارير عدم المطابقة", icon: AlertTriangle },
   { path: "/gemba", label: "جولة Gemba (تفتيش ميداني)", icon: Camera },
@@ -21,6 +23,9 @@ const MORE_NAV_ITEMS = [
   { path: "/groundwater", label: "المياه الجوفية", icon: Waves },
   { path: "/audit", label: "سجل التدقيق", icon: ClipboardList },
 ];
+
+// The bottom bar is app navigation — it must not appear on public pages.
+const HIDDEN_PATHS = ["/auth", "/sop", "/landing", "/install", "/reset-password"];
 
 const BottomNav = () => {
   const navigate = useNavigate();
