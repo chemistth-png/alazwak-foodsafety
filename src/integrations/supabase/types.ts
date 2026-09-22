@@ -352,6 +352,12 @@ export type Database = {
       }
       nc_reports: {
         Row: {
+          batch_number: string | null
+          lot_code: string | null
+          hazard_type: string | null
+          ccp_ref: string | null
+          verified_by: string | null
+          verified_at: string | null
           category: string
           closed_at: string | null
           corrective_action: string
@@ -368,6 +374,12 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          batch_number?: string | null
+          lot_code?: string | null
+          hazard_type?: string | null
+          ccp_ref?: string | null
+          verified_by?: string | null
+          verified_at?: string | null
           category?: string
           closed_at?: string | null
           corrective_action?: string
@@ -384,6 +396,12 @@ export type Database = {
           user_id: string
         }
         Update: {
+          batch_number?: string | null
+          lot_code?: string | null
+          hazard_type?: string | null
+          ccp_ref?: string | null
+          verified_by?: string | null
+          verified_at?: string | null
           category?: string
           closed_at?: string | null
           corrective_action?: string
