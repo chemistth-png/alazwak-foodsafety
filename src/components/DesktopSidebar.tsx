@@ -1,5 +1,5 @@
 import { useNavigate, useLocation } from "react-router-dom";
-import { MessageSquare, FolderOpen, FileText, Bot, PieChart, LogOut, Droplets, ClipboardList, BookOpen, Waves, ListChecks, AlertTriangle, ShieldCheck, Camera } from "lucide-react";
+import { MessageSquare, FolderOpen, FileText, Bot, PieChart, LogOut, Droplets, ClipboardList, BookOpen, Waves, ListChecks, AlertTriangle, ShieldCheck, Camera, LayoutTemplate } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
 import ThemeToggle from "@/components/ThemeToggle";
@@ -14,6 +14,7 @@ const NAV_ITEMS = [
   { path: "/gemba", label: "جولة Gemba", icon: Camera },
   { path: "/horus-procedures", label: "إجراءات FSMS", icon: ShieldCheck },
   { path: "/sops", label: "SOPs", icon: FileText },
+  { path: "/qms-templates", label: "نماذج نظام الجودة", icon: LayoutTemplate },
   { path: "/plans", label: "المخططات", icon: ClipboardList },
   { path: "/library", label: "المكتبة المرجعية", icon: BookOpen },
   { path: "/groundwater", label: "المياه الجوفية", icon: Waves },
