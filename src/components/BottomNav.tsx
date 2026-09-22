@@ -33,8 +33,8 @@ const BottomNav = () => {
   const { signOut } = useAuth();
   const [showMore, setShowMore] = useState(false);
 
-  // Hide on auth page and SOP template
-  if (location.pathname === "/auth" || location.pathname === "/sop") return null;
+  // Hide internal navigation on public pages and the standalone SOP template.
+  if (HIDDEN_PATHS.includes(location.pathname)) return null;
 
   const isMoreActive = MORE_NAV_ITEMS.some(item => location.pathname.startsWith(item.path));
 

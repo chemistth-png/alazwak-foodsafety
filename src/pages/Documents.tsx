@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
@@ -46,20 +46,33 @@ const Documents = () => {
   const [search, setSearch] = useState("");
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
-  const loadDocuments = async () => {
+  const [loadError, setLoadError] = useState(false);
+  const loadVersion = useRef(0);
+
+  const loadDocuments = useCallback(async () => {
+    const version = ++loadVersion.current;
     setLoading(true);
-    const { data, error } = await supabase
-      .from("documents")
-      .select("*")
-      .order("created_at", { ascending: false });
-    if (data) setDocuments(data as Document[]);
-    if (error) console.error(error);
-    setLoading(false);
-  };
+    setLoadError(false);
+    setDocuments([]);
+    setExpandedId(null);
+    try {
+      const { data, error } = await supabase
+        .from("documents")
+        .select("*")
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      if (version === loadVersion.current) setDocuments((data ?? []) as Document[]);
+    } catch {
+      if (version === loadVersion.current) setLoadError(true);
+    } finally {
+      if (version === loadVersion.current) setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
-    loadDocuments();
-  }, []);
+    void loadDocuments();
+    return () => { loadVersion.current += 1; };
+  }, [loadDocuments, user?.id]);
 
   const handleDelete = async (id: string) => {
     const doc = documents.find(d => d.id === id);
@@ -141,6 +154,11 @@ const Documents = () => {
           {loading ? (
             <div className="flex items-center justify-center py-16">
               <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+            </div>
+          ) : loadError ? (
+            <div role="alert" className="flex flex-col items-center py-16 gap-4 text-center">
+              <p>تعذر تحميل المستندات. تحقق من الاتصال ثم أعد المحاولة.</p>
+              <Button variant="outline" onClick={() => void loadDocuments()}>إعادة المحاولة</Button>
             </div>
           ) : filtered.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 gap-4">

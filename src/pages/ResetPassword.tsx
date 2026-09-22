@@ -14,42 +14,66 @@ const ResetPassword = () => {
   const [loading, setLoading] = useState(false);
   const [checking, setChecking] = useState(true);
   const [valid, setValid] = useState(false);
+  const [checkError, setCheckError] = useState(false);
 
   useEffect(() => {
-    let settled = false;
-    const finish = (ok: boolean) => {
-      if (settled) return;
-      settled = true;
+    let disposed = false;
+    let authenticated = false;
+    let authEventVersion = 0;
+    let retryTimer: ReturnType<typeof setTimeout> | undefined;
+    const clearTimers = () => {
+      clearTimeout(retryTimer);
+      clearTimeout(deadline);
+    };
+    const finish = (ok: boolean, failed = false) => {
+      if (disposed) return;
+      authenticated = ok;
+      clearTimers();
       setValid(ok);
+      setCheckError(failed);
       setChecking(false);
     };
 
-    // The recovery link may arrive as a hash fragment (implicit flow) or as a
-    // ?code= query param (PKCE). The Supabase client strips either one while
-    // establishing the session, so we cannot rely on reading the URL alone.
+    // A stalled network/session refresh must not leave the page spinning forever.
+    const deadline = setTimeout(() => finish(false, true), 10000);
+
+    // The configured client consumes the recovery URL when establishing a session.
+    // A session enables this form; updateUser still enforces authorization on the server.
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === "PASSWORD_RECOVERY" || (event === "SIGNED_IN" && session)) {
+      if (event === "SIGNED_OUT") {
+        authEventVersion += 1;
+        finish(false);
+      } else if (session) {
+        authEventVersion += 1;
         finish(true);
       }
     });
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) {
-        finish(true);
-        return;
+    const checkSession = async (retry: boolean) => {
+      const version = authEventVersion;
+      try {
+        const { data, error } = await supabase.auth.getSession();
+        if (disposed || version !== authEventVersion || authenticated) return;
+        if (error) throw error;
+        if (data.session) finish(true);
+        else if (retry) retryTimer = setTimeout(() => void checkSession(false), 1500);
+        else finish(false);
+      } catch {
+        if (!disposed && version === authEventVersion && !authenticated) finish(false, true);
       }
-      // Give the client a moment to exchange the link for a session.
-      setTimeout(async () => {
-        const { data } = await supabase.auth.getSession();
-        finish(!!data.session);
-      }, 1500);
-    });
+    };
+    void checkSession(true);
 
-    return () => subscription.unsubscribe();
+    return () => {
+      disposed = true;
+      clearTimers();
+      subscription.unsubscribe();
+    };
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!valid || loading) return;
     if (password !== confirm) {
       toast.error("كلمتا المرور غير متطابقتين");
       return;
@@ -64,8 +88,8 @@ const ResetPassword = () => {
       if (error) throw error;
       toast.success("تم تحديث كلمة المرور بنجاح");
       navigate("/auth");
-    } catch (error: any) {
-      toast.error(error.message || "حدث خطأ");
+    } catch (error: unknown) {
+      toast.error(error instanceof Error ? error.message : "حدث خطأ");
     } finally {
       setLoading(false);
     }
@@ -95,9 +119,11 @@ const ResetPassword = () => {
         </div>
         <div className="flex items-center justify-center min-h-[calc(100vh-56px)] px-4">
           <div className="w-full max-w-sm text-center space-y-4">
-            <h1 className="text-xl font-bold text-foreground">رابط غير صالح</h1>
+            <h1 className="text-xl font-bold text-foreground">{checkError ? "تعذر التحقق من الجلسة" : "رابط غير صالح"}</h1>
             <p className="text-sm text-muted-foreground">
-              رابط إعادة التعيين منتهي الصلاحية أو غير صحيح. يرجى طلب رابط جديد.
+              {checkError
+                ? "تعذر الاتصال للتحقق من الجلسة. تحقق من الاتصال ثم أعد فتح رابط الاستعادة."
+                : "رابط إعادة التعيين منتهي الصلاحية أو غير صحيح. يرجى طلب رابط جديد."}
             </p>
             <Button onClick={() => navigate("/auth")} className="w-full">
               العودة
