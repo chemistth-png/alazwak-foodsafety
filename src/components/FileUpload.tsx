@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
-const ALLOWED_EXTENSIONS = ["pdf", "doc", "docx", "xls", "xlsx", "txt", "csv", "md"];
+const ALLOWED_EXTENSIONS = ["txt", "csv", "md"];
 const MAX_FILE_SIZE = 20 * 1024 * 1024; // 20MB
 
 interface FileUploadProps {
@@ -26,12 +26,8 @@ const FileUpload = ({ onFileProcessed, disabled }: FileUploadProps) => {
 
     const ext = file.name.split(".").pop()?.toLowerCase();
     if (!ext || !ALLOWED_EXTENSIONS.includes(ext)) {
-      toast.error("نوع الملف غير مدعوم. الأنواع المدعومة: PDF, Word, Excel, TXT, CSV");
+      toast.error("الأنواع المدعومة حالياً: TXT, CSV, MD. تحليل PDF وOffice متوقف مؤقتاً للتحقق من دقته.");
       return;
-    }
-
-    if (ext === "doc") {
-      toast.warning("صيغة .doc القديمة قد لا تُستخرج بدقة. يُفضل تحويل الملف إلى .docx للحصول على نتائج أفضل.", { duration: 6000 });
     }
 
     if (file.size > MAX_FILE_SIZE) {
@@ -62,7 +58,8 @@ const FileUpload = ({ onFileProcessed, disabled }: FileUploadProps) => {
 
       // Get user auth token
       const { data: { session } } = await supabase.auth.getSession();
-      const authToken = session?.access_token || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+      const authToken = session?.access_token;
+      if (!authToken) throw new Error("انتهت الجلسة؛ سجّل الدخول مجدداً");
 
       // Parse the document
       const resp = await fetch(
@@ -82,13 +79,17 @@ const FileUpload = ({ onFileProcessed, disabled }: FileUploadProps) => {
         throw new Error(err.error || "فشل في تحليل الملف");
       }
 
-      const { text } = await resp.json();
+      const parsed = await resp.json();
+      if (parsed.saved !== true || typeof parsed.documentId !== "string" || !parsed.documentId || typeof parsed.text !== "string") {
+        throw new Error("لم يؤكد الخادم حفظ المستند");
+      }
+      const { text } = parsed;
       
       onFileProcessed(file.name, text);
       toast.success(`تم تحميل وتحليل وحفظ الملف: ${file.name}`);
-    } catch (e: any) {
+    } catch (e: unknown) {
       console.error("File upload error:", e);
-      toast.error(e.message || "حدث خطأ أثناء تحميل الملف");
+      toast.error(e instanceof Error ? e.message : "حدث خطأ أثناء تحميل الملف");
     } finally {
       setIsUploading(false);
       setPendingFile(null);
@@ -100,7 +101,8 @@ const FileUpload = ({ onFileProcessed, disabled }: FileUploadProps) => {
       <input
         ref={inputRef}
         type="file"
-        accept=".pdf,.doc,.docx,.xls,.xlsx,.txt,.csv,.md"
+        accept=".txt,.csv,.md"
+        aria-label="إرفاق مستند نصي"
         onChange={handleFileSelect}
         className="hidden"
         disabled={disabled || isUploading}
@@ -111,7 +113,7 @@ const FileUpload = ({ onFileProcessed, disabled }: FileUploadProps) => {
         className="rounded-xl h-11 w-11 shrink-0"
         onClick={() => inputRef.current?.click()}
         disabled={disabled || isUploading}
-        title="إرفاق ملف (PDF, Word, Excel)"
+        title="إرفاق ملف (TXT, CSV, MD)"
       >
         {isUploading ? (
           <Loader2 className="w-4 h-4 animate-spin" />
@@ -132,7 +134,7 @@ export const AttachedFileChip = ({ fileName, onRemove }: AttachedFileChipProps) 
   <div className="flex items-center gap-1.5 bg-accent text-accent-foreground rounded-lg px-2.5 py-1 text-xs">
     <FileText className="w-3.5 h-3.5" />
     <span className="truncate max-w-[150px]">{fileName}</span>
-    <button onClick={onRemove} className="hover:text-destructive">
+    <button aria-label="إزالة المرفق" onClick={onRemove} className="hover:text-destructive">
       <X className="w-3.5 h-3.5" />
     </button>
   </div>

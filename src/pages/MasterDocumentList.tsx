@@ -77,15 +77,8 @@ const MasterDocumentList = () => {
     ? docs.filter((d) => d.file_name.toLowerCase().includes(search.toLowerCase()))
     : docs;
 
-  const codeFor = (d: DocRow, i: number) =>
-    `DOC-${String(filtered.length - i).padStart(3, "0")}`;
-
-  const statusBadge = (d: DocRow) => {
-    const len = d.content?.length || 0;
-    if (len > 5000) return <Badge>معتمدة</Badge>;
-    if (len > 0) return <Badge variant="secondary">قيد المراجعة</Badge>;
-    return <Badge variant="outline">مسودة</Badge>;
-  };
+  const codeFor = (d: DocRow) => `DOC-${d.id}`;
+  const statusBadge = () => <Badge variant="outline">اعتماد غير متحقق</Badge>;
 
   return (
     <div dir="rtl" className="flex flex-col h-screen bg-background">
@@ -154,11 +147,11 @@ const MasterDocumentList = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filtered.map((d, i) => (
+                  {filtered.map((d) => (
                     <TableRow key={d.id}>
-                      <TableCell className="font-mono text-xs">{codeFor(d, i)}</TableCell>
+                      <TableCell className="font-mono text-xs">{codeFor(d)}</TableCell>
                       <TableCell className="font-medium">{d.file_name}</TableCell>
-                      <TableCell>{statusBadge(d)}</TableCell>
+                      <TableCell>{statusBadge()}</TableCell>
                       <TableCell className="text-xs text-muted-foreground">
                         {new Date(d.created_at).toLocaleDateString("ar-EG")}
                       </TableCell>
