@@ -24,7 +24,7 @@ export default function ApprovalRecord() {
 function ApprovalBody({kind,id}:{kind?:string;id?:string}) {
   const {user}=useAuth();
   const [record,setRecord]=useState<Approval|null>(null);const [error,setError]=useState('');const [busy,setBusy]=useState(false);
-  const [evidence,setEvidence]=useState('');const [code,setCode]=useState('');const [factorId,setFactorId]=useState('');const [qr,setQr]=useState('');const [mfaReady,setMfaReady]=useState(false);
+  const [evidence,setEvidence]=useState('');const [code,setCode]=useState('');const [factorId,setFactorId]=useState('');const [qr,setQr]=useState('');const [mfaReady,setMfaReady]=useState(false);const [enrolledThisSession,setEnrolledThisSession]=useState(false);
   const load=useCallback(async()=>{
     setRecord(null);setError('');setMfaReady(false);
     if(!id || !z.string().uuid().safeParse(id).success || !['haccp','nc'].includes(kind??'')){setError('رابط السجل غير صالح');return;}
@@ -42,18 +42,36 @@ function ApprovalBody({kind,id}:{kind?:string;id?:string}) {
     try {
       const {data,error:failure}=await supabase.auth.mfa.listFactors();if(failure)throw failure;
       const existing=data.totp.find(f=>f.status==='verified');
-      if(existing){setFactorId(existing.id);return;}
+      if(existing){setFactorId(existing.id);setEnrolledThisSession(false);return;}
       const result=await supabase.auth.mfa.enroll({factorType:'totp',friendlyName:`Approval ${Date.now()}`});
       if(result.error)throw result.error;
-      setFactorId(result.data.id);setQr(result.data.totp.qr_code);
+      setFactorId(result.data.id);setQr(result.data.totp.qr_code);setEnrolledThisSession(true);
     }catch {setError('تعذّر تجهيز التحقق الثنائي. راجع إعدادات حسابك.');}finally{setBusy(false);}
   }
   async function verifyMfa() {
     setBusy(true);setError('');
     try {
       const {error:failure}=await supabase.auth.mfa.challengeAndVerify({factorId,code});if(failure)throw failure;
-      setMfaReady(true);setQr('');setCode('');
+      setMfaReady(true);setQr('');setCode('');setEnrolledThisSession(false);
     }catch {setError('رمز التحقق غير صالح أو انتهت صلاحيته.');}finally{setBusy(false);}
+  }
+  async function cancelMfaSetup() {
+    // Explicit cancellation only: never unenroll on a failed OTP, network error or unmount.
+    if(!enrolledThisSession || !factorId || mfaReady)return;
+    setBusy(true);setError('');
+    try {
+      const {data,error:failure}=await supabase.auth.mfa.listFactors();if(failure)throw failure;
+      const factor=data.totp.find(f=>f.id===factorId);
+      // Fail closed if the factor is already verified or its status cannot be established.
+      if(!factor || factor.status!=='unverified'){
+        setError('تعذّر تأكيد حالة العامل؛ لم يتم حذفه. راجع إعدادات حسابك.');
+        return;
+      }
+      const result=await supabase.auth.mfa.unenroll({factorId});
+      if(result.error)throw result.error;
+      setFactorId('');setQr('');setCode('');setEnrolledThisSession(false);
+    }catch {setError('تعذّر إلغاء إعداد التحقق الثنائي؛ لم نؤكد حذف العامل. حاول مجددًا من إعدادات الحساب.');}
+    finally {setBusy(false);}
   }
   async function decide(action:string) {
     if(!record || !id || !kind)return;
@@ -84,6 +102,7 @@ function ApprovalBody({kind,id}:{kind?:string;id?:string}) {
         {!mfaReady&&<>
           {!factorId&&<Button onClick={()=>void prepareMfa()} disabled={busy}>التحقق الثنائي قبل القرار</Button>}
           {qr&&<div><p>أضف الحساب إلى تطبيق المصادقة عبر الرمز التالي.</p><img src={qr} alt="رمز إعداد المصادقة الثنائية للحساب" className="w-48 h-48"/></div>}
+          {enrolledThisSession&&factorId&&<Button disabled={busy} onClick={()=>void cancelMfaSetup()}>إلغاء إعداد العامل الجديد</Button>}
           {factorId&&<><Label htmlFor="approval-otp">رمز تطبيق المصادقة</Label><Input id="approval-otp" inputMode="numeric" autoComplete="one-time-code" maxLength={6} value={code} onChange={e=>setCode(e.target.value.replace(/\D/g,''))}/><Button disabled={busy||code.length!==6} onClick={()=>void verifyMfa()}>تحقق</Button></>}
         </>}
         <div className="flex gap-3 flex-wrap">{actions.map(action=><Button key={action} disabled={busy||!mfaReady||evidence.trim().length<10} onClick={()=>void decide(action)}>{labels[action]}</Button>)}</div>
