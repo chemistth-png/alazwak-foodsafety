@@ -1,0 +1,31 @@
+name: PR checks
+
+on:
+  pull_request:
+    branches:
+      - fix/audit-critical
+  push:
+    branches:
+      - fix/mfa-explicit-cancel-safe
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: TypeScript
+        run: npx tsc --noEmit
+      - name: Unit tests
+        run: npm test
+      - name: Build
+        run: npm run build
