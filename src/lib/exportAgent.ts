@@ -33,7 +33,8 @@ export async function exportToWord(title: string, markdownContent: string) {
         children.push(new Table({
           width: { size: 100, type: WidthType.PERCENTAGE },
           rows: rows.map((cells, rowIndex) => new TableRow({
-            children: cells.map(cell => new TableCell({
+            // Reverse physical cell order so the first logical Arabic column renders on the right in Word.
+            children: [...cells].reverse().map(cell => new TableCell({
               children: [new Paragraph({
                 bidirectional: true,
                 alignment: AlignmentType.RIGHT,
@@ -131,9 +132,10 @@ export async function exportToPdf(title: string, markdownContent: string) {
   container.style.fontFamily = "Cairo, Arial, sans-serif";
   container.style.padding = "24px";
   container.style.lineHeight = "1.8";
+  container.style.textAlign = "right";
   container.innerHTML = `
     <h1 style="text-align:center;margin-bottom:24px;">${escapeHtml(title)}</h1>
-    ${parseMarkdownToHtml(markdownContent)}
+    <style>table{direction:rtl;width:100%;border-collapse:collapse;margin:12px 0}th,td{direction:rtl;text-align:right;border:1px solid #999;padding:6px;unicode-bidi:plaintext}th{font-weight:700}p,li,h1,h2,h3,h4,h5,h6{direction:rtl;text-align:right}</style>\n    ${parseMarkdownToHtml(markdownContent)}
     <p style="text-align:center;margin-top:24px;font-size:10px;">
       تاريخ الإصدار: ${new Date().toLocaleDateString("ar-EG")}
     </p>
@@ -227,7 +229,8 @@ export function exportToExcel(title: string, markdownContent: string) {
     allContentSheetData.push(...currentTable);
   }
 
-  const wsAllContent = XLSX.utils.aoa_to_sheet(allContentSheetData);
+  const rtlSheetData = allContentSheetData.map(row => row.length > 1 ? [...row].reverse() : row);
+  const wsAllContent = XLSX.utils.aoa_to_sheet(rtlSheetData);
   wsAllContent["!merges"] = merges;
   
   // Auto-size columns for the main sheet
@@ -239,7 +242,7 @@ export function exportToExcel(title: string, markdownContent: string) {
   // Also extract tables to separate sheets for better usability
   const tables = extractMarkdownTables(markdownContent);
   tables.forEach((table, idx) => {
-    const tableWs = XLSX.utils.aoa_to_sheet(table.rows);
+    const tableWs = XLSX.utils.aoa_to_sheet(table.rows.map(row => [...row].reverse()));
     const tableMaxCols = Math.max(...table.rows.map(r => r.length));
     tableWs["!cols"] = Array.from({ length: tableMaxCols }, (_, colIdx) => {
       const maxWidth = Math.max(...table.rows.map(r => (r[colIdx] || "").toString().length));
