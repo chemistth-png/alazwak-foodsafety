@@ -228,7 +228,14 @@ const Index = () => {
       }
 
       if (!isCurrent()) return;
-      if (convId) await saveMessage(convId, "user", displayContent, attachmentIds);
+      if (convId) {
+        try {
+          await saveMessage(convId, "user", displayContent, attachmentIds);
+        } catch (saveErr) {
+          // Do not block the AI response if conversation persistence is temporarily unavailable.
+          console.error("user message persistence failed:", saveErr);
+        }
+      }
       if (!isCurrent()) return;
 
       let assistantSoFar = "";
@@ -263,8 +270,13 @@ const Index = () => {
         onDone: () => {},
       });
       if (isCurrent() && convId && assistantSoFar) {
-        await saveMessage(convId, "assistant", assistantSoFar);
-        await supabase.from("conversations").update({ updated_at: new Date().toISOString() }).eq("id", convId);
+        try {
+          await saveMessage(convId, "assistant", assistantSoFar);
+          await supabase.from("conversations").update({ updated_at: new Date().toISOString() }).eq("id", convId);
+        } catch (saveErr) {
+          console.error("assistant message persistence failed:", saveErr);
+          toast.warning("تم استلام الرد، لكن تعذر حفظه في سجل المحادثة.");
+        }
       }
     } catch (error: unknown) {
       if (isCurrent()) toast.error(error instanceof Error ? error.message : "حدث خطأ أثناء الاتصال أو حفظ المحادثة");
