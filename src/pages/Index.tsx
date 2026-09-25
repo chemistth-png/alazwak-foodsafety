@@ -26,7 +26,7 @@ const SUGGESTED_QUESTIONS = [
 ];
 
 const Index = () => {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -40,6 +40,8 @@ const Index = () => {
   const requestVersion = useRef(0);
   useEffect(() => () => { requestVersion.current += 1; }, []);
   const bottomRef = useRef<HTMLDivElement>(null);
+  const restoredForUser = useRef<string | null>(null);
+  const storageKey = user ? `alazwak:last-conversation:${user.id}` : null;
 
   const exportPDF = useCallback(async () => {
     if (messages.length === 0) return;
@@ -110,13 +112,16 @@ const Index = () => {
         .eq("conversation_id", id)
         .order("created_at", { ascending: true });
       if (error) throw error;
-      if (version === requestVersion.current) setMessages((data ?? []) as Msg[]);
+      if (version === requestVersion.current) {
+        setMessages((data ?? []) as Msg[]);
+        if (storageKey) localStorage.setItem(storageKey, id);
+      }
     } catch {
       if (version === requestVersion.current) toast.error("تعذر تحميل المحادثة. أعد اختيارها للمحاولة مجدداً.");
     } finally {
       if (version === requestVersion.current) setIsLoading(false);
     }
-  }, []);
+  }, [storageKey]);
 
   const startNew = useCallback(() => {
     requestVersion.current += 1;
@@ -126,7 +131,30 @@ const Index = () => {
     setIsLoading(false);
     setInput("");
     setAttachedFiles([]);
-  }, []);
+    if (storageKey) localStorage.removeItem(storageKey);
+  }, [storageKey]);
+
+  // Restore the user's last open conversation after navigation, refresh, or a new session.
+  // Ownership is verified by RLS before loading any messages.
+  useEffect(() => {
+    if (authLoading || !user || !storageKey || restoredForUser.current === user.id) return;
+    restoredForUser.current = user.id;
+    const lastId = localStorage.getItem(storageKey);
+    if (!lastId) return;
+    void (async () => {
+      const { data, error } = await supabase
+        .from("conversations")
+        .select("id")
+        .eq("id", lastId)
+        .eq("user_id", user.id)
+        .maybeSingle();
+      if (error || !data) {
+        localStorage.removeItem(storageKey);
+        return;
+      }
+      await loadConversation(data.id);
+    })();
+  }, [authLoading, user, storageKey, loadConversation]);
 
   const saveMessage = async (convId: string, role: string, content: string, documentIds: string[] = []) => {
     const { data, error } = await supabase
@@ -190,6 +218,7 @@ const Index = () => {
         convId = data.id;
         if (!isCurrent()) return;
         setConversationId(convId);
+        if (storageKey) localStorage.setItem(storageKey, convId);
       } else {
         await supabase
           .from("conversations")
@@ -234,13 +263,14 @@ const Index = () => {
       });
       if (isCurrent() && convId && assistantSoFar) {
         await saveMessage(convId, "assistant", assistantSoFar);
+        await supabase.from("conversations").update({ updated_at: new Date().toISOString() }).eq("id", convId);
       }
     } catch (error: unknown) {
       if (isCurrent()) toast.error(error instanceof Error ? error.message : "حدث خطأ أثناء الاتصال أو حفظ المحادثة");
     } finally {
       if (isCurrent()) setIsLoading(false);
     }
-  }, [messages, isLoading, conversationId, user, attachedFiles, selectedModel]);
+  }, [messages, isLoading, conversationId, user, attachedFiles, selectedModel, storageKey]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
