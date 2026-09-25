@@ -25,7 +25,7 @@ beforeEach(() => {
   Element.prototype.scrollIntoView = vi.fn();
   mocks.order.mockResolvedValue({ data: [{ role: "assistant", content: "Other conversation" }], error: null });
   mocks.insert.mockResolvedValue({ error: null });
-  mocks.conversationSelect.mockReturnValue({ eq: () => ({ eq: () => ({ maybeSingle: async () => ({ data: { id: "owned" }, error: null }) }), maybeSingle: async () => ({ data: { id: "owned" }, error: null }) }) });
+  mocks.conversationSelect.mockReturnValue({ eq: () => ({ eq: () => ({ maybeSingle: async () => ({ data: null, error: null }) }), maybeSingle: async () => ({ data: null, error: null }) }) });
   mocks.from.mockImplementation((table) => table === "conversations" ? {
     insert: () => ({ select: () => ({ single: async () => ({ data: { id: "created" }, error: null }) }) }),
     select: mocks.conversationSelect,
@@ -49,6 +49,7 @@ it("associates sources with the answer in StrictMode, then clears them on conver
     options.onDone();
   });
   mount();
+  await waitFor(() => expect(screen.getByRole("textbox")).toBeEnabled());
   send();
   expect(await screen.findByText("old-source.pdf")).toBeInTheDocument();
   fireEvent.click(screen.getAllByText("Load other")[0]);
@@ -61,6 +62,7 @@ it("ignores late stream content and sources after starting a new chat", async ()
   let resolve!: () => void;
   mocks.streamChat.mockImplementation((value) => { options = value; return new Promise<void>(r => { resolve = r; }); });
   mount();
+  await waitFor(() => expect(screen.getByRole("textbox")).toBeEnabled());
   send();
   await waitFor(() => expect(mocks.streamChat).toHaveBeenCalledOnce());
   fireEvent.click(screen.getAllByText("New chat")[0]);
@@ -79,6 +81,7 @@ it("does not restore an old conversation when its load completes after New chat"
   let resolve!: (value: unknown) => void;
   mocks.order.mockReturnValue(new Promise(r => { resolve = r; }));
   mount();
+  await waitFor(() => expect(screen.getByRole("textbox")).toBeEnabled());
   fireEvent.click(screen.getAllByText("Load other")[0]);
   fireEvent.click(screen.getAllByText("New chat")[0]);
   await act(async () => { resolve({ data: [{ role: "assistant", content: "Stale loaded answer" }], error: null }); });
@@ -89,6 +92,7 @@ it("does not restore an old conversation when its load completes after New chat"
 it("reports persistence failures and releases the composer", async () => {
   mocks.insert.mockResolvedValue({ error: { message: "write denied" } });
   mount();
+  await waitFor(() => expect(screen.getByRole("textbox")).toBeEnabled());
   send();
   await waitFor(() => expect(mocks.error).toHaveBeenCalledOnce());
   expect(screen.getByRole("textbox")).toBeEnabled();
