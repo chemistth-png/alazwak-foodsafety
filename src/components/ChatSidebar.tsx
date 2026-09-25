@@ -60,16 +60,16 @@ const ChatSidebar = ({ currentId, onSelect, onNew, open, onClose }: ChatSidebarP
       )}
       <aside
         className={cn(
-          "fixed md:relative z-50 top-0 right-0 h-full w-72 bg-card border-s flex flex-col transition-transform duration-200",
+          "fixed md:relative z-50 top-0 right-0 h-[100dvh] w-[88vw] max-w-[340px] md:w-72 bg-card border-s flex flex-col overflow-hidden transition-transform duration-200",
           open ? "translate-x-0" : "translate-x-full md:translate-x-0"
         )}
       >
-        <div className="flex items-center justify-between p-3 border-b">
-          <Button variant="outline" size="sm" className="gap-1.5 flex-1" onClick={() => { onNew(); onClose(); }}>
+        <div className="flex items-center justify-between gap-2 p-3 border-b shrink-0">
+          <Button variant="outline" size="sm" className="gap-1.5 flex-1 min-h-12 text-base" onClick={() => { onNew(); onClose(); }}>
             <Plus className="w-4 h-4" />
             محادثة جديدة
           </Button>
-          <Button variant="ghost" size="icon" className="md:hidden mr-1" onClick={onClose}>
+          <Button variant="ghost" size="icon" className="md:hidden mr-1 min-h-11 min-w-11" onClick={onClose}>
             <X className="w-4 h-4" />
           </Button>
         </div>
@@ -80,7 +80,7 @@ const ChatSidebar = ({ currentId, onSelect, onNew, open, onClose }: ChatSidebarP
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="بحث في المحادثات..."
-              className="pr-8 h-8 text-sm"
+              className="pr-9 h-11 text-base"
             />
           </div>
         </div>
@@ -98,7 +98,7 @@ const ChatSidebar = ({ currentId, onSelect, onNew, open, onClose }: ChatSidebarP
                 )}
               >
                 <MessageSquare className="w-4 h-4 shrink-0" />
-                <span className="truncate flex-1">{c.title}</span>
+                <span className="truncate flex-1 min-w-0">{c.title}</span>
                 <Trash2
                   className="w-3.5 h-3.5 shrink-0 opacity-0 group-hover:opacity-60 hover:!opacity-100 text-destructive"
                   onClick={(e) => handleDelete(c.id, e)}
@@ -113,20 +113,20 @@ const ChatSidebar = ({ currentId, onSelect, onNew, open, onClose }: ChatSidebarP
           </div>
         </ScrollArea>
         {/* Mobile-only nav links */}
-        <div className="border-t p-3 space-y-1 md:hidden">
-          <Button variant="ghost" size="sm" className="w-full gap-1.5 text-foreground justify-start" onClick={() => { navigate("/documents"); onClose(); }}>
+        <div className="border-t p-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] space-y-1 md:hidden shrink-0">
+          <Button variant="ghost" size="sm" className="w-full min-h-11 gap-2 text-base text-foreground justify-start" onClick={() => { navigate("/documents"); onClose(); }}>
             <FolderOpen className="w-4 h-4" /> إدارة المستندات
           </Button>
-          <Button variant="ghost" size="sm" className="w-full gap-1.5 text-foreground justify-start" onClick={() => { navigate("/plans"); onClose(); }}>
+          <Button variant="ghost" size="sm" className="w-full min-h-11 gap-2 text-base text-foreground justify-start" onClick={() => { navigate("/plans"); onClose(); }}>
             <LayoutGrid className="w-4 h-4" /> المخططات والخطط
           </Button>
-          <Button variant="ghost" size="sm" className="w-full gap-1.5 text-foreground justify-start" onClick={() => { navigate("/sops"); onClose(); }}>
+          <Button variant="ghost" size="sm" className="w-full min-h-11 gap-2 text-base text-foreground justify-start" onClick={() => { navigate("/sops"); onClose(); }}>
             <FileText className="w-4 h-4" /> إدارة SOPs
           </Button>
-          <Button variant="ghost" size="sm" className="w-full gap-1.5 text-foreground justify-start" onClick={() => { navigate("/agent"); onClose(); }}>
+          <Button variant="ghost" size="sm" className="w-full min-h-11 gap-2 text-base text-foreground justify-start" onClick={() => { navigate("/agent"); onClose(); }}>
             <Bot className="w-4 h-4" /> الوكيل الذكي
           </Button>
-          <Button variant="ghost" size="sm" className="w-full gap-1.5 text-muted-foreground justify-start" onClick={signOut}>
+          <Button variant="ghost" size="sm" className="w-full min-h-11 gap-2 text-base text-muted-foreground justify-start" onClick={signOut}>
             <LogOut className="w-4 h-4" /> تسجيل الخروج
           </Button>
         </div>
