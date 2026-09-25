@@ -2,7 +2,7 @@ import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import Documents from "./Documents";
 
-const db = vi.hoisted(() => ({ from: vi.fn(), order: vi.fn() }));
+const db = vi.hoisted(() => ({ from: vi.fn(), order: vi.fn(), channel: vi.fn(), removeChannel: vi.fn() }));
 vi.mock("@/integrations/supabase/client", () => ({ supabase: db }));
 vi.mock("@/hooks/useAuth", () => ({ useAuth: () => ({ user: { id: "user-a" } }) }));
 vi.mock("@/components/ThemeToggle", () => ({ default: () => null }));
@@ -10,6 +10,7 @@ const mount = () => render(<MemoryRouter><Documents /></MemoryRouter>);
 beforeEach(() => {
   vi.clearAllMocks();
   db.from.mockReturnValue({ select: () => ({ order: db.order }) });
+  db.channel.mockReturnValue({ on: vi.fn().mockReturnThis(), subscribe: vi.fn().mockReturnThis() });
 });
 afterEach(cleanup);
 
