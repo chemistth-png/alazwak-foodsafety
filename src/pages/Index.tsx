@@ -33,7 +33,7 @@ const Index = () => {
   const [conversationId, setConversationId] = useState<string | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
-  const [attachedFiles, setAttachedFiles] = useState<{ name: string; text: string }[]>([]);
+  const [attachedFiles, setAttachedFiles] = useState<{ name: string; text: string; documentId: string }[]>([]);
   const [selectedModel, setSelectedModel] = useState("google/gemini-3-flash-preview");
   const [messageSources, setMessageSources] = useState<Record<number, Source[]>>({});
   // Invalidate async loads/stream callbacks when the displayed conversation changes.
@@ -128,9 +128,20 @@ const Index = () => {
     setAttachedFiles([]);
   }, []);
 
-  const saveMessage = async (convId: string, role: string, content: string) => {
-    const { error } = await supabase.from("messages").insert({ conversation_id: convId, role, content });
+  const saveMessage = async (convId: string, role: string, content: string, documentIds: string[] = []) => {
+    const { data, error } = await supabase
+      .from("messages")
+      .insert({ conversation_id: convId, role, content })
+      .select("id")
+      .single();
     if (error) throw error;
+    if (documentIds.length > 0) {
+      if (!data?.id) throw new Error("تعذر ربط المرفقات بالرسالة");
+      const { error: attErr } = await supabase
+        .from("message_attachments")
+        .insert(documentIds.map((document_id) => ({ message_id: data.id, document_id })));
+      if (attErr) throw attErr;
+    }
   };
 
   const send = useCallback(async (text: string) => {
@@ -157,6 +168,7 @@ const Index = () => {
     const userMsg: Msg = { role: "user", content: displayContent };
     const aiMsg: Msg = { role: "user", content: messageContent };
     
+    const attachmentIds = [...new Set(attachedFiles.map((f) => f.documentId))];
     setMessages((prev) => [...prev, userMsg]);
     setInput("");
     setAttachedFiles([]);
@@ -187,7 +199,7 @@ const Index = () => {
       }
 
       if (!isCurrent()) return;
-      if (convId) await saveMessage(convId, "user", displayContent);
+      if (convId) await saveMessage(convId, "user", displayContent, attachmentIds);
       if (!isCurrent()) return;
 
       let assistantSoFar = "";
@@ -215,6 +227,7 @@ const Index = () => {
         onDelta: upsertAssistant,
         authToken: session?.access_token,
         model: selectedModel,
+        conversationId: convId ?? undefined,
         onSources: (sources) => {
           if (isCurrent()) setMessageSources((old) => ({ ...old, [assistantIdx]: sources }));
         },
@@ -402,7 +415,7 @@ const Index = () => {
             )}
             <div className="flex items-end gap-2">
               <FileUpload
-                onFileProcessed={(name, text) => setAttachedFiles(prev => [...prev, { name, text }])}
+                onFileProcessed={(name, text, documentId) => setAttachedFiles(prev => [...prev, { name, text, documentId }])}
                 disabled={isLoading || attachedFiles.length >= 10}
               />
               <VoiceInput
