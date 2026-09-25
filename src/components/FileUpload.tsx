@@ -60,35 +60,22 @@ const FileUpload = ({ onFileProcessed, disabled }: FileUploadProps) => {
 
       if (uploadError) throw uploadError;
 
-      // Get user auth token
-      const { data: { session } } = await supabase.auth.getSession();
-      const authToken = session?.access_token;
-      if (!authToken) throw new Error("انتهت جلسة تسجيل الدخول. يرجى تسجيل الدخول مرة أخرى.");
+      // Invoke through the active Supabase client. This avoids browser/CORS
+      // failures caused by constructing the Edge Function URL manually.
+      const { data: parsed, error: functionError } = await supabase.functions.invoke("parse-document", {
+        body: { filePath, fileName: file.name, mimeType: file.type },
+      });
 
-      // Parse the document
-      const resp = await fetch(
-        `${supabase.supabaseUrl}/functions/v1/parse-document`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${authToken}`,
-          },
-          body: JSON.stringify({ filePath, fileName: file.name, mimeType: file.type }),
-        }
-      );
-
-      if (!resp.ok) {
-        const err = await resp.json().catch(() => ({}));
-        throw new Error(err.error || "فشل في تحليل الملف");
+      if (functionError) {
+        console.error("parse-document invoke failed:", functionError);
+        throw new Error(functionError.message || "فشل الاتصال بخدمة تحليل المستند");
       }
 
-      const parsed = await resp.json();
       let documentId = typeof parsed?.documentId === "string" ? parsed.documentId : "";
       const parsedText = typeof parsed?.text === "string" ? parsed.text : "";
 
-      // Backward-compatible verification for older deployed parse-document responses:
-      // the database is the source of truth, so confirm persistence before reporting failure.
+      // The database is the source of truth. Older function deployments may
+      // omit the explicit saved flag, so verify persistence before failing.
       if (parsed?.saved !== true || !documentId) {
         const { data: savedDoc, error: verifyError } = await supabase
           .from("documents")
