@@ -335,7 +335,7 @@ serve(async (req) => {
       });
     }
 
-    const { messages, model } = await req.json();
+    const { messages, model, conversationId } = await req.json();
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
@@ -347,7 +347,29 @@ serve(async (req) => {
     let documentsContext = "";
     let ragSources: { file_name: string; relevance: number }[] = [];
     try {
-      if (searchQuery) {
+      // --- Conversation-scoped attachments FIRST (RLS: only the caller's own) ---
+      const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      if (typeof conversationId === "string" && UUID_RE.test(conversationId)) {
+        const { data: atts, error: attErr } = await userClient
+          .from("message_attachments")
+          .select("document_id, messages!inner(conversation_id)")
+          .eq("messages.conversation_id", conversationId);
+        if (attErr) console.error("attachments query failed:", attErr);
+        const ids = [...new Set((atts ?? []).map((a: any) => a.document_id))];
+        if (ids.length > 0) {
+          const { data: convDocs } = await userClient
+            .from("documents")
+            .select("file_name, content")
+            .in("id", ids)
+            .order("created_at", { ascending: false });
+          if (convDocs && convDocs.length > 0) {
+            documentsContext = buildDocsContext(convDocs);
+            ragSources = convDocs.map((d: any) => ({ file_name: d.file_name, relevance: 1 }));
+          }
+        }
+      }
+
+      if (!documentsContext && searchQuery) {
         // --- RAG: Chunked Search (SECURITY INVOKER, scoped via auth.uid()) ---
         try {
           const { data: chunks, error: searchErr } = await userClient.rpc("search_document_chunks", {
