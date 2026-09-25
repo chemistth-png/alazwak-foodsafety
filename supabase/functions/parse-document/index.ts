@@ -5,7 +5,17 @@ const json = (status: number, body: unknown) =>
   new Response(JSON.stringify(body), { status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
 const TEXT_EXTS = ["txt", "csv", "md"];
-const ALLOWED = [...TEXT_EXTS, "pdf", "docx", "doc", "rtf"];
+const IMAGE_MIME: Record<string, string> = { jpg: "image/jpeg", jpeg: "image/jpeg", png: "image/png", webp: "image/webp" };
+const ALLOWED = [...TEXT_EXTS, "pdf", "docx", "doc", "rtf", "xls", "xlsx", ...Object.keys(IMAGE_MIME)];
+
+async function extractExcel(bytes: Uint8Array): Promise<string> {
+  const XLSX = await import("npm:xlsx@0.18.5");
+  const wb = XLSX.read(bytes, { type: "array" });
+  return wb.SheetNames.map((n: string) => {
+    const csv = XLSX.utils.sheet_to_csv(wb.Sheets[n], { FS: " | ", blankrows: false });
+    return `### ورقة: ${n}\n${csv}`;
+  }).join("\n\n").trim();
+}
 const MAX_BYTES = 20 * 1024 * 1024;
 const MAX_CHARS = 1_000_000;
 
@@ -96,7 +106,7 @@ Deno.serve(async (req) => {
       return json(403, { error: "Forbidden" });
     }
     const ext = fileName.split(".").pop()?.toLowerCase() ?? "";
-    if (!ALLOWED.includes(ext)) return json(415, { error: "الأنواع المدعومة: PDF, DOCX, DOC, RTF, TXT, CSV, MD" });
+    if (!ALLOWED.includes(ext)) return json(415, { error: "الأنواع المدعومة: PDF, DOC, DOCX, XLS, XLSX, JPG, PNG, WEBP, RTF, TXT, CSV, MD" });
 
     const { data: blob, error: dlErr } = await client.storage.from("chat-files").download(filePath);
     if (dlErr || !blob) return json(404, { error: "تعذر تحميل الملف من التخزين" });
@@ -109,6 +119,8 @@ Deno.serve(async (req) => {
       else if (ext === "pdf") content = await extractPdf(bytes, fileName);
       else if (ext === "docx") content = await extractDocx(bytes);
       else if (ext === "rtf") content = extractRtf(bytes);
+      else if (ext === "xls" || ext === "xlsx") content = await extractExcel(bytes);
+      else if (IMAGE_MIME[ext]) content = (await extractWithAI(bytes, IMAGE_MIME[ext], fileName)).trim();
       else content = (await extractWithAI(bytes, "application/msword", fileName)).trim();
     } catch (e) {
       console.error(`extract ${ext} failed:`, e);
