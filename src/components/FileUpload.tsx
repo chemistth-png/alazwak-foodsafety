@@ -100,7 +100,7 @@ const FileUpload = ({ onFileProcessed, disabled }: FileUploadProps) => {
           .single();
         if (insertError || !insertedDoc?.id) {
           console.error("document persistence fallback failed:", insertError);
-          throw new Error("تم تحليل الملف لكن تعذر حفظ المستند");
+          throw new Error(`تعذر حفظ المستند${insertError?.code ? ` [${insertError.code}]` : ""}: ${insertError?.message || "خطأ قاعدة بيانات غير محدد"}`);
         }
         documentId = insertedDoc.id;
       }
