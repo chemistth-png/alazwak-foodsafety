@@ -1,55 +1,122 @@
 import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
+import { Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell, WidthType, AlignmentType, HeadingLevel, BorderStyle } from "docx";
 
 /**
- * Export markdown content as a simple Word (.doc) file with RTL Arabic support
- * This approach uses HTML with Word-specific XML namespaces for maximum mobile compatibility.
+ * Export markdown content as a real Word (.docx) file with RTL Arabic support.
+ * Markdown headings, lists and pipe tables are converted to native Word elements.
  */
 export async function exportToWord(title: string, markdownContent: string) {
-  const htmlContent = parseMarkdownToHtml(markdownContent);
-  
-  const html = `
-    <html xmlns:o="urn:schemas-microsoft-com:office:office" 
-          xmlns:w="urn:schemas-microsoft-com:office:word" 
-          xmlns="http://www.w3.org/TR/REC-html40">
-    <head>
-      <meta charset="utf-8">
-      <title>${title}</title>
-      <!--[if gte mso 9]>
-      <xml>
-        <w:WordDocument>
-          <w:View>Print</w:View>
-          <w:Zoom>100</w:Zoom>
-          <w:DoNotOptimizeForBrowser/>
-        </w:WordDocument>
-      </xml>
-      <![endif]-->
-      <style>
-        body {
-          font-family: 'Arial', 'Tahoma', sans-serif;
-          line-height: 1.6;
-        }
-        h1 { color: #1a365d; text-align: center; border-bottom: 2px solid #1a365d; padding-bottom: 10px; }
-        h2 { color: #2c5282; border-bottom: 1px solid #e2e8f0; padding-bottom: 5px; margin-top: 20px; }
-        h3 { color: #2b6cb0; }
-        table { border-collapse: collapse; width: 100%; margin: 15px 0; }
-        th, td { border: 1px solid #cbd5e0; padding: 8px; text-align: right; }
-        th { background-color: #f7fafc; font-weight: bold; }
-        .footer { margin-top: 30px; text-align: center; color: #718096; font-size: 12px; border-top: 1px solid #e2e8f0; padding-top: 10px; }
-      </style>
-    </head>
-    <body dir="rtl">
-      <h1>${title}</h1>
-      ${htmlContent}
-      <div class="footer">
-        تاريخ الإصدار: ${new Date().toLocaleDateString("ar-EG")}
-      </div>
-    </body>
-    </html>
-  `;
+  const children: (Paragraph | Table)[] = [
+    new Paragraph({
+      bidirectional: true,
+      alignment: AlignmentType.CENTER,
+      heading: HeadingLevel.HEADING_1,
+      children: [new TextRun({ text: title, bold: true, size: 32 })],
+    }),
+  ];
 
-  const blob = new Blob(['\ufeff', html], { type: 'application/msword' });
-  saveAs(blob, `${sanitizeFilename(title)}.doc`);
+  const lines = markdownContent.split("\n");
+  let i = 0;
+  while (i < lines.length) {
+    const line = lines[i].trim();
+    if (!line) { i++; continue; }
+
+    if (line.startsWith("|")) {
+      const rows: string[][] = [];
+      while (i < lines.length && lines[i].trim().startsWith("|")) {
+        const row = lines[i].trim();
+        if (!row.match(/^\|[\s\-:|]+\|$/)) rows.push(parseTableRow(row));
+        i++;
+      }
+      if (rows.length) {
+        children.push(new Table({
+          width: { size: 100, type: WidthType.PERCENTAGE },
+          rows: rows.map((cells, rowIndex) => new TableRow({
+            children: cells.map(cell => new TableCell({
+              children: [new Paragraph({
+                bidirectional: true,
+                alignment: AlignmentType.RIGHT,
+                children: [new TextRun({ text: cell, bold: rowIndex === 0 })],
+              })],
+            })),
+          })),
+          borders: {
+            top: { style: BorderStyle.SINGLE, size: 1 },
+            bottom: { style: BorderStyle.SINGLE, size: 1 },
+            left: { style: BorderStyle.SINGLE, size: 1 },
+            right: { style: BorderStyle.SINGLE, size: 1 },
+            insideHorizontal: { style: BorderStyle.SINGLE, size: 1 },
+            insideVertical: { style: BorderStyle.SINGLE, size: 1 },
+          },
+        }));
+      }
+      continue;
+    }
+
+    const heading = line.match(/^(#{1,6})\s+(.*)$/);
+    if (heading) {
+      const levels = [
+        HeadingLevel.HEADING_1, HeadingLevel.HEADING_2, HeadingLevel.HEADING_3,
+        HeadingLevel.HEADING_4, HeadingLevel.HEADING_5, HeadingLevel.HEADING_6,
+      ];
+      children.push(new Paragraph({
+        bidirectional: true,
+        alignment: AlignmentType.RIGHT,
+        heading: levels[Math.min(heading[1].length, 6) - 1],
+        children: [new TextRun({ text: cleanMarkdown(heading[2]), bold: true })],
+      }));
+      i++; continue;
+    }
+
+    const bullet = line.match(/^[-*]\s+(.*)$/);
+    const numbered = line.match(/^\d+[.)]\s+(.*)$/);
+    if (bullet || numbered) {
+      children.push(new Paragraph({
+        bidirectional: true,
+        alignment: AlignmentType.RIGHT,
+        bullet: bullet ? { level: 0 } : undefined,
+        numbering: numbered ? { reference: "arabic-numbering", level: 0 } : undefined,
+        children: [new TextRun(cleanMarkdown((bullet || numbered)![1]))],
+      }));
+      i++; continue;
+    }
+
+    children.push(new Paragraph({
+      bidirectional: true,
+      alignment: AlignmentType.RIGHT,
+      children: [new TextRun(cleanMarkdown(line))],
+    }));
+    i++;
+  }
+
+  children.push(new Paragraph({
+    bidirectional: true,
+    alignment: AlignmentType.CENTER,
+    children: [new TextRun({ text: `تاريخ الإصدار: ${new Date().toLocaleDateString("ar-EG")}`, size: 18 })],
+  }));
+
+  const doc = new Document({
+    numbering: {
+      config: [{
+        reference: "arabic-numbering",
+        levels: [{
+          level: 0,
+          format: "decimal",
+          text: "%1.",
+          alignment: AlignmentType.RIGHT,
+          style: { paragraph: { indent: { left: 720, hanging: 360 } } },
+        }],
+      }],
+    },
+    sections: [{ children }],
+  });
+  const blob = await Packer.toBlob(doc);
+  saveAs(blob, `${sanitizeFilename(title)}.docx`);
+}
+
+function cleanMarkdown(value: string): string {
+  return value.replace(/\*\*/g, "").replace(/[*_`]/g, "").trim();
 }
 
 /**
