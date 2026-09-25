@@ -1,16 +1,16 @@
 project_id = "lnchwlswprpegesupimg"
 
 [functions.chat]
-verify_jwt = false
+verify_jwt = true
 
 [functions.parse-document]
-verify_jwt = false
+verify_jwt = true
 
 [functions.smart-agent]
-verify_jwt = false
+verify_jwt = true
 
 [functions.generate-image]
-verify_jwt = false
+verify_jwt = true
 
 [functions.layout-from-doc]
-verify_jwt = false
+verify_jwt = true
