@@ -84,10 +84,29 @@ const FileUpload = ({ onFileProcessed, disabled }: FileUploadProps) => {
       }
 
       const parsed = await resp.json();
-      if (parsed?.saved !== true || typeof parsed.documentId !== "string" || typeof parsed.text !== "string") {
-        throw new Error("لم يؤكد الخادم حفظ المستند");
+      let documentId = typeof parsed?.documentId === "string" ? parsed.documentId : "";
+      const parsedText = typeof parsed?.text === "string" ? parsed.text : "";
+
+      // Backward-compatible verification for older deployed parse-document responses:
+      // the database is the source of truth, so confirm persistence before reporting failure.
+      if (parsed?.saved !== true || !documentId) {
+        const { data: savedDoc, error: verifyError } = await supabase
+          .from("documents")
+          .select("id, content")
+          .eq("user_id", user.id)
+          .eq("file_name", file.name)
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        if (verifyError || !savedDoc?.id) {
+          throw new Error(parsed?.error || "لم يؤكد الخادم حفظ المستند");
+        }
+        documentId = savedDoc.id;
+        onFileProcessed(file.name, parsedText || savedDoc.content || "", documentId);
+      } else {
+        onFileProcessed(file.name, parsedText, documentId);
       }
-      onFileProcessed(file.name, parsed.text, parsed.documentId);
       toast.success(`تم تحميل وتحليل وحفظ الملف: ${file.name}`);
     } catch (e: any) {
       console.error("File upload error:", e);
