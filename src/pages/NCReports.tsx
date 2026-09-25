@@ -141,9 +141,32 @@ const NCReports = () => {
       report_number:
         form.report_number || `NC-${String(reports.length + 1).padStart(4, "0")}`,
     };
-    const { error } = await supabase.from("nc_reports").insert(payload);
+    let { error } = await supabase.from("nc_reports").insert(payload);
+
+    // Compatibility fallback: some production databases may not yet have the
+    // optional traceability/verification columns introduced by newer UI builds.
+    // Retry with the core schema instead of blocking NCR creation.
+    if (error && /batch_number|lot_code|hazard_type|ccp_ref|schema cache|column/i.test(error.message || "")) {
+      const corePayload = {
+        user_id: user.id,
+        report_number: payload.report_number,
+        title: form.title,
+        description: form.description,
+        category: form.category,
+        severity: form.severity,
+        corrective_action: form.corrective_action,
+        responsible: form.responsible,
+        status: form.status,
+      };
+      const retry = await supabase.from("nc_reports").insert(corePayload);
+      error = retry.error;
+    }
+
     setSaving(false);
-    if (error) return toast.error("فشل الحفظ", { duration: 8000 });
+    if (error) {
+      console.error("NCR save failed:", error);
+      return toast.error(`فشل الحفظ: ${error.message || "خطأ غير معروف"}`, { duration: 12000 });
+    }
     toast.success("تم إنشاء التقرير");
     setOpen(false);
     setForm(emptyForm);
