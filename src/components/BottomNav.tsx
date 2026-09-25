@@ -2,7 +2,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { MessageSquare, FolderOpen, FileText, Bot, PieChart, ListChecks, AlertTriangle, MoreHorizontal, ClipboardList, BookOpen, Waves, LogOut, Camera, ShieldCheck, LayoutTemplate } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { cn } from "@/lib/utils";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 const MAIN_NAV_ITEMS = [
   { path: "/", label: "المحادثة", icon: MessageSquare },
@@ -32,6 +32,12 @@ const BottomNav = () => {
   const location = useLocation();
   const { signOut } = useAuth();
   const [showMore, setShowMore] = useState(false);
+
+  useEffect(() => {
+    const closeMore = () => setShowMore(false);
+    window.addEventListener("alazwak:chat-sidebar-open", closeMore);
+    return () => window.removeEventListener("alazwak:chat-sidebar-open", closeMore);
+  }, []);
 
   // Hide internal navigation on public pages and the standalone SOP template.
   if (HIDDEN_PATHS.includes(location.pathname)) return null;
@@ -105,7 +111,11 @@ const BottomNav = () => {
           })}
           {/* More button - always visible */}
           <button
-            onClick={() => setShowMore(!showMore)}
+            onClick={() => {
+              const next = !showMore;
+              setShowMore(next);
+              if (next) window.dispatchEvent(new CustomEvent("alazwak:more-menu-open"));
+            }}
             aria-label="المزيد"
             className={cn(
               "flex flex-1 basis-0 min-w-0 flex-col items-center justify-center gap-0.5 px-0.5 py-1 rounded-lg transition-colors",
