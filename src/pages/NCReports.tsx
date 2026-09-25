@@ -135,15 +135,31 @@ const NCReports = () => {
     if (form.title.length > 200) return toast.error("العنوان طويل جداً (الحد 200 حرف)", { duration: 8000 });
     if (form.description.length > 2000) return toast.error("الوصف طويل جداً (الحد 2000 حرف)", { duration: 8000 });
     setSaving(true);
-    const payload = {
-      ...form,
-      user_id: user.id,
+    // Avoid sending optional traceability fields as empty strings.
+    // This keeps NCR creation compatible with staging databases where the
+    // enhancement migration has not been applied yet.
+    const payload: Record<string, string> = {
       report_number:
-        form.report_number || `NC-${String(reports.length + 1).padStart(4, "0")}`,
+        form.report_number || `NC-${Date.now().toString().slice(-8)}`,
+      title: form.title.trim(),
+      description: form.description.trim(),
+      category: form.category,
+      severity: form.severity,
+      corrective_action: form.corrective_action.trim(),
+      responsible: form.responsible.trim(),
+      status: form.status,
+      user_id: user.id,
     };
+    if (form.batch_number.trim()) payload.batch_number = form.batch_number.trim();
+    if (form.lot_code.trim()) payload.lot_code = form.lot_code.trim();
+    if (form.hazard_type) payload.hazard_type = form.hazard_type;
+    if (form.ccp_ref.trim()) payload.ccp_ref = form.ccp_ref.trim();
     const { error } = await supabase.from("nc_reports").insert(payload);
     setSaving(false);
-    if (error) return toast.error("فشل الحفظ", { duration: 8000 });
+    if (error) {
+      console.error("NCR save failed", error);
+      return toast.error(`فشل الحفظ: ${error.message}`, { duration: 10000 });
+    }
     toast.success("تم إنشاء التقرير");
     setOpen(false);
     setForm(emptyForm);
