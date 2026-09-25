@@ -71,12 +71,43 @@ const FileUpload = ({ onFileProcessed, disabled }: FileUploadProps) => {
         throw new Error(functionError.message || "فشل الاتصال بخدمة تحليل المستند");
       }
 
-      let documentId = typeof parsed?.documentId === "string" ? parsed.documentId : "";
-      const parsedText = typeof parsed?.text === "string" ? parsed.text : "";
+      const parsedText = typeof parsed?.text === "string"
+        ? parsed.text
+        : typeof parsed?.content === "string"
+          ? parsed.content
+          : "";
+      let documentId = typeof parsed?.documentId === "string"
+        ? parsed.documentId
+        : typeof parsed?.document_id === "string"
+          ? parsed.document_id
+          : typeof parsed?.id === "string"
+            ? parsed.id
+            : "";
 
-      // The database is the source of truth. Older function deployments may
-      // omit the explicit saved flag, so verify persistence before failing.
-      if (parsed?.saved !== true || !documentId) {
+      // The original Lovable backend may run an older parser contract that
+      // returns extracted text but does not persist the document. Persist it
+      // here with the authenticated client so RLS still enforces ownership.
+      if (!documentId && parsedText.trim()) {
+        const { data: insertedDoc, error: insertError } = await supabase
+          .from("documents")
+          .insert({
+            user_id: user.id,
+            file_name: file.name,
+            content: parsedText,
+            file_size: file.size,
+          })
+          .select("id")
+          .single();
+        if (insertError || !insertedDoc?.id) {
+          console.error("document persistence fallback failed:", insertError);
+          throw new Error("تم تحليل الملف لكن تعذر حفظ المستند");
+        }
+        documentId = insertedDoc.id;
+      }
+
+      // If the parser claims success without returning text/id, verify whether
+      // an older deployment already persisted the row before reporting failure.
+      if (!documentId) {
         const { data: savedDoc, error: verifyError } = await supabase
           .from("documents")
           .select("id, content")
@@ -85,9 +116,9 @@ const FileUpload = ({ onFileProcessed, disabled }: FileUploadProps) => {
           .order("created_at", { ascending: false })
           .limit(1)
           .maybeSingle();
-
         if (verifyError || !savedDoc?.id) {
-          throw new Error(parsed?.error || "لم يؤكد الخادم حفظ المستند");
+          console.error("unexpected parse-document response:", parsed);
+          throw new Error(parsed?.error || "خدمة تحليل المستند لم تُرجع نصاً أو مستنداً محفوظاً");
         }
         documentId = savedDoc.id;
         onFileProcessed(file.name, parsedText || savedDoc.content || "", documentId);
