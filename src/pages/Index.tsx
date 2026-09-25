@@ -278,7 +278,7 @@ const Index = () => {
         {/* Header */}
         <header className="flex items-center justify-between gap-2 border-b px-2 sm:px-4 py-2 sm:py-3 bg-card shadow-sm shrink-0 overflow-hidden">
           <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-            <Button variant="ghost" size="icon" className="md:hidden" onClick={() => setSidebarOpen(true); window.dispatchEvent(new CustomEvent("alazwak:chat-sidebar-open"))} aria-label="فتح قائمة المحادثات">
+            <Button variant="ghost" size="icon" className="md:hidden" onClick={() => { setSidebarOpen(true); window.dispatchEvent(new CustomEvent("alazwak:chat-sidebar-open")); }} aria-label="فتح قائمة المحادثات">
               <Menu className="w-5 h-5" />
             </Button>
             <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-primary text-primary-foreground">
