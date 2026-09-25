@@ -5,6 +5,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import { streamChat, type Msg, type Source } from "@/lib/chat";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -401,7 +402,7 @@ const Index = () => {
                     {msg.role === "assistant" ? (
                       <>
                         <div className="prose prose-sm max-w-none dark:prose-invert prose-p:my-1 prose-ul:my-1 prose-ol:my-1 prose-li:my-0.5 prose-headings:my-2">
-                          <ReactMarkdown>{msg.content}</ReactMarkdown>
+                          <ReactMarkdown remarkPlugins={[remarkGfm]}>{msg.content}</ReactMarkdown>
                         </div>
                         {messageSources[i] && <SourcesBadge sources={messageSources[i]} />}
                       </>
