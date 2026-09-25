@@ -251,9 +251,6 @@ serve(async (req) => {
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const supabase = createClient(supabaseUrl, supabaseKey);
-
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) throw new Error("Authorization required");
     const token = authHeader.replace("Bearer ", "");
@@ -333,7 +330,7 @@ serve(async (req) => {
       const aiResult = await response.json();
       const aiOutput = aiResult.choices?.[0]?.message?.content || "";
 
-      await supabase.from("agent_tasks").update({
+      await userClient.from("agent_tasks").update({
         ai_output: aiOutput,
         status: "review",
         updated_at: new Date().toISOString(),
@@ -345,7 +342,7 @@ serve(async (req) => {
     }
 
     if (action === "approve") {
-      const { count, error: appErr } = await supabase.from("agent_tasks").update({
+      const { count, error: appErr } = await userClient.from("agent_tasks").update({
         status: "approved",
         updated_at: new Date().toISOString(),
       }, { count: "exact" }).eq("id", taskId).eq("user_id", user.id);
@@ -362,7 +359,7 @@ serve(async (req) => {
     }
 
     if (action === "revise") {
-      const { count: revCount, error: revErr } = await supabase.from("agent_tasks").update({
+      const { count: revCount, error: revErr } = await userClient.from("agent_tasks").update({
         status: "revision",
         user_feedback: feedback || "",
         updated_at: new Date().toISOString(),
@@ -374,7 +371,7 @@ serve(async (req) => {
         });
       }
 
-      const { data: task } = await supabase.from("agent_tasks").select("*").eq("id", taskId).eq("user_id", user.id).single();
+      const { data: task } = await userClient.from("agent_tasks").select("*").eq("id", taskId).eq("user_id", user.id).single();
       if (!task) throw new Error("Task not found");
 
       const docsContext = await fetchUserDocs(userClient, user.id, `${task.title} ${feedback || ""}`);
@@ -407,7 +404,7 @@ serve(async (req) => {
       const aiResult = await response.json();
       const aiOutput = aiResult.choices?.[0]?.message?.content || "";
 
-      await supabase.from("agent_tasks").update({
+      await userClient.from("agent_tasks").update({
         ai_output: aiOutput,
         status: "review",
         updated_at: new Date().toISOString(),
