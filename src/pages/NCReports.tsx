@@ -395,24 +395,24 @@ const NCReports = () => {
         title="سجل تقارير عدم المطابقة - Non-Conformity Reports"
       />
 
-      <header className="flex items-center justify-between gap-2 border-b px-2 sm:px-4 py-2 sm:py-3 bg-card shadow-sm print:hidden">
-        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-          <Button variant="ghost" size="icon" className="min-h-14 min-w-14" onClick={() => navigate("/")}>
+      <header className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-b px-2 sm:px-4 py-2 sm:py-3 bg-card shadow-sm print:hidden">
+        <div className="flex items-center gap-2 sm:gap-3 min-w-0 w-full sm:w-auto">
+          <Button variant="ghost" size="icon" className="h-10 w-10 min-h-10 min-w-10 shrink-0" onClick={() => navigate("/")}>
             <ArrowRight className="w-5 h-5" />
           </Button>
-          <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-primary text-primary-foreground">
+          <div className="flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-primary text-primary-foreground shrink-0">
             <AlertTriangle className="w-5 h-5" />
           </div>
-          <div>
-            <h1 className="text-sm sm:text-base font-bold leading-tight">تقارير عدم المطابقة</h1>
-            <p className="text-[11px] sm:text-xs text-muted-foreground">
+          <div className="min-w-0 flex-1">
+            <h1 className="text-sm sm:text-base font-bold leading-tight truncate">تقارير عدم المطابقة</h1>
+            <p className="text-[10px] sm:text-xs text-muted-foreground leading-relaxed break-words">
               {reports.length} تقرير •{" "}
               {reports.filter((r) => r.status === "open").length} مفتوح •{" "}
               {reports.filter((r) => r.status === "closed" && !r.verified_by).length} بانتظار التحقق
             </p>
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5 sm:gap-2 w-full sm:w-auto justify-end">
           <Button variant="outline" size="sm" className="hidden sm:flex min-h-10" onClick={exportPDF}>
             <FileDown className="w-4 h-4 ms-2" />
             PDF
@@ -423,7 +423,7 @@ const NCReports = () => {
           </Button>
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-              <Button size="sm" className="min-h-12 sm:min-h-10 px-3 sm:px-4">
+              <Button size="sm" className="h-10 min-h-10 px-3 sm:px-4 shrink-0">
                 <Plus className="w-4 h-4 ms-2" />
                 <span className="hidden sm:inline">تقرير جديد</span>
                 <span className="sm:hidden">جديد</span>
