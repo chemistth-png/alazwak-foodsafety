@@ -60,7 +60,7 @@ const ChatSidebar = ({ currentId, onSelect, onNew, open, onClose }: ChatSidebarP
       )}
       <aside
         className={cn(
-          "fixed md:relative z-50 top-0 right-0 h-[100dvh] w-[88vw] max-w-[340px] md:w-72 bg-card border-s flex flex-col overflow-hidden transition-transform duration-200",
+          "fixed md:relative z-50 top-0 right-0 h-[100dvh] w-[min(92vw,360px)] md:w-72 bg-card border-s flex flex-col overflow-hidden transition-transform duration-200",
           open ? "translate-x-0" : "translate-x-full md:translate-x-0"
         )}
       >
@@ -91,7 +91,7 @@ const ChatSidebar = ({ currentId, onSelect, onNew, open, onClose }: ChatSidebarP
                 key={c.id}
                 onClick={() => { onSelect(c.id); onClose(); }}
                 className={cn(
-                  "w-full flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-right transition-colors group",
+                  "w-full min-w-0 flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-right transition-colors group overflow-hidden",
                   currentId === c.id
                     ? "bg-accent text-accent-foreground"
                     : "hover:bg-muted text-foreground"
