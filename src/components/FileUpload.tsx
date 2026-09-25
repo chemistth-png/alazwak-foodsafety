@@ -4,11 +4,11 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
-const ALLOWED_EXTENSIONS = ["pdf", "doc", "docx", "xls", "xlsx", "txt", "csv", "md"];
+const ALLOWED_EXTENSIONS = ["pdf", "docx", "doc", "xls", "xlsx", "jpg", "jpeg", "png", "webp", "rtf", "txt", "csv", "md"];
 const MAX_FILE_SIZE = 20 * 1024 * 1024; // 20MB
 
 interface FileUploadProps {
-  onFileProcessed: (fileName: string, fileText: string) => void;
+  onFileProcessed: (fileName: string, fileText: string, documentId: string) => void;
   disabled?: boolean;
 }
 
@@ -26,7 +26,7 @@ const FileUpload = ({ onFileProcessed, disabled }: FileUploadProps) => {
 
     const ext = file.name.split(".").pop()?.toLowerCase();
     if (!ext || !ALLOWED_EXTENSIONS.includes(ext)) {
-      toast.error("نوع الملف غير مدعوم. الأنواع المدعومة: PDF, Word, Excel, TXT, CSV");
+      toast.error("نوع الملف غير مدعوم. الأنواع المدعومة: PDF, DOC, DOCX, XLS, XLSX, JPG, PNG, WEBP, RTF, TXT, CSV, MD");
       return;
     }
 
@@ -78,13 +78,15 @@ const FileUpload = ({ onFileProcessed, disabled }: FileUploadProps) => {
       );
 
       if (!resp.ok) {
-        const err = await resp.json();
+        const err = await resp.json().catch(() => ({}));
         throw new Error(err.error || "فشل في تحليل الملف");
       }
 
-      const { text } = await resp.json();
-      
-      onFileProcessed(file.name, text);
+      const parsed = await resp.json();
+      if (parsed?.saved !== true || typeof parsed.documentId !== "string" || typeof parsed.text !== "string") {
+        throw new Error("لم يؤكد الخادم حفظ المستند");
+      }
+      onFileProcessed(file.name, parsed.text, parsed.documentId);
       toast.success(`تم تحميل وتحليل وحفظ الملف: ${file.name}`);
     } catch (e: any) {
       console.error("File upload error:", e);
@@ -100,7 +102,8 @@ const FileUpload = ({ onFileProcessed, disabled }: FileUploadProps) => {
       <input
         ref={inputRef}
         type="file"
-        accept=".pdf,.doc,.docx,.xls,.xlsx,.txt,.csv,.md"
+        accept=".pdf,.docx,.doc,.xls,.xlsx,.jpg,.jpeg,.png,.webp,.rtf,.txt,.csv,.md"
+        aria-label="إرفاق مستند"
         onChange={handleFileSelect}
         className="hidden"
         disabled={disabled || isUploading}
@@ -111,7 +114,7 @@ const FileUpload = ({ onFileProcessed, disabled }: FileUploadProps) => {
         className="rounded-xl h-11 w-11 shrink-0"
         onClick={() => inputRef.current?.click()}
         disabled={disabled || isUploading}
-        title="إرفاق ملف (PDF, Word, Excel)"
+        title="إرفاق ملف (PDF, Word, TXT)"
       >
         {isUploading ? (
           <Loader2 className="w-4 h-4 animate-spin" />
