@@ -275,7 +275,7 @@ function parseMarkdownToHtml(markdown: string): string {
     // Headers
     if (line.startsWith("#")) {
       const level = line.match(/^#+/)?.[0].length || 1;
-      const text = escapeHtml(line.replace(/^#+\\s*/, "").replace(/\\*\\*/g, ""));
+      const text = escapeHtml(line.replace(/^#+\s*/, "").replace(/\*\*/g, ""));
       html += `<h${level}>${text}</h${level}>`;
       i++;
     } 
@@ -294,7 +294,7 @@ function parseMarkdownToHtml(markdown: string): string {
         html += "<tr>";
         cells.forEach(cell => {
           const tag = isHeader ? "th" : "td";
-          html += `<${tag}>${escapeHtml(cell.trim().replace(/\\*\\*/g, ""))}</${tag}>`;
+          html += `<${tag}>${escapeHtml(cell.trim().replace(/\*\*/g, ""))}</${tag}>`;
         });
         html += "</tr>";
         isHeader = false;
@@ -308,14 +308,14 @@ function parseMarkdownToHtml(markdown: string): string {
       const tag = isOrdered ? "ol" : "ul";
       html += `<${tag}>`;
       while (i < lines.length && (lines[i].trim().startsWith("- ") || lines[i].trim().match(/^\d+\.\s/))) {
-        html += `<li>${escapeHtml(lines[i].trim().replace(/^[-\\d.]+\\s+/, "").replace(/\\*\\*/g, ""))}</li>`;
+        html += `<li>${escapeHtml(lines[i].trim().replace(/^[-\d.]+\s+/, "").replace(/\*\*/g, ""))}</li>`;
         i++;
       }
       html += `</${tag}>`;
     }
     // Normal Paragraph
     else {
-      html += `<p>${escapeHtml(line.replace(/\\*\\*/g, "").replace(/\\*/g, ""))}</p>`;
+      html += `<p>${escapeHtml(line.replace(/\*\*/g, "").replace(/\*/g, ""))}</p>`;
       i++;
     }
   }
