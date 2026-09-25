@@ -169,7 +169,11 @@ const Index = () => {
       const { error: attErr } = await supabase
         .from("message_attachments")
         .insert(documentIds.map((document_id) => ({ message_id: data.id, document_id })));
-      if (attErr) throw attErr;
+      if (attErr) {
+        // The message itself is already saved. Attachment-link persistence must
+        // not make chat fail when a backend has stricter/legacy RLS here.
+        console.error("message attachment link persistence failed:", attErr);
+      }
     }
   };
 
