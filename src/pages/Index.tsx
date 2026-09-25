@@ -152,14 +152,13 @@ const Index = () => {
     const isCurrent = () => version === requestVersion.current;
     const assistantIdx = messages.length + 1;
 
-    // Build message content with files if attached
-    let messageContent = trimmed;
-    if (attachedFiles.length > 0) {
-      const filesContent = attachedFiles
-        .map((f, i) => `[ملف مرفق ${i + 1}: ${f.name}]\n\nمحتوى الملف:\n${f.text}`)
-        .join("\n\n---\n\n");
-      messageContent = `${filesContent}${trimmed ? `\n\nسؤال المستخدم: ${trimmed}` : "\n\nقم بتحليل محتوى هذه الملفات وتلخيصها."}`;
-    }
+    // Keep the AI request small: attached documents are already persisted and
+    // retrieved server-side through conversation-scoped RAG.
+    const messageContent = trimmed || (
+      attachedFiles.length > 0
+        ? "حلل الملفات المرفقة في هذه المحادثة ولخص محتواها مع الاعتماد عليها كمصادر."
+        : ""
+    );
 
     const displayContent = attachedFiles.length > 0
       ? `📎 ${attachedFiles.map(f => f.name).join("، ")}${trimmed ? `\n${trimmed}` : ""}`
