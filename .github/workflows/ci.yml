@@ -27,3 +27,11 @@ jobs:
         run: npm run build
       - name: Tests
         run: npm test
+      - name: Package standalone web build
+        run: zip -r alazwak-web-build.zip dist
+      - name: Upload standalone web build
+        uses: actions/upload-artifact@v4
+        with:
+          name: alazwak-web-build
+          path: alazwak-web-build.zip
+          retention-days: 7
