@@ -17,7 +17,7 @@ import {
   BarChart3, FileText, ChevronRight, Clock, AlertTriangle, Menu,
   Download, FileSpreadsheet, FileType, RotateCcw
 } from "lucide-react";
-import { exportToWord, exportToExcel } from "@/lib/exportAgent";
+import { exportToWord, exportToExcel, exportToPdf } from "@/lib/exportAgent";
 import { logAudit } from "@/lib/auditLog";
 import ThemeToggle from "@/components/ThemeToggle";
 
@@ -463,6 +463,15 @@ const AgentDashboard = () => {
                       >
                         <FileSpreadsheet className="w-4 h-4" />
                         <span className="text-xs">Excel</span>
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="gap-1.5 shrink-0 h-9 px-3 min-w-[80px]"
+                        onClick={() => exportToPdf(selectedTask.title, selectedTask.ai_output)}
+                      >
+                        <Download className="w-4 h-4" />
+                        <span className="text-xs">PDF</span>
                       </Button>
                     </>
                   )}
