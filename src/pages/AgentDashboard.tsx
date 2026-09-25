@@ -10,13 +10,14 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import {
   Bot, ArrowRight, Loader2, CheckCircle2, Edit3, Trash2, Plus, 
   Sparkles, ClipboardCheck, GraduationCap, ShieldAlert, Droplets,
   BarChart3, FileText, ChevronRight, Clock, AlertTriangle, Menu,
   Download, FileSpreadsheet, FileType, RotateCcw
 } from "lucide-react";
-import { exportToWord, exportToExcel } from "@/lib/exportAgent";
+import { exportToWord, exportToExcel, exportToPdf } from "@/lib/exportAgent";
 import { logAudit } from "@/lib/auditLog";
 import ThemeToggle from "@/components/ThemeToggle";
 
@@ -463,6 +464,15 @@ const AgentDashboard = () => {
                         <FileSpreadsheet className="w-4 h-4" />
                         <span className="text-xs">Excel</span>
                       </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="gap-1.5 shrink-0 h-9 px-3 min-w-[80px]"
+                        onClick={() => exportToPdf(selectedTask.title, selectedTask.ai_output)}
+                      >
+                        <Download className="w-4 h-4" />
+                        <span className="text-xs">PDF</span>
+                      </Button>
                     </>
                   )}
                   {selectedTask.status === "review" && (
@@ -499,7 +509,7 @@ const AgentDashboard = () => {
                   </div>
                 ) : selectedTask.ai_output ? (
                   <div className="prose prose-sm max-w-none dark:prose-invert prose-p:my-1.5 prose-ul:my-1 prose-ol:my-1 prose-li:my-0.5 prose-headings:my-3 prose-table:my-2">
-                    <ReactMarkdown>{selectedTask.ai_output}</ReactMarkdown>
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>{selectedTask.ai_output}</ReactMarkdown>
                   </div>
                 ) : (
                   <div className="flex flex-col items-center justify-center py-20 gap-3 text-muted-foreground">
