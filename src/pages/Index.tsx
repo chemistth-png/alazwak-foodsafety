@@ -246,7 +246,7 @@ const Index = () => {
   };
 
   return (
-    <div dir="rtl" className="flex flex-row-reverse h-full bg-background overflow-hidden">
+    <div dir="rtl" className="flex flex-row-reverse h-[100dvh] w-full max-w-full bg-background overflow-hidden">
       {/* Chat history sidebar - always visible on desktop */}
       <div className="hidden md:block">
         <ChatSidebar
@@ -268,10 +268,10 @@ const Index = () => {
         />
       </div>
 
-      <div className="flex flex-col flex-1 min-w-0">
+      <div className="flex flex-col flex-1 min-w-0 w-full max-w-full overflow-hidden">
         {/* Header */}
-        <header className="flex items-center justify-between gap-3 border-b px-4 py-3 bg-card shadow-sm">
-          <div className="flex items-center gap-3">
+        <header className="flex items-center justify-between gap-2 border-b px-2 sm:px-4 py-2 sm:py-3 bg-card shadow-sm shrink-0 overflow-hidden">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
             <Button variant="ghost" size="icon" className="md:hidden" onClick={() => setSidebarOpen(true)} aria-label="فتح قائمة المحادثات">
               <Menu className="w-5 h-5" />
             </Button>
@@ -279,7 +279,7 @@ const Index = () => {
               <Droplets className="w-5 h-5" />
             </div>
             <div className="min-w-0">
-              <h1 className="text-sm sm:text-base font-bold text-foreground leading-tight whitespace-nowrap">
+              <h1 className="text-sm sm:text-base font-bold text-foreground leading-tight truncate max-w-[44vw] sm:max-w-none">
                 Alazwak FoodSafety — مساعدك الذكي لسلامة الغذاء
               </h1>
               <p className="hidden sm:block text-xs text-muted-foreground">
@@ -287,8 +287,8 @@ const Index = () => {
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-1.5">
-            <ModelSelector value={selectedModel} onChange={setSelectedModel} disabled={isLoading} />
+          <div className="flex items-center gap-1 shrink-0 min-w-0"
+            <div className="max-w-[128px] sm:max-w-none overflow-hidden"><ModelSelector value={selectedModel} onChange={setSelectedModel} disabled={isLoading} /></div>
             <ImageGenerator />
             <ThemeToggle />
             {messages.length > 0 && (
@@ -307,24 +307,24 @@ const Index = () => {
         <main className="flex flex-col flex-1 min-h-0">
 
         {/* Messages */}
-        <ScrollArea className="flex-1 px-4">
+        <ScrollArea className="flex-1 px-2 sm:px-4 overflow-x-hidden">
           {messages.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-full py-16 gap-6">
+            <div className="flex flex-col items-center justify-center h-full py-8 sm:py-16 gap-4 sm:gap-6 px-2 overflow-hidden">
               <div className="flex items-center justify-center w-20 h-20 rounded-2xl bg-accent">
                 <Droplets className="w-10 h-10 text-accent-foreground" />
               </div>
-              <div className="text-center space-y-2 max-w-md">
-                <h2 className="text-xl font-bold text-foreground">مرحباً بك في Alazwak FoodSafety! 👋</h2>
+              <div className="text-center space-y-2 w-full max-w-md px-2">
+                <h2 className="text-lg sm:text-xl font-bold text-foreground break-words">مرحباً بك في Alazwak FoodSafety! 👋</h2>
                 <p className="text-sm text-muted-foreground leading-relaxed">
                   مساعدك الذكي المتخصص في جودة وسلامة الغذاء. اسألني أي سؤال!
                 </p>
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 w-full max-w-lg">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 w-full max-w-lg min-w-0">
                 {SUGGESTED_QUESTIONS.map((q) => (
                   <button
                     key={q}
                     onClick={() => send(q)}
-                    className="text-start text-sm rounded-xl border border-border bg-card p-3 text-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
+                    className="w-full min-w-0 text-start text-sm rounded-xl border border-border bg-card p-3 text-foreground break-words transition-colors hover:bg-accent hover:text-accent-foreground"
                   >
                     {q}
                   </button>
@@ -332,7 +332,7 @@ const Index = () => {
               </div>
             </div>
           ) : (
-            <div className="flex flex-col gap-4 py-4 max-w-5xl mx-auto">
+            <div className="flex flex-col gap-3 sm:gap-4 py-3 sm:py-4 w-full max-w-5xl mx-auto min-w-0 overflow-hidden">
               {messages.map((msg, i) => (
                 <div
                   key={i}
@@ -350,7 +350,7 @@ const Index = () => {
                     </AvatarFallback>
                   </Avatar>
                   <div
-                    className={`rounded-2xl px-4 py-2.5 max-w-[80%] text-sm leading-relaxed ${
+                    className={`rounded-2xl px-3 sm:px-4 py-2.5 max-w-[88%] sm:max-w-[80%] min-w-0 overflow-hidden break-words text-sm leading-relaxed ${
                       msg.role === "user"
                         ? "bg-primary text-primary-foreground rounded-tl-sm"
                         : "bg-muted text-foreground rounded-tr-sm"
@@ -358,7 +358,7 @@ const Index = () => {
                   >
                     {msg.role === "assistant" ? (
                       <>
-                        <div className="prose prose-sm max-w-none dark:prose-invert prose-p:my-1 prose-ul:my-1 prose-ol:my-1 prose-li:my-0.5 prose-headings:my-2">
+                        <div className="prose prose-sm max-w-none min-w-0 break-words overflow-x-auto dark:prose-invert prose-p:my-1 prose-ul:my-1 prose-ol:my-1 prose-li:my-0.5 prose-headings:my-2 prose-table:text-xs">
                           <ReactMarkdown>{msg.content}</ReactMarkdown>
                         </div>
                         {messageSources[i] && <SourcesBadge sources={messageSources[i]} />}
@@ -387,7 +387,7 @@ const Index = () => {
         </ScrollArea>
 
         {/* Input */}
-        <div className="border-t bg-card p-3 pb-[calc(0.75rem+3.5rem)] md:pb-3">
+        <div className="border-t bg-card px-2 sm:px-3 pt-2 sm:pt-3 pb-[calc(0.5rem+3.5rem+env(safe-area-inset-bottom))] md:pb-3 shrink-0">
           <div className="max-w-5xl mx-auto">
             {attachedFiles.length > 0 && (
               <div className="mb-2 flex flex-wrap gap-1.5">
@@ -400,7 +400,7 @@ const Index = () => {
                 ))}
               </div>
             )}
-            <div className="flex items-end gap-2">
+            <div className="flex items-end gap-1.5 sm:gap-2 min-w-0">
               <FileUpload
                 onFileProcessed={(name, text) => setAttachedFiles(prev => [...prev, { name, text }])}
                 disabled={isLoading || attachedFiles.length >= 10}
@@ -414,7 +414,7 @@ const Index = () => {
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={handleKeyDown}
                 placeholder={attachedFiles.length > 0 ? "اكتب سؤالك عن الملفات أو اضغط إرسال..." : "اكتب سؤالك هنا..."}
-                className="min-h-[44px] max-h-32 resize-none rounded-xl text-sm"
+                className="min-h-[44px] max-h-28 resize-none rounded-xl text-sm min-w-0 px-3"
                 rows={1}
                 disabled={isLoading}
               />
