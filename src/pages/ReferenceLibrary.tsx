@@ -162,7 +162,7 @@ const ReferenceLibrary = () => {
                 المكتبة المرجعية الرقمية
               </h1>
               <p className="text-sm text-muted-foreground mt-0.5">
-                Digital Reference Library — مصادر سلامة الغذاء وجودة المياه
+                Digital Reference Library — مصادر الجودة وسلامة الغذاء
               </p>
             </div>
           </div>
