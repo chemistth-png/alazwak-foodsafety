@@ -120,6 +120,43 @@ function cleanMarkdown(value: string): string {
 }
 
 /**
+ * Export markdown content as a downloadable PDF with RTL Arabic support.
+ * The HTML is generated locally in the browser; no document content is sent to a third party.
+ */
+export async function exportToPdf(title: string, markdownContent: string) {
+  const html2pdf = (await import("html2pdf.js")).default;
+  const container = document.createElement("div");
+  container.setAttribute("dir", "rtl");
+  container.style.direction = "rtl";
+  container.style.fontFamily = "Cairo, Arial, sans-serif";
+  container.style.padding = "24px";
+  container.style.lineHeight = "1.8";
+  container.innerHTML = `
+    <h1 style="text-align:center;margin-bottom:24px;">${escapeHtml(title)}</h1>
+    ${parseMarkdownToHtml(markdownContent)}
+    <p style="text-align:center;margin-top:24px;font-size:10px;">
+      تاريخ الإصدار: ${new Date().toLocaleDateString("ar-EG")}
+    </p>
+  `;
+
+  await html2pdf().set({
+    margin: 10,
+    filename: `${sanitizeFilename(title)}.pdf`,
+    html2canvas: { scale: 2, useCORS: true },
+    jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
+  }).from(container).save();
+}
+
+function escapeHtml(value: string): string {
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+/**
  * Export markdown content as an Excel (.xlsx) file
  * Properly parses markdown tables into columns and rows
  */
@@ -238,7 +275,7 @@ function parseMarkdownToHtml(markdown: string): string {
     // Headers
     if (line.startsWith("#")) {
       const level = line.match(/^#+/)?.[0].length || 1;
-      const text = line.replace(/^#+\s*/, "").replace(/\*\*/g, "");
+      const text = escapeHtml(line.replace(/^#+\\s*/, "").replace(/\\*\\*/g, ""));
       html += `<h${level}>${text}</h${level}>`;
       i++;
     } 
@@ -257,7 +294,7 @@ function parseMarkdownToHtml(markdown: string): string {
         html += "<tr>";
         cells.forEach(cell => {
           const tag = isHeader ? "th" : "td";
-          html += `<${tag}>${cell.trim().replace(/\*\*/g, "")}</${tag}>`;
+          html += `<${tag}>${escapeHtml(cell.trim().replace(/\\*\\*/g, ""))}</${tag}>`;
         });
         html += "</tr>";
         isHeader = false;
@@ -271,14 +308,14 @@ function parseMarkdownToHtml(markdown: string): string {
       const tag = isOrdered ? "ol" : "ul";
       html += `<${tag}>`;
       while (i < lines.length && (lines[i].trim().startsWith("- ") || lines[i].trim().match(/^\d+\.\s/))) {
-        html += `<li>${lines[i].trim().replace(/^[-\d.]+\s+/, "").replace(/\*\*/g, "")}</li>`;
+        html += `<li>${escapeHtml(lines[i].trim().replace(/^[-\\d.]+\\s+/, "").replace(/\\*\\*/g, ""))}</li>`;
         i++;
       }
       html += `</${tag}>`;
     }
     // Normal Paragraph
     else {
-      html += `<p>${line.replace(/\*\*/g, "").replace(/\*/g, "")}</p>`;
+      html += `<p>${escapeHtml(line.replace(/\\*\\*/g, "").replace(/\\*/g, ""))}</p>`;
       i++;
     }
   }
