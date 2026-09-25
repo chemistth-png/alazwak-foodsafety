@@ -70,8 +70,33 @@ const Documents = () => {
   }, []);
 
   useEffect(() => {
+    if (!user?.id) {
+      setDocuments([]);
+      setLoading(false);
+      return;
+    }
+
     void loadDocuments();
-    return () => { loadVersion.current += 1; };
+
+    const channel = supabase
+      .channel(`documents-live-${user.id}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "documents", filter: `user_id=eq.${user.id}` },
+        () => { void loadDocuments(); }
+      )
+      .subscribe();
+
+    const refreshOnFocus = () => { void loadDocuments(); };
+    window.addEventListener("focus", refreshOnFocus);
+    document.addEventListener("visibilitychange", refreshOnFocus);
+
+    return () => {
+      loadVersion.current += 1;
+      window.removeEventListener("focus", refreshOnFocus);
+      document.removeEventListener("visibilitychange", refreshOnFocus);
+      void supabase.removeChannel(channel);
+    };
   }, [loadDocuments, user?.id]);
 
   const handleDelete = async (id: string) => {
@@ -115,20 +140,20 @@ const Documents = () => {
   return (
     <div dir="rtl" className="flex flex-col h-screen bg-background">
       {/* Header */}
-      <header className="flex items-center justify-between gap-3 border-b px-4 py-3 bg-card shadow-sm">
-        <div className="flex items-center gap-3">
+      <header className="flex items-center justify-between gap-2 border-b px-2 sm:px-4 py-2 sm:py-3 bg-card shadow-sm overflow-hidden">
+        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
           <Button variant="ghost" size="icon" onClick={() => navigate("/")} aria-label="العودة إلى الصفحة الرئيسية">
             <ArrowRight className="w-5 h-5" />
           </Button>
           <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-primary text-primary-foreground">
             <FolderOpen className="w-5 h-5" />
           </div>
-          <div>
-            <h1 className="text-base font-bold text-foreground leading-tight">
+          <div className="min-w-0">
+            <h1 className="text-sm sm:text-base font-bold text-foreground leading-tight whitespace-nowrap">
               إدارة المستندات
             </h1>
-            <p className="text-xs text-muted-foreground">
-              {documents.length} مستند محفوظ في قاعدة المعرفة
+            <p className="text-[11px] sm:text-xs text-muted-foreground truncate">
+              {loading ? "جارٍ تحديث المستندات..." : `${documents.length} مستند محفوظ في قاعدة المعرفة`}
             </p>
           </div>
         </div>
