@@ -293,7 +293,7 @@ const Index = () => {
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-1 shrink-0 min-w-0"
+          <div className="flex items-center gap-1 shrink-0 min-w-0">
             <div className="max-w-[128px] sm:max-w-none overflow-hidden"><ModelSelector value={selectedModel} onChange={setSelectedModel} disabled={isLoading} /></div>
             <ImageGenerator />
             <ThemeToggle />
