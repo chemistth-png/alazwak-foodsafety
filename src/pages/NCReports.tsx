@@ -266,7 +266,7 @@ const NCReports = () => {
   const SkeletonCards = () => (
     <div className="space-y-3">
       {[1, 2, 3].map((i) => (
-        <div key={i} className="rounded-xl border bg-card p-4 space-y-3">
+        <div key={i} className="rounded-xl border bg-card p-3 sm:p-4 space-y-3 overflow-hidden">
           <div className="flex items-start justify-between gap-2">
             <div className="flex-1 space-y-2">
               <Skeleton className="h-4 w-3/4" />
@@ -289,7 +289,7 @@ const NCReports = () => {
     <div className="rounded-xl border bg-card p-4 space-y-3">
       <div className="flex items-start justify-between gap-2">
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-bold text-foreground leading-relaxed">{r.title}</p>
+          <p className="text-sm font-bold text-foreground leading-relaxed break-words">{r.title}</p>
           <p className="text-xs text-muted-foreground font-mono mt-1">{r.report_number}</p>
         </div>
         <div className="flex flex-col items-end gap-1.5 shrink-0">
@@ -332,7 +332,7 @@ const NCReports = () => {
       </div>
 
       {r.description && (
-        <p className="text-xs text-muted-foreground border-t pt-2 leading-relaxed">{r.description}</p>
+        <p className="text-xs text-muted-foreground border-t pt-2 leading-relaxed whitespace-pre-wrap break-words">{r.description}</p>
       )}
 
       {r.verified_by && (
@@ -388,15 +388,15 @@ const NCReports = () => {
   );
 
   return (
-    <div dir="rtl" className="flex flex-col h-screen bg-background">
+    <div dir="rtl" className="flex flex-col min-h-[100dvh] bg-background overflow-x-hidden">
       <DocumentHeader
         docCode="F-08-1"
         version="02"
         title="سجل تقارير عدم المطابقة - Non-Conformity Reports"
       />
 
-      <header className="flex items-center justify-between gap-3 border-b px-4 py-3 bg-card shadow-sm print:hidden">
-        <div className="flex items-center gap-3">
+      <header className="flex items-center justify-between gap-2 border-b px-2 sm:px-4 py-2 sm:py-3 bg-card shadow-sm print:hidden">
+        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
           <Button variant="ghost" size="icon" className="min-h-14 min-w-14" onClick={() => navigate("/")}>
             <ArrowRight className="w-5 h-5" />
           </Button>
@@ -404,8 +404,8 @@ const NCReports = () => {
             <AlertTriangle className="w-5 h-5" />
           </div>
           <div>
-            <h1 className="text-base font-bold leading-tight">تقارير عدم المطابقة</h1>
-            <p className="text-xs text-muted-foreground">
+            <h1 className="text-sm sm:text-base font-bold leading-tight">تقارير عدم المطابقة</h1>
+            <p className="text-[11px] sm:text-xs text-muted-foreground">
               {reports.length} تقرير •{" "}
               {reports.filter((r) => r.status === "open").length} مفتوح •{" "}
               {reports.filter((r) => r.status === "closed" && !r.verified_by).length} بانتظار التحقق
@@ -423,13 +423,13 @@ const NCReports = () => {
           </Button>
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-              <Button size="sm" className="min-h-14 sm:min-h-10">
+              <Button size="sm" className="min-h-12 sm:min-h-10 px-3 sm:px-4">
                 <Plus className="w-4 h-4 ms-2" />
                 <span className="hidden sm:inline">تقرير جديد</span>
                 <span className="sm:hidden">جديد</span>
               </Button>
             </DialogTrigger>
-            <DialogContent dir="rtl" className="max-w-lg max-h-[90vh] overflow-y-auto">
+            <DialogContent dir="rtl" className="w-[calc(100vw-1rem)] sm:max-w-lg max-h-[90dvh] overflow-y-auto p-4 sm:p-6">
               <DialogHeader>
                 <DialogTitle>إنشاء تقرير عدم مطابقة</DialogTitle>
               </DialogHeader>
@@ -579,7 +579,7 @@ const NCReports = () => {
         </div>
       </header>
 
-      <div id="nc-print-area" className="flex-1 overflow-auto px-4 py-4 pb-20 md:pb-4">
+      <div id="nc-print-area" className="flex-1 overflow-auto overflow-x-hidden px-2 sm:px-4 py-3 sm:py-4 pb-24 md:pb-4">
         <div className="max-w-6xl mx-auto">
           {loading ? (
             <>
@@ -700,7 +700,7 @@ const NCReports = () => {
 
       {/* AI CAPA Dialog */}
       <Dialog open={capaOpen} onOpenChange={setCapaOpen}>
-        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto" dir="rtl">
+        <DialogContent className="w-[calc(100vw-1rem)] sm:max-w-lg max-h-[90dvh] overflow-y-auto p-4 sm:p-6" dir="rtl">
           <DialogHeader>
             <DialogTitle className="text-right flex items-center gap-2">
               <ClipboardCheck className="w-5 h-5 text-primary" />
