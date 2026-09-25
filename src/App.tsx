@@ -68,9 +68,9 @@ const App = () => {
             <Sonner />
             {showSplash && <SplashScreen onFinish={handleSplashFinish} />}
             <BrowserRouter>
-              <div className="flex flex-row-reverse h-full">
+              <div className="flex flex-row-reverse h-full min-h-0">
                 <DesktopSidebar />
-                <div className="flex-1 min-w-0 flex flex-col h-full">
+                <div className="flex-1 min-w-0 flex flex-col h-full min-h-0 overflow-y-auto overscroll-contain pb-16 md:pb-0">
                   <Routes>
                     <Route path="/landing" element={<PublicRoute><Landing /></PublicRoute>} />
                     <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
