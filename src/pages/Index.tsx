@@ -5,6 +5,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import { streamChat, type Msg, type Source } from "@/lib/chat";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -26,26 +27,22 @@ const SUGGESTED_QUESTIONS = [
 ];
 
 const Index = () => {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [conversationId, setConversationId] = useState<string | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
-
-  useEffect(() => {
-    const closeSidebar = () => setSidebarOpen(false);
-    window.addEventListener("alazwak:more-menu-open", closeSidebar);
-    return () => window.removeEventListener("alazwak:more-menu-open", closeSidebar);
-  }, []);
   const [isExporting, setIsExporting] = useState(false);
-  const [attachedFiles, setAttachedFiles] = useState<{ name: string; text: string }[]>([]);
+  const [attachedFiles, setAttachedFiles] = useState<{ name: string; text: string; documentId: string }[]>([]);
   const [selectedModel, setSelectedModel] = useState("google/gemini-3-flash-preview");
   const [messageSources, setMessageSources] = useState<Record<number, Source[]>>({});
   // Invalidate async loads/stream callbacks when the displayed conversation changes.
   const requestVersion = useRef(0);
   useEffect(() => () => { requestVersion.current += 1; }, []);
   const bottomRef = useRef<HTMLDivElement>(null);
+  const restoredForUser = useRef<string | null>(null);
+  const storageKey = user ? `alazwak:last-conversation:${user.id}` : null;
 
   const exportPDF = useCallback(async () => {
     if (messages.length === 0) return;
@@ -116,13 +113,16 @@ const Index = () => {
         .eq("conversation_id", id)
         .order("created_at", { ascending: true });
       if (error) throw error;
-      if (version === requestVersion.current) setMessages((data ?? []) as Msg[]);
+      if (version === requestVersion.current) {
+        setMessages((data ?? []) as Msg[]);
+        if (storageKey) localStorage.setItem(storageKey, id);
+      }
     } catch {
       if (version === requestVersion.current) toast.error("تعذر تحميل المحادثة. أعد اختيارها للمحاولة مجدداً.");
     } finally {
       if (version === requestVersion.current) setIsLoading(false);
     }
-  }, []);
+  }, [storageKey]);
 
   const startNew = useCallback(() => {
     requestVersion.current += 1;
@@ -132,11 +132,45 @@ const Index = () => {
     setIsLoading(false);
     setInput("");
     setAttachedFiles([]);
-  }, []);
+    if (storageKey) localStorage.removeItem(storageKey);
+  }, [storageKey]);
 
-  const saveMessage = async (convId: string, role: string, content: string) => {
-    const { error } = await supabase.from("messages").insert({ conversation_id: convId, role, content });
+  // Restore the user's last open conversation after navigation, refresh, or a new session.
+  // Ownership is verified by RLS before loading any messages.
+  useEffect(() => {
+    if (authLoading || !user || !storageKey || restoredForUser.current === user.id) return;
+    restoredForUser.current = user.id;
+    const lastId = localStorage.getItem(storageKey);
+    if (!lastId) return;
+    void (async () => {
+      const { data, error } = await supabase
+        .from("conversations")
+        .select("id")
+        .eq("id", lastId)
+        .eq("user_id", user.id)
+        .maybeSingle();
+      if (error || !data) {
+        localStorage.removeItem(storageKey);
+        return;
+      }
+      await loadConversation(data.id);
+    })();
+  }, [authLoading, user, storageKey, loadConversation]);
+
+  const saveMessage = async (convId: string, role: string, content: string, documentIds: string[] = []) => {
+    const { data, error } = await supabase
+      .from("messages")
+      .insert({ conversation_id: convId, role, content })
+      .select("id")
+      .single();
     if (error) throw error;
+    if (documentIds.length > 0) {
+      if (!data?.id) throw new Error("تعذر ربط المرفقات بالرسالة");
+      const { error: attErr } = await supabase
+        .from("message_attachments")
+        .insert(documentIds.map((document_id) => ({ message_id: data.id, document_id })));
+      if (attErr) throw attErr;
+    }
   };
 
   const send = useCallback(async (text: string) => {
@@ -147,14 +181,13 @@ const Index = () => {
     const isCurrent = () => version === requestVersion.current;
     const assistantIdx = messages.length + 1;
 
-    // Build message content with files if attached
-    let messageContent = trimmed;
-    if (attachedFiles.length > 0) {
-      const filesContent = attachedFiles
-        .map((f, i) => `[ملف مرفق ${i + 1}: ${f.name}]\n\nمحتوى الملف:\n${f.text}`)
-        .join("\n\n---\n\n");
-      messageContent = `${filesContent}${trimmed ? `\n\nسؤال المستخدم: ${trimmed}` : "\n\nقم بتحليل محتوى هذه الملفات وتلخيصها."}`;
-    }
+    // Keep the AI request small: attached documents are already persisted and
+    // retrieved server-side through conversation-scoped RAG.
+    const messageContent = trimmed || (
+      attachedFiles.length > 0
+        ? "حلل الملفات المرفقة في هذه المحادثة ولخص محتواها مع الاعتماد عليها كمصادر."
+        : ""
+    );
 
     const displayContent = attachedFiles.length > 0
       ? `📎 ${attachedFiles.map(f => f.name).join("، ")}${trimmed ? `\n${trimmed}` : ""}`
@@ -163,6 +196,7 @@ const Index = () => {
     const userMsg: Msg = { role: "user", content: displayContent };
     const aiMsg: Msg = { role: "user", content: messageContent };
     
+    const attachmentIds = [...new Set(attachedFiles.map((f) => f.documentId))];
     setMessages((prev) => [...prev, userMsg]);
     setInput("");
     setAttachedFiles([]);
@@ -185,6 +219,7 @@ const Index = () => {
         convId = data.id;
         if (!isCurrent()) return;
         setConversationId(convId);
+        if (storageKey) localStorage.setItem(storageKey, convId);
       } else {
         await supabase
           .from("conversations")
@@ -193,7 +228,7 @@ const Index = () => {
       }
 
       if (!isCurrent()) return;
-      if (convId) await saveMessage(convId, "user", displayContent);
+      if (convId) await saveMessage(convId, "user", displayContent, attachmentIds);
       if (!isCurrent()) return;
 
       let assistantSoFar = "";
@@ -221,6 +256,7 @@ const Index = () => {
         onDelta: upsertAssistant,
         authToken: session?.access_token,
         model: selectedModel,
+        conversationId: convId ?? undefined,
         onSources: (sources) => {
           if (isCurrent()) setMessageSources((old) => ({ ...old, [assistantIdx]: sources }));
         },
@@ -228,13 +264,14 @@ const Index = () => {
       });
       if (isCurrent() && convId && assistantSoFar) {
         await saveMessage(convId, "assistant", assistantSoFar);
+        await supabase.from("conversations").update({ updated_at: new Date().toISOString() }).eq("id", convId);
       }
     } catch (error: unknown) {
       if (isCurrent()) toast.error(error instanceof Error ? error.message : "حدث خطأ أثناء الاتصال أو حفظ المحادثة");
     } finally {
       if (isCurrent()) setIsLoading(false);
     }
-  }, [messages, isLoading, conversationId, user, attachedFiles, selectedModel]);
+  }, [messages, isLoading, conversationId, user, attachedFiles, selectedModel, storageKey]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
@@ -252,7 +289,7 @@ const Index = () => {
   };
 
   return (
-    <div dir="rtl" className="flex flex-row-reverse h-[100dvh] w-full max-w-full bg-background overflow-hidden">
+    <div dir="rtl" className="flex flex-row-reverse h-full bg-background overflow-hidden">
       {/* Chat history sidebar - always visible on desktop */}
       <div className="hidden md:block">
         <ChatSidebar
@@ -274,18 +311,18 @@ const Index = () => {
         />
       </div>
 
-      <div className="flex flex-col flex-1 min-w-0 w-full max-w-full overflow-hidden">
+      <div className="flex flex-col flex-1 min-w-0">
         {/* Header */}
-        <header className="flex items-center justify-between gap-2 border-b px-2 sm:px-4 py-2 sm:py-3 bg-card shadow-sm shrink-0 overflow-hidden">
-          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-            <Button variant="ghost" size="icon" className="md:hidden" onClick={() => { setSidebarOpen(true); window.dispatchEvent(new CustomEvent("alazwak:chat-sidebar-open")); }} aria-label="فتح قائمة المحادثات">
+        <header className="flex items-center justify-between gap-3 border-b px-4 py-3 bg-card shadow-sm">
+          <div className="flex items-center gap-3">
+            <Button variant="ghost" size="icon" className="md:hidden" onClick={() => setSidebarOpen(true)} aria-label="فتح قائمة المحادثات">
               <Menu className="w-5 h-5" />
             </Button>
             <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-primary text-primary-foreground">
               <Droplets className="w-5 h-5" />
             </div>
             <div className="min-w-0">
-              <h1 className="text-sm sm:text-base font-bold text-foreground leading-tight truncate max-w-[44vw] sm:max-w-none">
+              <h1 className="text-sm sm:text-base font-bold text-foreground leading-tight whitespace-nowrap">
                 Alazwak FoodSafety — مساعدك الذكي لسلامة الغذاء
               </h1>
               <p className="hidden sm:block text-xs text-muted-foreground">
@@ -293,8 +330,8 @@ const Index = () => {
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-1 shrink-0 min-w-0">
-            <div className="max-w-[128px] sm:max-w-none overflow-hidden"><ModelSelector value={selectedModel} onChange={setSelectedModel} disabled={isLoading} /></div>
+          <div className="flex items-center gap-1.5">
+            <ModelSelector value={selectedModel} onChange={setSelectedModel} disabled={isLoading} />
             <ImageGenerator />
             <ThemeToggle />
             {messages.length > 0 && (
@@ -313,24 +350,24 @@ const Index = () => {
         <main className="flex flex-col flex-1 min-h-0">
 
         {/* Messages */}
-        <ScrollArea className="flex-1 px-2 sm:px-4 overflow-x-hidden">
+        <ScrollArea className="flex-1 px-4">
           {messages.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-full py-8 sm:py-16 gap-4 sm:gap-6 px-2 overflow-hidden">
+            <div className="flex flex-col items-center justify-center h-full py-16 gap-6">
               <div className="flex items-center justify-center w-20 h-20 rounded-2xl bg-accent">
                 <Droplets className="w-10 h-10 text-accent-foreground" />
               </div>
-              <div className="text-center space-y-2 w-full max-w-md px-2">
-                <h2 className="text-lg sm:text-xl font-bold text-foreground break-words">مرحباً بك في Alazwak FoodSafety! 👋</h2>
+              <div className="text-center space-y-2 max-w-md">
+                <h2 className="text-xl font-bold text-foreground">مرحباً بك في Alazwak FoodSafety! 👋</h2>
                 <p className="text-sm text-muted-foreground leading-relaxed">
                   مساعدك الذكي المتخصص في جودة وسلامة الغذاء. اسألني أي سؤال!
                 </p>
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 w-full max-w-lg min-w-0">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 w-full max-w-lg">
                 {SUGGESTED_QUESTIONS.map((q) => (
                   <button
                     key={q}
                     onClick={() => send(q)}
-                    className="w-full min-w-0 text-start text-sm rounded-xl border border-border bg-card p-3 text-foreground break-words transition-colors hover:bg-accent hover:text-accent-foreground"
+                    className="text-start text-sm rounded-xl border border-border bg-card p-3 text-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
                   >
                     {q}
                   </button>
@@ -338,7 +375,7 @@ const Index = () => {
               </div>
             </div>
           ) : (
-            <div className="flex flex-col gap-3 sm:gap-4 py-3 sm:py-4 w-full max-w-5xl mx-auto min-w-0 overflow-hidden">
+            <div className="flex flex-col gap-4 py-4 max-w-5xl mx-auto">
               {messages.map((msg, i) => (
                 <div
                   key={i}
@@ -356,7 +393,7 @@ const Index = () => {
                     </AvatarFallback>
                   </Avatar>
                   <div
-                    className={`rounded-2xl px-3 sm:px-4 py-2.5 max-w-[88%] sm:max-w-[80%] min-w-0 overflow-hidden break-words text-sm leading-relaxed ${
+                    className={`rounded-2xl px-4 py-2.5 max-w-[80%] text-sm leading-relaxed ${
                       msg.role === "user"
                         ? "bg-primary text-primary-foreground rounded-tl-sm"
                         : "bg-muted text-foreground rounded-tr-sm"
@@ -364,8 +401,8 @@ const Index = () => {
                   >
                     {msg.role === "assistant" ? (
                       <>
-                        <div className="prose prose-sm max-w-none min-w-0 break-words overflow-x-auto dark:prose-invert prose-p:my-1 prose-ul:my-1 prose-ol:my-1 prose-li:my-0.5 prose-headings:my-2 prose-table:text-xs">
-                          <ReactMarkdown>{msg.content}</ReactMarkdown>
+                        <div className="prose prose-sm max-w-none dark:prose-invert prose-p:my-1 prose-ul:my-1 prose-ol:my-1 prose-li:my-0.5 prose-headings:my-2">
+                          <ReactMarkdown remarkPlugins={[remarkGfm]}>{msg.content}</ReactMarkdown>
                         </div>
                         {messageSources[i] && <SourcesBadge sources={messageSources[i]} />}
                       </>
@@ -393,7 +430,7 @@ const Index = () => {
         </ScrollArea>
 
         {/* Input */}
-        <div className="border-t bg-card px-2 sm:px-3 pt-2 sm:pt-3 pb-[calc(0.5rem+3.5rem+env(safe-area-inset-bottom))] md:pb-3 shrink-0">
+        <div className="border-t bg-card p-3 pb-[calc(0.75rem+3.5rem)] md:pb-3">
           <div className="max-w-5xl mx-auto">
             {attachedFiles.length > 0 && (
               <div className="mb-2 flex flex-wrap gap-1.5">
@@ -406,9 +443,9 @@ const Index = () => {
                 ))}
               </div>
             )}
-            <div className="flex items-end gap-1.5 sm:gap-2 min-w-0">
+            <div className="flex items-end gap-2">
               <FileUpload
-                onFileProcessed={(name, text) => setAttachedFiles(prev => [...prev, { name, text }])}
+                onFileProcessed={(name, text, documentId) => setAttachedFiles(prev => [...prev, { name, text, documentId }])}
                 disabled={isLoading || attachedFiles.length >= 10}
               />
               <VoiceInput
@@ -420,7 +457,7 @@ const Index = () => {
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={handleKeyDown}
                 placeholder={attachedFiles.length > 0 ? "اكتب سؤالك عن الملفات أو اضغط إرسال..." : "اكتب سؤالك هنا..."}
-                className="min-h-[44px] max-h-28 resize-none rounded-xl text-sm min-w-0 px-3"
+                className="min-h-[44px] max-h-32 resize-none rounded-xl text-sm"
                 rows={1}
                 disabled={isLoading}
               />
