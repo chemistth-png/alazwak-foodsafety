@@ -24,12 +24,15 @@ beforeEach(() => {
   vi.clearAllMocks();
   Element.prototype.scrollIntoView = vi.fn();
   mocks.order.mockResolvedValue({ data: [{ role: "assistant", content: "Other conversation" }], error: null });
-  mocks.insert.mockResolvedValue({ error: null });
+  mocks.insert.mockResolvedValue({ data: { id: "message-1" }, error: null });
   mocks.conversationSelect.mockReturnValue({ eq: () => ({ eq: () => ({ maybeSingle: async () => ({ data: null, error: null }) }), maybeSingle: async () => ({ data: null, error: null }) }) });
   mocks.from.mockImplementation((table) => table === "conversations" ? {
     insert: () => ({ select: () => ({ single: async () => ({ data: { id: "created" }, error: null }) }) }),
     select: mocks.conversationSelect,
     update: () => ({ eq: async () => ({ error: null }) }),
+  } : table === "messages" ? {
+    insert: () => ({ select: () => ({ single: mocks.insert }) }),
+    select: () => ({ eq: () => ({ order: mocks.order }) }),
   } : {
     insert: mocks.insert,
     select: () => ({ eq: () => ({ order: mocks.order }) }),
@@ -90,7 +93,7 @@ it("does not restore an old conversation when its load completes after New chat"
 });
 
 it("reports persistence failures and releases the composer", async () => {
-  mocks.insert.mockResolvedValue({ error: { message: "write denied" } });
+  mocks.insert.mockResolvedValue({ data: null, error: { message: "write denied" } });
   mount();
   await waitFor(() => expect(screen.getByRole("textbox")).toBeEnabled());
   send();
