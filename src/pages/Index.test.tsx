@@ -3,7 +3,7 @@ import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-libra
 import Index from "./Index";
 import type { streamChat as StreamChat } from "@/lib/chat";
 
-const mocks = vi.hoisted(() => ({ from: vi.fn(), streamChat: vi.fn(), error: vi.fn(), insert: vi.fn(), order: vi.fn() }));
+const mocks = vi.hoisted(() => ({ from: vi.fn(), streamChat: vi.fn(), error: vi.fn(), insert: vi.fn(), order: vi.fn(), conversationSelect: vi.fn() }));
 vi.mock("@/integrations/supabase/client", () => ({ supabase: { from: mocks.from, auth: { getSession: async () => ({ data: { session: { access_token: "test" } } }) } } }));
 vi.mock("@/lib/chat", () => ({ streamChat: mocks.streamChat }));
 vi.mock("sonner", () => ({ toast: { error: mocks.error } }));
@@ -25,8 +25,11 @@ beforeEach(() => {
   Element.prototype.scrollIntoView = vi.fn();
   mocks.order.mockResolvedValue({ data: [{ role: "assistant", content: "Other conversation" }], error: null });
   mocks.insert.mockResolvedValue({ error: null });
+  mocks.conversationSelect.mockReturnValue({ eq: () => ({ maybeSingle: async () => ({ data: null, error: null }) }) });
   mocks.from.mockImplementation((table) => table === "conversations" ? {
     insert: () => ({ select: () => ({ single: async () => ({ data: { id: "created" }, error: null }) }) }),
+    select: mocks.conversationSelect,
+    update: () => ({ eq: async () => ({ error: null }) }),
   } : {
     insert: mocks.insert,
     select: () => ({ eq: () => ({ order: mocks.order }) }),
