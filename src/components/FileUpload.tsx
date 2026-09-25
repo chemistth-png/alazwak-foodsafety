@@ -88,6 +88,20 @@ const FileUpload = ({ onFileProcessed, disabled }: FileUploadProps) => {
       // returns extracted text but does not persist the document. Persist it
       // here with the authenticated client so RLS still enforces ownership.
       if (!documentId && parsedText.trim()) {
+        // Legacy parser may persist successfully but omit the document id.
+        // Check for that row first to avoid creating a duplicate document.
+        const { data: existingDoc } = await supabase
+          .from("documents")
+          .select("id")
+          .eq("user_id", user.id)
+          .eq("file_name", file.name)
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        if (existingDoc?.id) documentId = existingDoc.id;
+      }
+
+      if (!documentId && parsedText.trim()) {
         const { data: insertedDoc, error: insertError } = await supabase
           .from("documents")
           .insert({
