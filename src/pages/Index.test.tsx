@@ -25,7 +25,7 @@ beforeEach(() => {
   Element.prototype.scrollIntoView = vi.fn();
   mocks.order.mockResolvedValue({ data: [{ role: "assistant", content: "Other conversation" }], error: null });
   mocks.insert.mockResolvedValue({ error: null });
-  mocks.conversationSelect.mockReturnValue({ eq: () => ({ eq: () => ({ maybeSingle: async () => ({ data: null, error: null }) }), maybeSingle: async () => ({ data: null, error: null }) }) });
+  mocks.conversationSelect.mockReturnValue({ eq: () => ({ eq: () => ({ maybeSingle: async () => ({ data: { id: "owned" }, error: null }) }), maybeSingle: async () => ({ data: { id: "owned" }, error: null }) }) });
   mocks.from.mockImplementation((table) => table === "conversations" ? {
     insert: () => ({ select: () => ({ single: async () => ({ data: { id: "created" }, error: null }) }) }),
     select: mocks.conversationSelect,
