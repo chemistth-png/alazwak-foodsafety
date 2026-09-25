@@ -62,11 +62,12 @@ const FileUpload = ({ onFileProcessed, disabled }: FileUploadProps) => {
 
       // Get user auth token
       const { data: { session } } = await supabase.auth.getSession();
-      const authToken = session?.access_token || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+      const authToken = session?.access_token;
+      if (!authToken) throw new Error("انتهت جلسة تسجيل الدخول. يرجى تسجيل الدخول مرة أخرى.");
 
       // Parse the document
       const resp = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/parse-document`,
+        `${supabase.supabaseUrl}/functions/v1/parse-document`,
         {
           method: "POST",
           headers: {
