@@ -34,6 +34,12 @@ type Procedure = {
   docx: string | null;
 };
 
+// Bundle the Markdown with the app: deployed static hosts may not serve .md files.
+const markdownFiles = import.meta.glob<string>(
+  "../data/horus-procedures-markdown/*.md",
+  { query: "?raw", import: "default" }
+);
+
 const HorusProcedures = () => {
   const navigate = useNavigate();
   const [search, setSearch] = useState("");
@@ -59,18 +65,13 @@ const HorusProcedures = () => {
     let cancelled = false;
     setLoadingMd(true);
     setMdContent("");
-    fetch(active.md)
-      .then((r) => {
-        if (!r.ok) throw new Error(String(r.status));
-        return r.text();
-      })
+    const filename = active.md.split("/").pop();
+    const loadMarkdown = filename
+      ? markdownFiles[`../data/horus-procedures-markdown/${filename}`]
+      : undefined;
+    (loadMarkdown ? loadMarkdown() : Promise.reject(new Error("Missing Markdown")))
       .then((text) => {
         if (cancelled) return;
-        // A missing file is served the SPA shell by the dev/static server.
-        if (/^\s*<(!doctype|html)/i.test(text)) {
-          setMdContent("تعذر تحميل المحتوى: الملف غير متوفر.");
-          return;
-        }
         setMdContent(text);
       })
       .catch(() => {
