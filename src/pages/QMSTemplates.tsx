@@ -11,7 +11,7 @@ import {
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
-import { ArrowRight, FileText, Filter, Loader2, Search, FolderOpen } from "lucide-react";
+import { ArrowRight, Download, FileText, Filter, Loader2, Search, FolderOpen } from "lucide-react";
 import ThemeToggle from "@/components/ThemeToggle";
 import { toast } from "sonner";
 
@@ -29,6 +29,7 @@ const QMSTemplates = () => {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("all");
+  const [downloadingId, setDownloadingId] = useState<number | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -70,6 +71,30 @@ const QMSTemplates = () => {
   const folder = (p: string) => {
     const parts = p.split("/");
     return parts.slice(0, -1).join(" / ");
+  };
+
+  const downloadTemplate = async (template: Template) => {
+    if (downloadingId !== null) return;
+    setDownloadingId(template.id);
+    try {
+      const { data, error } = await supabase.storage
+        .from("master_templates")
+        .download(`${template.id}.docx`);
+      if (error || !data) throw error || new Error("Missing template file");
+      const url = URL.createObjectURL(data);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = template.file_path.split("/").pop() || `${template.id}.docx`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
+    } catch (error) {
+      console.error("Template download failed", error);
+      toast.error("تعذر تنزيل القالب");
+    } finally {
+      setDownloadingId(null);
+    }
   };
 
   return (
@@ -166,6 +191,7 @@ const QMSTemplates = () => {
                     <TableHead className="text-right">التصنيف</TableHead>
                     <TableHead className="text-right hidden md:table-cell">المجلد</TableHead>
                     <TableHead className="text-right w-[80px]">النوع</TableHead>
+                    <TableHead className="text-right w-[80px]">تنزيل</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -189,6 +215,21 @@ const QMSTemplates = () => {
                         <Badge variant="outline" className="text-[10px] font-mono">
                           {fileType(t.file_path)}
                         </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          aria-label={`تنزيل ${t.title}`}
+                          disabled={downloadingId !== null}
+                          onClick={() => downloadTemplate(t)}
+                        >
+                          {downloadingId === t.id ? (
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                          ) : (
+                            <Download className="w-4 h-4" />
+                          )}
+                        </Button>
                       </TableCell>
                     </TableRow>
                   ))}
