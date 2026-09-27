@@ -88,7 +88,7 @@ const MasterDocumentList = () => {
   };
 
   return (
-    <div dir="rtl" className="flex flex-col h-screen bg-background">
+    <div dir="rtl" className="flex flex-col h-full min-h-0 bg-background">
       <DocumentHeader
         docCode="F-01-1"
         version="01"
