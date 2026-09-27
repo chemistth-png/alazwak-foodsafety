@@ -26,9 +26,11 @@ const SUGGESTED_QUESTIONS = [
   "ما الفرق بين ISO 9001 و ISO 22000 و FSSC 22000؟",
 ];
 
+type ChatMessage = Msg & { attachmentNames?: string[] };
+
 const Index = () => {
   const { user, loading: authLoading } = useAuth();
-  const [messages, setMessages] = useState<Msg[]>([]);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [conversationId, setConversationId] = useState<string | null>(null);
@@ -109,12 +111,45 @@ const Index = () => {
     try {
       const { data, error } = await supabase
         .from("messages")
-        .select("role, content")
+        .select("id, role, content")
         .eq("conversation_id", id)
         .order("created_at", { ascending: true });
       if (error) throw error;
+      const rows = data ?? [];
+      const ids = rows.map((row) => row.id);
+      const attachmentNames = new Map<string, string[]>();
+      if (ids.length > 0) {
+        const { data: links, error: linksError } = await supabase
+          .from("message_attachments")
+          .select("message_id, document_id")
+          .in("message_id", ids);
+        if (linksError) {
+          console.error("message attachment load failed:", linksError);
+          toast.warning("تم تحميل الرسائل، لكن تعذر التحقق من مرفقاتها.");
+        }
+        const documentIds = [...new Set((links ?? []).map((link) => link.document_id))];
+        if (documentIds.length > 0) {
+          const { data: docs, error: docsError } = await supabase
+            .from("documents")
+            .select("id, file_name")
+            .in("id", documentIds);
+          if (docsError) {
+            console.error("attached document lookup failed:", docsError);
+            toast.warning("تم تحميل الرسائل، لكن تعذر عرض أسماء مرفقاتها.");
+          }
+          const byId = new Map((docs ?? []).map((doc) => [doc.id, doc.file_name]));
+          for (const link of links ?? []) {
+            const name = byId.get(link.document_id);
+            if (name) attachmentNames.set(link.message_id, [...(attachmentNames.get(link.message_id) ?? []), name]);
+          }
+        }
+      }
       if (version === requestVersion.current) {
-        setMessages((data ?? []) as Msg[]);
+        setMessages(rows.map((row) => ({
+          role: row.role as Msg["role"],
+          content: row.content,
+          attachmentNames: attachmentNames.get(row.id),
+        })));
         if (storageKey) localStorage.setItem(storageKey, id);
       }
     } catch {
@@ -430,7 +465,15 @@ const Index = () => {
                         {messageSources[i] && <SourcesBadge sources={messageSources[i]} />}
                       </>
                     ) : (
-                      <p className="whitespace-pre-wrap">{msg.content}</p>
+                      <>
+                        <p className="whitespace-pre-wrap break-words">{msg.content}</p>
+                        {msg.attachmentNames?.map((name, index) => (
+                          <span key={`${name}-${index}`} className="mt-2 inline-flex max-w-full items-center gap-1 rounded border border-current/25 px-2 py-1 text-xs">
+                            <FileText className="h-3.5 w-3.5 shrink-0" />
+                            <span className="truncate" title={name}>ملف مرتبط: {name}</span>
+                          </span>
+                        ))}
+                      </>
                     )}
                   </div>
                 </div>
