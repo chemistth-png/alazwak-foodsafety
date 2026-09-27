@@ -1,7 +1,8 @@
+import { SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY } from "@/integrations/supabase/config";
 export type Msg = { role: "user" | "assistant"; content: string };
 export type Source = { file_name: string; relevance: number };
 
-const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat`;
+const CHAT_URL = `${SUPABASE_URL}/functions/v1/chat`;
 
 export async function streamChat({
   messages,
@@ -20,8 +21,8 @@ export async function streamChat({
 }) {
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
-    "apikey": import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-    "Authorization": `Bearer ${authToken || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+    "apikey": SUPABASE_PUBLISHABLE_KEY,
+    "Authorization": `Bearer ${authToken || SUPABASE_PUBLISHABLE_KEY}`,
   };
 
   const resp = await fetch(CHAT_URL, {
