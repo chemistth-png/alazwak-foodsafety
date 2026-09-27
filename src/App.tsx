@@ -46,7 +46,12 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 
 const AuthRoute = ({ children }: { children: React.ReactNode }) => {
   const { user, loading } = useAuth();
-  if (loading) return null;
+  if (loading) return (
+    <div role="status" aria-live="polite" className="flex h-full min-h-[50dvh] items-center justify-center gap-3 text-muted-foreground">
+      <Loader2 className="h-6 w-6 animate-spin" aria-hidden="true" />
+      <span>جارٍ التحقق من تسجيل الدخول...</span>
+    </div>
+  );
   if (user) return <Navigate to="/" replace />;
   return <>{children}</>;
 };
