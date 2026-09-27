@@ -13,7 +13,7 @@ const Plans = () => {
   const [activeTab, setActiveTab] = useState("flowchart");
 
   return (
-    <div dir="rtl" className="flex flex-col h-screen bg-background">
+    <div dir="rtl" className="flex flex-col h-full min-h-0 bg-background">
       {/* Header */}
       <header className="flex items-center justify-between gap-3 border-b px-4 py-3 bg-card shadow-sm">
         <div className="flex items-center gap-3">

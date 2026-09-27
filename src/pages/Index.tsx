@@ -170,9 +170,16 @@ const Index = () => {
         .from("message_attachments")
         .insert(documentIds.map((document_id) => ({ message_id: data.id, document_id })));
       if (attErr) {
-        // The message itself is already saved. Attachment-link persistence must
-        // not make chat fail when a backend has stricter/legacy RLS here.
         console.error("message attachment link persistence failed:", attErr);
+        toast.warning("تم حفظ الرسالة، لكن تعذر ربط الملف بها. سيظل المستند محفوظاً في المستندات.");
+        return;
+      }
+      const { data: links, error: verifyError } = await supabase
+        .from("message_attachments")
+        .select("document_id")
+        .eq("message_id", data.id);
+      if (verifyError || documentIds.some((id) => !links?.some((link) => link.document_id === id))) {
+        toast.warning("تعذر تأكيد حفظ مرفق المحادثة. تحقق منه قبل إغلاق الصفحة.");
       }
     }
   };
@@ -329,16 +336,16 @@ const Index = () => {
 
       <div className="flex flex-col flex-1 min-w-0">
         {/* Header */}
-        <header className="flex items-center justify-between gap-3 border-b px-4 py-3 bg-card shadow-sm">
-          <div className="flex items-center gap-3">
+        <header className="flex items-center justify-between gap-1 sm:gap-3 border-b px-2 sm:px-4 py-3 bg-card shadow-sm min-w-0">
+          <div className="flex items-center gap-1 sm:gap-3 min-w-0">
             <Button variant="ghost" size="icon" className="md:hidden" onClick={() => setSidebarOpen(true)} aria-label="فتح قائمة المحادثات">
               <Menu className="w-5 h-5" />
             </Button>
-            <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-primary text-primary-foreground">
+            <div className="hidden sm:flex items-center justify-center w-10 h-10 shrink-0 rounded-xl bg-primary text-primary-foreground">
               <Droplets className="w-5 h-5" />
             </div>
             <div className="min-w-0">
-              <h1 className="text-sm sm:text-base font-bold text-foreground leading-tight whitespace-nowrap">
+              <h1 className="text-sm sm:text-base font-bold text-foreground leading-tight truncate">
                 Alazwak FoodSafety — مساعدك الذكي لسلامة الغذاء
               </h1>
               <p className="hidden sm:block text-xs text-muted-foreground">
@@ -346,7 +353,7 @@ const Index = () => {
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-0 sm:gap-1.5 shrink-0">
             <ModelSelector value={selectedModel} onChange={setSelectedModel} disabled={isLoading} />
             <ImageGenerator />
             <ThemeToggle />
@@ -366,7 +373,7 @@ const Index = () => {
         <main className="flex flex-col flex-1 min-h-0">
 
         {/* Messages */}
-        <ScrollArea className="flex-1 px-4">
+        <ScrollArea className="flex-1 min-h-0 px-3 sm:px-4">
           {messages.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full py-16 gap-6">
               <div className="flex items-center justify-center w-20 h-20 rounded-2xl bg-accent">
@@ -446,7 +453,7 @@ const Index = () => {
         </ScrollArea>
 
         {/* Input */}
-        <div className="border-t bg-card p-3 pb-[calc(0.75rem+3.5rem)] md:pb-3">
+        <div className="border-t bg-card p-3 shrink-0">
           <div className="max-w-5xl mx-auto">
             {attachedFiles.length > 0 && (
               <div className="mb-2 flex flex-wrap gap-1.5">

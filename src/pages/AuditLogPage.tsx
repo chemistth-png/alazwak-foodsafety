@@ -72,7 +72,7 @@ const AuditLogPage = () => {
   const grouped = groupByDate(logs);
 
   return (
-    <div dir="rtl" className="flex flex-col h-screen bg-background">
+    <div dir="rtl" className="flex flex-col h-full min-h-0 bg-background">
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b bg-card">
         <div className="flex items-center gap-2">

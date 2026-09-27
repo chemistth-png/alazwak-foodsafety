@@ -32,9 +32,9 @@ const ModelSelector = ({ value, onChange, disabled }: ModelSelectorProps) => {
 
   return (
     <Select value={value} onValueChange={onChange} disabled={disabled}>
-      <SelectTrigger className="h-9 w-[180px] rounded-lg text-xs border-border bg-background">
-        <div className="flex items-center gap-1.5">
-          <Bot className="w-3.5 h-3.5 text-muted-foreground" />
+      <SelectTrigger className="h-9 w-[102px] sm:w-[180px] rounded-lg text-xs border-border bg-background">
+        <div className="flex items-center gap-1 min-w-0">
+          <Bot className="hidden sm:block w-3.5 h-3.5 text-muted-foreground" />
           <SelectValue>{selected?.label || "اختر النموذج"}</SelectValue>
         </div>
       </SelectTrigger>

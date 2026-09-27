@@ -216,7 +216,7 @@ const AgentDashboard = () => {
   const otherTasks = tasks.filter(t => t.status !== "review");
 
   return (
-    <div dir="rtl" className="flex h-screen bg-background">
+    <div dir="rtl" className="flex h-full min-h-0 bg-background">
       {/* Sidebar / Task List */}
       <aside className={`${mobileView === "list" ? "flex" : "hidden"} md:flex flex-col w-full md:w-80 lg:w-96 border-l bg-card`}>
         {/* Header */}

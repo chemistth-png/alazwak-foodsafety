@@ -138,7 +138,7 @@ const Documents = () => {
   };
 
   return (
-    <div dir="rtl" className="flex flex-col h-screen bg-background">
+    <div dir="rtl" className="flex flex-col h-full min-h-0 bg-background">
       {/* Header */}
       <header className="flex items-center justify-between gap-2 border-b px-2 sm:px-4 py-2 sm:py-3 bg-card shadow-sm overflow-hidden">
         <div className="flex items-center gap-2 sm:gap-3 min-w-0">

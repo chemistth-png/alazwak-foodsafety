@@ -70,7 +70,7 @@ const App = () => {
             <BrowserRouter>
               <div className="flex flex-row-reverse h-full min-h-0">
                 <DesktopSidebar />
-                <div className="flex-1 min-w-0 flex flex-col h-full min-h-0 overflow-y-auto overscroll-contain pb-16 md:pb-0">
+                <div className="flex-1 min-w-0 flex flex-col h-full min-h-0 overflow-y-auto overscroll-contain pb-[calc(4rem+env(safe-area-inset-bottom))] md:pb-0">
                   <Routes>
                     <Route path="/landing" element={<PublicRoute><Landing /></PublicRoute>} />
                     <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
