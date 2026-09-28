@@ -35,18 +35,18 @@ export default defineConfig(({ mode }) => ({
         orientation: "portrait",
         dir: "rtl",
         lang: "ar",
-        start_url: "/landing",
-        scope: "/",
+        start_url: "./landing",
+        scope: "./",
         categories: ["productivity", "business"],
         icons: [
           {
-            src: "/app-icon.png",
+            src: "app-icon.png",
             sizes: "512x512",
             type: "image/png",
             purpose: "any maskable",
           },
           {
-            src: "/favicon.png",
+            src: "favicon.png",
             sizes: "192x192",
             type: "image/png",
           },
