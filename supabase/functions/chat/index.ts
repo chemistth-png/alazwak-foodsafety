@@ -85,8 +85,11 @@ serve(async (req) => {
     const userClient = createClient(DATA_SUPABASE_URL, DATA_SUPABASE_PUBLISHABLE_KEY, {
       global: { headers: { Authorization: authHeader } },
     });
-    const { data: { user: authUser } } = await userClient.auth.getUser();
-    if (!authUser) {
+    // Edge Functions are stateless: pass the caller's JWT explicitly so Auth
+    // verifies it against the independent data project's Auth service.
+    const accessToken = authHeader.slice("Bearer ".length).trim();
+    const { data: { user: authUser }, error: authError } = await userClient.auth.getUser(accessToken);
+    if (authError || !authUser) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
