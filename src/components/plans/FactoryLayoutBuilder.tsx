@@ -1,4 +1,3 @@
-import { SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY } from "@/integrations/supabase/config";
 import { useState, useRef, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -173,9 +172,10 @@ const FactoryLayoutBuilder = () => {
       }
 
       const { data: { session } } = await supabase.auth.getSession();
-      const authToken = session?.access_token || SUPABASE_PUBLISHABLE_KEY;
+      const authToken = session?.access_token;
+      if (!authToken) throw new Error("يجب تسجيل الدخول أولاً");
       const resp = await fetch(
-        `${SUPABASE_URL}/functions/v1/layout-from-doc`,
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/layout-from-doc`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json", Authorization: `Bearer ${authToken}` },
