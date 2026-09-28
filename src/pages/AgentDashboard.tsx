@@ -127,6 +127,7 @@ const AgentDashboard = () => {
 
   const callAgent = async (body: Record<string, any>) => {
     const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.access_token) throw new Error("يجب تسجيل الدخول أولاً");
     const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/smart-agent`, {
       method: "POST",
       headers: {
