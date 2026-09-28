@@ -102,6 +102,6 @@ it("warns on persistence failure, continues the AI request, and releases the com
   await waitFor(() => expect(screen.getByRole("textbox")).toBeEnabled());
   send();
   await waitFor(() => expect(mocks.warning).toHaveBeenCalledOnce());
-  expect(screen.getByRole("textbox")).toBeEnabled();
+  await waitFor(() => expect(screen.getByRole("textbox")).toBeEnabled());
   expect(mocks.streamChat).toHaveBeenCalledOnce();
 });
