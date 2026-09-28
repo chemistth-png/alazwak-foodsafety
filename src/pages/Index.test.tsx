@@ -21,7 +21,7 @@ vi.mock("@/components/ChatSidebar", () => ({ default: ({ onSelect, onNew }: { on
 </div> }));
 
 beforeEach(() => {
-  vi.clearAllMocks();
+  vi.resetAllMocks();
   localStorage.clear();
   Element.prototype.scrollIntoView = vi.fn();
   mocks.order.mockResolvedValue({ data: [{ id: "other-message", role: "assistant", content: "Other conversation" }], error: null });
