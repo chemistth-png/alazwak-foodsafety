@@ -33,6 +33,13 @@ import SplashScreen from "@/components/SplashScreen";
 
 const queryClient = new QueryClient();
 
+const GITHUB_PAGES_BASE = "/alazwak-foodsafety";
+const routerBasename =
+  window.location.pathname === GITHUB_PAGES_BASE ||
+  window.location.pathname.startsWith(`${GITHUB_PAGES_BASE}/`)
+    ? GITHUB_PAGES_BASE
+    : "/";
+
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { user, loading } = useAuth();
   if (loading) return (
@@ -72,7 +79,7 @@ const App = () => {
             <Toaster />
             <Sonner />
             {showSplash && <SplashScreen onFinish={handleSplashFinish} />}
-            <BrowserRouter>
+            <BrowserRouter basename={routerBasename}>
               <div className="flex flex-row-reverse h-full min-h-0">
                 <DesktopSidebar />
                 <div className="flex-1 min-w-0 flex flex-col h-full min-h-0 overflow-y-auto overscroll-contain pb-[calc(4rem+env(safe-area-inset-bottom))] md:pb-0">
