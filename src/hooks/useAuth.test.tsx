@@ -1,8 +1,6 @@
-import { act, render, screen, waitFor } from "@testing-library/react";
+import { act, render, screen } from "@testing-library/react";
 import { AuthProvider, useAuth } from "./useAuth";
-import type { AuthChangeEvent, Session, User } from "@supabase/supabase-js";
-
-type AuthChangeCallback = (event: AuthChangeEvent, session: Session | null) => void;
+import type { Session, User } from "@supabase/supabase-js";
 
 const authMocks = vi.hoisted(() => ({
   getSession: vi.fn(),
@@ -27,7 +25,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   authMocks.getSession.mockResolvedValue({ data: { session: storedSession }, error: null });
   authMocks.getUser.mockResolvedValue({ data: { user: { id: "verified-user" } as User }, error: null });
-  authMocks.onAuthStateChange.mockImplementation((callback: AuthChangeCallback) => ({
+  authMocks.onAuthStateChange.mockImplementation(() => ({
     data: { subscription: { unsubscribe: vi.fn() } },
   }));
 });
