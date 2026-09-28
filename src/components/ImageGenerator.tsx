@@ -3,7 +3,7 @@ import { ImagePlus, Loader2, Download, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { supabase } from "@/integrations/supabase/client";
+import { invokeLovableFunction } from "@/lib/lovableFunctions";
 import { toast } from "sonner";
 
 const ImageGenerator = () => {
@@ -18,11 +18,10 @@ const ImageGenerator = () => {
     setImageUrl(null);
 
     try {
-      const { data, error } = await supabase.functions.invoke("generate-image", {
-        body: { prompt: prompt.trim() },
-      });
-
-      if (error) throw error;
+      const data = await invokeLovableFunction<{ images?: Array<{ image_url?: { url?: string } }> }>(
+        "generate-image",
+        { prompt: prompt.trim() },
+      );
       if (data?.images?.[0]?.image_url?.url) {
         setImageUrl(data.images[0].image_url.url);
       } else {
