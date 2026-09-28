@@ -278,8 +278,9 @@ const Index = () => {
         try {
           await saveMessage(convId, "user", displayContent, attachmentIds);
         } catch (saveErr) {
-          // Do not block the AI response if conversation persistence is temporarily unavailable.
+          // Keep the AI response available, but tell the user that history may be incomplete.
           console.error("user message persistence failed:", saveErr);
+          toast.warning("تعذر حفظ رسالة المستخدم؛ قد لا تظهر هذه المحادثة في السجل بعد تحديث الصفحة.");
         }
       }
       if (!isCurrent()) return;
