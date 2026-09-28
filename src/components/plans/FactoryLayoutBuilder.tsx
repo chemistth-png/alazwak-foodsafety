@@ -178,7 +178,11 @@ const FactoryLayoutBuilder = () => {
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/layout-from-doc`,
         {
           method: "POST",
-          headers: { "Content-Type": "application/json", Authorization: `Bearer ${authToken}` },
+          headers: {
+            "Content-Type": "application/json",
+            "apikey": import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+            Authorization: `Bearer ${authToken}`,
+          },
           body: JSON.stringify({ filePath, fileName: file.name, images }),
         }
       );
