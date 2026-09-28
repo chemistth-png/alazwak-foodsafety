@@ -259,8 +259,9 @@ serve(async (req) => {
     const userClient = createClient(DATA_SUPABASE_URL, DATA_SUPABASE_PUBLISHABLE_KEY, {
       global: { headers: { Authorization: `Bearer ${token}` } }
     });
-    const { data: { user } } = await userClient.auth.getUser();
-    if (!user) throw new Error("User not authenticated");
+    // Edge Functions are stateless: validate the caller's JWT explicitly.
+    const { data: { user }, error: authError } = await userClient.auth.getUser(token);
+    if (authError || !user) throw new Error("User not authenticated");
 
     if (action === "generate") {
       let currentTaskId = taskId;
