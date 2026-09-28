@@ -3,10 +3,10 @@ import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-libra
 import Index from "./Index";
 import type { streamChat as StreamChat } from "@/lib/chat";
 
-const mocks = vi.hoisted(() => ({ from: vi.fn(), streamChat: vi.fn(), error: vi.fn(), insert: vi.fn(), order: vi.fn(), conversationSelect: vi.fn() }));
+const mocks = vi.hoisted(() => ({ from: vi.fn(), streamChat: vi.fn(), error: vi.fn(), warning: vi.fn(), insert: vi.fn(), order: vi.fn(), conversationSelect: vi.fn() }));
 vi.mock("@/integrations/supabase/client", () => ({ supabase: { from: mocks.from, auth: { getSession: async () => ({ data: { session: { access_token: "test" } } }) } } }));
 vi.mock("@/lib/chat", () => ({ streamChat: mocks.streamChat }));
-vi.mock("sonner", () => ({ toast: { error: mocks.error } }));
+vi.mock("sonner", () => ({ toast: { error: mocks.error, warning: mocks.warning } }));
 vi.mock("@/hooks/useAuth", () => ({ useAuth: () => ({ user: { id: "user-a" } }) }));
 vi.mock("@/lib/auditLog", () => ({ logAudit: vi.fn() }));
 vi.mock("@/components/ThemeToggle", () => ({ default: () => null }));
@@ -21,9 +21,10 @@ vi.mock("@/components/ChatSidebar", () => ({ default: ({ onSelect, onNew }: { on
 </div> }));
 
 beforeEach(() => {
-  vi.clearAllMocks();
+  vi.resetAllMocks();
+  localStorage.clear();
   Element.prototype.scrollIntoView = vi.fn();
-  mocks.order.mockResolvedValue({ data: [{ role: "assistant", content: "Other conversation" }], error: null });
+  mocks.order.mockResolvedValue({ data: [{ id: "other-message", role: "assistant", content: "Other conversation" }], error: null });
   mocks.insert.mockResolvedValue({ data: { id: "message-1" }, error: null });
   mocks.conversationSelect.mockReturnValue({ eq: () => ({ eq: () => ({ maybeSingle: async () => ({ data: null, error: null }) }), maybeSingle: async () => ({ data: null, error: null }) }) });
   mocks.from.mockImplementation((table) => table === "conversations" ? {
@@ -33,6 +34,9 @@ beforeEach(() => {
   } : table === "messages" ? {
     insert: () => ({ select: () => ({ single: mocks.insert }) }),
     select: () => ({ eq: () => ({ order: mocks.order }) }),
+  } : table === "message_attachments" || table === "documents" ? {
+    insert: mocks.insert,
+    select: () => ({ in: async () => ({ data: [], error: null }) }),
   } : {
     insert: mocks.insert,
     select: () => ({ eq: () => ({ order: mocks.order }) }),
@@ -92,12 +96,12 @@ it("does not restore an old conversation when its load completes after New chat"
   expect(screen.getByRole("textbox")).toBeEnabled();
 });
 
-it("reports persistence failures and releases the composer", async () => {
+it("warns on persistence failure, continues the AI request, and releases the composer", async () => {
   mocks.insert.mockResolvedValue({ data: null, error: { message: "write denied" } });
   mount();
   await waitFor(() => expect(screen.getByRole("textbox")).toBeEnabled());
   send();
-  await waitFor(() => expect(mocks.error).toHaveBeenCalledOnce());
-  expect(screen.getByRole("textbox")).toBeEnabled();
-  expect(mocks.streamChat).not.toHaveBeenCalled();
+  await waitFor(() => expect(mocks.warning).toHaveBeenCalledOnce());
+  await waitFor(() => expect(screen.getByRole("textbox")).toBeEnabled());
+  expect(mocks.streamChat).toHaveBeenCalledOnce();
 });

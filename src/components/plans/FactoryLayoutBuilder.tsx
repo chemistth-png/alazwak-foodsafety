@@ -172,12 +172,17 @@ const FactoryLayoutBuilder = () => {
       }
 
       const { data: { session } } = await supabase.auth.getSession();
-      const authToken = session?.access_token || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+      const authToken = session?.access_token;
+      if (!authToken) throw new Error("يجب تسجيل الدخول أولاً");
       const resp = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/layout-from-doc`,
         {
           method: "POST",
-          headers: { "Content-Type": "application/json", Authorization: `Bearer ${authToken}` },
+          headers: {
+            "Content-Type": "application/json",
+            "apikey": import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+            Authorization: `Bearer ${authToken}`,
+          },
           body: JSON.stringify({ filePath, fileName: file.name, images }),
         }
       );

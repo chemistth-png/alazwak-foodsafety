@@ -46,10 +46,11 @@ export default function AICAPASuggestion({
 
     try {
       const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) throw new Error("يجب تسجيل الدخول أولاً");
       const headers: Record<string, string> = {
         "Content-Type": "application/json",
         "apikey": import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-        "Authorization": `Bearer ${session?.access_token || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+        "Authorization": `Bearer ${session?.access_token || ""}`,
       };
 
       const resp = await fetch(CHAT_URL, {

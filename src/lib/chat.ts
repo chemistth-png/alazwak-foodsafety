@@ -18,10 +18,12 @@ export async function streamChat({
   authToken?: string;
   model?: string;
 }) {
+  if (!authToken) throw new Error("يجب تسجيل الدخول أولاً");
+
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
     "apikey": import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-    "Authorization": `Bearer ${authToken || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+    "Authorization": `Bearer ${authToken || ""}`,
   };
 
   const resp = await fetch(CHAT_URL, {

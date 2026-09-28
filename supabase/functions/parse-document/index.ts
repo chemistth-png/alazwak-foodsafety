@@ -1,6 +1,9 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 
+const DATA_SUPABASE_URL = "https://iebknvuhbnmtongtebzg.supabase.co";
+const DATA_SUPABASE_PUBLISHABLE_KEY = "sb_publishable_FDL4MZHFVgm9fq_U3sTqsg_W9mce7ea";
+
 const json = (status: number, body: unknown) =>
   new Response(JSON.stringify(body), { status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
@@ -92,7 +95,7 @@ Deno.serve(async (req) => {
     if (!authHeader?.startsWith("Bearer ")) return json(401, { error: "Unauthorized" });
 
     // Caller JWT keeps storage + documents RLS active (no service-role bypass).
-    const client = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_ANON_KEY")!, {
+    const client = createClient(DATA_SUPABASE_URL, DATA_SUPABASE_PUBLISHABLE_KEY, {
       global: { headers: { Authorization: authHeader } },
     });
     const { data: { user } } = await client.auth.getUser(authHeader.replace("Bearer ", ""));

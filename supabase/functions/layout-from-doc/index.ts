@@ -1,6 +1,9 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
+const DATA_SUPABASE_URL = "https://iebknvuhbnmtongtebzg.supabase.co";
+const DATA_SUPABASE_PUBLISHABLE_KEY = "sb_publishable_FDL4MZHFVgm9fq_U3sTqsg_W9mce7ea";
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -137,9 +140,7 @@ serve(async (req) => {
       });
     }
 
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
-    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) {
       return new Response(JSON.stringify({ error: "AI غير مُهيّأ" }), {
@@ -148,7 +149,7 @@ serve(async (req) => {
     }
 
     const token = authHeader.replace("Bearer ", "");
-    const userClient = createClient(supabaseUrl, supabaseAnonKey, {
+    const userClient = createClient(DATA_SUPABASE_URL, DATA_SUPABASE_PUBLISHABLE_KEY, {
       global: { headers: { Authorization: `Bearer ${token}` } },
     });
     const { data: { user }, error: userError } = await userClient.auth.getUser();
@@ -186,8 +187,7 @@ serve(async (req) => {
           status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      const admin = createClient(supabaseUrl, supabaseKey);
-      const { data: fileData, error: dlErr } = await admin.storage.from("chat-files").download(filePath);
+      const { data: fileData, error: dlErr } = await userClient.storage.from("chat-files").download(filePath);
       if (dlErr || !fileData) {
         return new Response(JSON.stringify({ error: "تعذّر تحميل الملف" }), {
           status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
