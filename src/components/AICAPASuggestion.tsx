@@ -1,4 +1,3 @@
-import { SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY } from "@/integrations/supabase/config";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Loader2, Sparkles, Check, Copy } from "lucide-react";
@@ -21,7 +20,7 @@ const AI_SYSTEM_PROMPT = `أنت خبير جودة وسلامة غذاء في ا
 اربط الاقتراح بطبيعة المنتج والعملية والخطر الفعلي المذكور في الحالة، ولا تفترض أن المنتج مياه معبأة إلا إذا نص التقرير على ذلك.
 اكتب الرد بنقاط واضحة، مهنية، ومختصرة باللغة العربية.`;
 
-const CHAT_URL = `${SUPABASE_URL}/functions/v1/chat`;
+const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat`;
 
 export default function AICAPASuggestion({
   reportId,
@@ -49,8 +48,8 @@ export default function AICAPASuggestion({
       const { data: { session } } = await supabase.auth.getSession();
       const headers: Record<string, string> = {
         "Content-Type": "application/json",
-        "apikey": SUPABASE_PUBLISHABLE_KEY,
-        "Authorization": `Bearer ${session?.access_token || SUPABASE_PUBLISHABLE_KEY}`,
+        "apikey": import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+        "Authorization": `Bearer ${session?.access_token || ""}`,
       };
 
       const resp = await fetch(CHAT_URL, {
