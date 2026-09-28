@@ -2,6 +2,7 @@ import { useState, useRef } from "react";
 import { Paperclip, X, FileText, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
+import { invokeLovableFunction } from "@/lib/lovableFunctions";
 import { toast } from "sonner";
 
 const ALLOWED_EXTENSIONS = ["pdf", "docx", "doc", "xls", "xlsx", "jpg", "jpeg", "png", "webp", "rtf", "txt", "csv", "md"];
@@ -60,16 +61,14 @@ const FileUpload = ({ onFileProcessed, disabled }: FileUploadProps) => {
 
       if (uploadError) throw uploadError;
 
-      // Invoke through the active Supabase client. This avoids browser/CORS
-      // failures caused by constructing the Edge Function URL manually.
-      const { data: parsed, error: functionError } = await supabase.functions.invoke("parse-document", {
-        body: { filePath, fileName: file.name, mimeType: file.type },
-      });
-
-      if (functionError) {
-        console.error("parse-document invoke failed:", functionError);
-        throw new Error(functionError.message || "فشل الاتصال بخدمة تحليل المستند");
-      }
+      const parsed = await invokeLovableFunction<{
+        text?: string;
+        content?: string;
+        documentId?: string;
+        document_id?: string;
+        id?: string;
+        error?: string;
+      }>("parse-document", { filePath, fileName: file.name, mimeType: file.type });
 
       const parsedText = typeof parsed?.text === "string"
         ? parsed.text
