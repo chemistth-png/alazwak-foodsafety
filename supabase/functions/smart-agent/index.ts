@@ -1,6 +1,9 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
+const DATA_SUPABASE_URL = "https://iebknvuhbnmtongtebzg.supabase.co";
+const DATA_SUPABASE_PUBLISHABLE_KEY = "sb_publishable_FDL4MZHFVgm9fq_U3sTqsg_W9mce7ea";
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
@@ -250,12 +253,10 @@ serve(async (req) => {
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) throw new Error("Authorization required");
     const token = authHeader.replace("Bearer ", "");
-    const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
-    const userClient = createClient(supabaseUrl, anonKey, {
+    const userClient = createClient(DATA_SUPABASE_URL, DATA_SUPABASE_PUBLISHABLE_KEY, {
       global: { headers: { Authorization: `Bearer ${token}` } }
     });
     const { data: { user } } = await userClient.auth.getUser();
