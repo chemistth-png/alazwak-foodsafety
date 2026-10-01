@@ -318,6 +318,39 @@ export type Database = {
         }
         Relationships: []
       }
+      message_attachments: {
+        Row: {
+          created_at: string
+          document_id: string
+          message_id: string
+        }
+        Insert: {
+          created_at?: string
+          document_id: string
+          message_id: string
+        }
+        Update: {
+          created_at?: string
+          document_id?: string
+          message_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "message_attachments_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "documents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "message_attachments_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "messages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       messages: {
         Row: {
           content: string
@@ -562,6 +595,10 @@ export type Database = {
           p_entity_title?: string
           p_entity_type: string
         }
+        Returns: string
+      }
+      save_document: {
+        Args: { p_content: string; p_file_name: string; p_file_size?: number }
         Returns: string
       }
       search_document_chunks: {
