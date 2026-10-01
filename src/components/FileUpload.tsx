@@ -75,7 +75,7 @@ const FileUpload = ({ onFileProcessed, disabled }: FileUploadProps) => {
         : typeof parsed?.content === "string"
           ? parsed.content
           : "";
-      let documentId = typeof parsed?.documentId === "string"
+      const documentId = typeof parsed?.documentId === "string"
         ? parsed.documentId
         : typeof parsed?.document_id === "string"
           ? parsed.document_id
@@ -83,61 +83,13 @@ const FileUpload = ({ onFileProcessed, disabled }: FileUploadProps) => {
             ? parsed.id
             : "";
 
-      // The original Lovable backend may run an older parser contract that
-      // returns extracted text but does not persist the document. Persist it
-      // here with the authenticated client so RLS still enforces ownership.
-      if (!documentId && parsedText.trim()) {
-        // Legacy parser may persist successfully but omit the document id.
-        // Check for that row first to avoid creating a duplicate document.
-        const { data: existingDoc } = await supabase
-          .from("documents")
-          .select("id")
-          .eq("user_id", user.id)
-          .eq("file_name", file.name)
-          .order("created_at", { ascending: false })
-          .limit(1)
-          .maybeSingle();
-        if (existingDoc?.id) documentId = existingDoc.id;
-      }
-
-      if (!documentId && parsedText.trim()) {
-        const { data: insertedDoc, error: insertError } = await supabase
-          .from("documents")
-          .insert({
-            user_id: user.id,
-            file_name: file.name,
-            content: parsedText,
-            file_size: file.size,
-          })
-          .select("id")
-          .single();
-        if (insertError || !insertedDoc?.id) {
-          console.error("document persistence fallback failed:", insertError);
-          throw new Error(`تعذر حفظ المستند${insertError?.code ? ` [${insertError.code}]` : ""}: ${insertError?.message || "خطأ قاعدة بيانات غير محدد"}`);
-        }
-        documentId = insertedDoc.id;
-      }
-
-      // If the parser claims success without returning text/id, verify whether
-      // an older deployment already persisted the row before reporting failure.
+      // The parser is the single owner of document persistence. Never insert
+      // a second row from the client — that created duplicate documents.
       if (!documentId) {
-        const { data: savedDoc, error: verifyError } = await supabase
-          .from("documents")
-          .select("id, content")
-          .eq("user_id", user.id)
-          .eq("file_name", file.name)
-          .order("created_at", { ascending: false })
-          .limit(1)
-          .maybeSingle();
-        if (verifyError || !savedDoc?.id) {
-          console.error("unexpected parse-document response:", parsed);
-          throw new Error(parsed?.error || "خدمة تحليل المستند لم تُرجع نصاً أو مستنداً محفوظاً");
-        }
-        documentId = savedDoc.id;
-        onFileProcessed(file.name, parsedText || savedDoc.content || "", documentId);
-      } else {
-        onFileProcessed(file.name, parsedText, documentId);
+        console.error("unexpected parse-document response:", parsed);
+        throw new Error(parsed?.error || "خدمة تحليل المستند لم تُرجع معرّف المستند المحفوظ");
       }
+      onFileProcessed(file.name, parsedText, documentId);
       toast.success(`تم تحميل وتحليل وحفظ الملف: ${file.name}`);
     } catch (e: any) {
       console.error("File upload error:", e);
