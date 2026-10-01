@@ -261,7 +261,12 @@ serve(async (req) => {
     });
     // Edge Functions are stateless: validate the caller's JWT explicitly.
     const { data: { user }, error: authError } = await userClient.auth.getUser(token);
-    if (authError || !user) throw new Error("User not authenticated");
+    if (authError || !user) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     if (action === "generate") {
       let currentTaskId = taskId;
