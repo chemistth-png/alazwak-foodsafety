@@ -40,6 +40,9 @@ const markdownFiles = import.meta.glob<string>(
   { query: "?raw", import: "default" }
 );
 
+const procedureDownloadUrl = (path: string) =>
+  `${import.meta.env.BASE_URL}${path.replace(/^\/+/, "")}`;
+
 const HorusProcedures = () => {
   const navigate = useNavigate();
   const [search, setSearch] = useState("");
@@ -206,7 +209,7 @@ const HorusProcedures = () => {
                 </Button>
                 {p.docx && (
                   <Button size="sm" variant="outline" asChild>
-                    <a href={p.docx} download>
+                    <a href={procedureDownloadUrl(p.docx)} download>
                       <Download className="w-3.5 h-3.5" />
                     </a>
                   </Button>
@@ -245,7 +248,7 @@ const HorusProcedures = () => {
                 </Button>
                 {active?.docx && (
                   <Button size="sm" asChild>
-                    <a href={active.docx} download>
+                    <a href={procedureDownloadUrl(active.docx)} download>
                       <Download className="w-3.5 h-3.5 ms-1" /> Word
                     </a>
                   </Button>
