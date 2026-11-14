@@ -96,7 +96,55 @@ serve(async (req) => {
       });
     }
 
-    const { messages, model, conversationId } = await req.json();
+    const requestBody = await req.json();
+    if (!requestBody || typeof requestBody !== "object" || Array.isArray(requestBody)) {
+      return new Response(JSON.stringify({ error: "Invalid request" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const { messages: suppliedMessages, model, conversationId } = requestBody;
+    if (!Array.isArray(suppliedMessages) || suppliedMessages.length === 0 || suppliedMessages.length > 200) {
+      return new Response(JSON.stringify({ error: "Invalid messages" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Accept only ordinary conversation turns and construct fresh objects so
+    // caller-supplied roles/fields can never override server-owned instructions.
+    const messages: { role: "user" | "assistant"; content: string }[] = [];
+    let totalMessageChars = 0;
+    for (const item of suppliedMessages) {
+      if (
+        !item || typeof item !== "object" || Array.isArray(item) ||
+        (item.role !== "user" && item.role !== "assistant") ||
+        typeof item.content !== "string" || item.content.length > 30_000
+      ) {
+        return new Response(JSON.stringify({ error: "Invalid message" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      totalMessageChars += item.content.length;
+      if (totalMessageChars > 120_000) {
+        return new Response(JSON.stringify({ error: "Messages too large" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      messages.push({ role: item.role, content: item.content });
+    }
+
+    if (!messages.some((message) => message.role === "user")) {
+      return new Response(JSON.stringify({ error: "A user message is required" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
