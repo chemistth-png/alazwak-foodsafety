@@ -416,7 +416,7 @@ const Index = () => {
                 <Droplets className="w-10 h-10 text-accent-foreground" />
               </div>
               <div className="text-center space-y-2 max-w-md">
-                <h2 className="text-xl font-bold text-foreground">مرحباً بك في Alazwak FoodSafety! 👋</h2>
+                <h2 dir="rtl" className="text-xl font-bold text-foreground">مرحباً بك في Alazwak FoodSafety! 👋</h2>
                 <p className="text-sm text-muted-foreground leading-relaxed">
                   مساعدك الذكي المتخصص في جودة وسلامة الغذاء. اسألني أي سؤال!
                 </p>

@@ -84,8 +84,8 @@ const ChatSidebar = ({ currentId, onSelect, onNew, open, onClose }: ChatSidebarP
             />
           </div>
         </div>
-        <ScrollArea className="flex-1">
-          <div className="p-2 space-y-1">
+        <div dir="rtl" className="flex-1 overflow-y-auto min-w-0">
+          <div className="p-2 space-y-1 w-full min-w-0">
             {filtered.map((c) => (
               <button
                 key={c.id}
@@ -111,7 +111,7 @@ const ChatSidebar = ({ currentId, onSelect, onNew, open, onClose }: ChatSidebarP
               </p>
             )}
           </div>
-        </ScrollArea>
+        </div>
         {/* Mobile-only nav links */}
         <div className="border-t p-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] space-y-1 md:hidden shrink-0">
           <Button variant="ghost" size="sm" className="w-full min-h-11 gap-2 text-base text-foreground justify-start" onClick={() => { navigate("/documents"); onClose(); }}>
