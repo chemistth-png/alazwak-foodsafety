@@ -1,0 +1,13 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1794740008149,
+      "tag": "0000_restrict_company_sops_read_to_admins",
+      "breakpoints": true
+    }
+  ]
+}
