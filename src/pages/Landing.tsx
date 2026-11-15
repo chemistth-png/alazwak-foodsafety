@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { ChevronDown, Shield, TrendingUp, Users, Zap, CheckCircle, Star, ArrowRight } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { ChevronDown, Shield, TrendingUp, Users, Zap, CheckCircle, Star, ArrowRight, Droplets } from "lucide-react";
+import { Button } from "@/components/ui/button"; // unchanged
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { useNavigate } from "react-router-dom";
@@ -188,10 +188,10 @@ const Landing = () => {
       <nav className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container flex items-center justify-between h-16">
           <div className="flex items-center gap-2">
-            <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-primary text-primary-foreground font-bold">
-              A
+            <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-primary text-primary-foreground">
+              <Droplets className="w-5 h-5" />
             </div>
-            <span className="font-bold text-lg hidden sm:inline">Alazwak</span>
+            <span className="font-bold text-lg hidden sm:inline">Alazwak FoodSafety</span>
           </div>
           <div className="flex items-center gap-4">
             <Button variant="ghost" onClick={() => navigate("/auth")}>
@@ -215,7 +215,7 @@ const Landing = () => {
                 مساعدك الذكي لسلامة الغذاء
               </h1>
               <p className="text-lg sm:text-xl text-muted-foreground leading-relaxed">
-                منصة متكاملة لإدارة سلامة الغذاء والامتثال للمعايير الدولية. تطبيق نظام HACCP بسهولة وحصل على
+                منصة متكاملة لإدارة سلامة الغذاء والامتثال للمعايير الدولية. تطبيق نظام HACCP بسهولة واحصل على
                 الشهادات المطلوبة
               </p>
             </div>
@@ -232,7 +232,11 @@ const Landing = () => {
               <Button
                 size="lg"
                 variant="outline"
-                className="text-base h-12 px-8"
+                className="text-base h-12 px-8 !bg-transparent"
+                onClick={() => {
+                  const el = document.getElementById('features');
+                  if (el) el.scrollIntoView({ behavior: 'smooth' });
+                }}
               >
                 تعرف على المزيد
                 <ChevronDown className="w-5 h-5 mr-2" />
@@ -440,7 +444,7 @@ const Landing = () => {
               <Button
                 size="lg"
                 variant="outline"
-                className="text-base h-12 px-8 border-primary-foreground text-primary-foreground hover:bg-primary-foreground/10"
+                className="text-base h-12 px-8 border-primary-foreground text-primary-foreground hover:bg-primary-foreground/10 !bg-transparent" onClick={() => window.location.href='mailto:chemistth@gmail.com'}
               >
                 تواصل معنا
               </Button>

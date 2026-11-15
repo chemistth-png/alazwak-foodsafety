@@ -14,6 +14,7 @@ import SOPTemplate from "./pages/SOPTemplate";
 import SOPsPage from "./pages/SOPsPage";
 import AgentDashboard from "./pages/AgentDashboard";
 import Dashboard from "./pages/Dashboard";
+import TelegramManagement from "./pages/TelegramManagement";
 import AuditLogPage from "./pages/AuditLogPage";
 import ReferenceLibrary from "./pages/ReferenceLibrary";
 import GroundwaterSystems from "./pages/GroundwaterSystems";
@@ -103,6 +104,7 @@ const App = () => {
                     <Route path="/auth" element={<AuthRoute><Auth /></AuthRoute>} />
                     <Route path="/reset-password" element={<ResetPassword />} />
                     <Route path="/install" element={<Install />} />
+                    <Route path="/telegram" element={<ProtectedRoute><TelegramManagement /></ProtectedRoute>} />
                     <Route path="*" element={<NotFound />} />
                   </Routes>
                 </div>

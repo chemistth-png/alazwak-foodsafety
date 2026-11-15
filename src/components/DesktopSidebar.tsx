@@ -1,5 +1,5 @@
 import { useNavigate, useLocation } from "react-router-dom";
-import { MessageSquare, FolderOpen, FileText, Bot, PieChart, LogOut, Droplets, ClipboardList, BookOpen, Waves, ListChecks, AlertTriangle, ShieldCheck, Camera, LayoutTemplate } from "lucide-react";
+import { MessageSquare, FolderOpen, FileText, Bot, Send, PieChart, LogOut, Droplets, ClipboardList, BookOpen, Waves, ListChecks, AlertTriangle, ShieldCheck, Camera, LayoutTemplate } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
 import ThemeToggle from "@/components/ThemeToggle";
@@ -19,7 +19,7 @@ const NAV_ITEMS = [
   { path: "/library", label: "المكتبة المرجعية", icon: BookOpen },
   { path: "/groundwater", label: "المياه الجوفية", icon: Waves },
   { path: "/audit", label: "سجل التدقيق", icon: ClipboardList },
-];
+  { path: "/telegram", label: "إدارة تيليجرام", icon: Send }];
 
 const DesktopSidebar = () => {
   const navigate = useNavigate();
